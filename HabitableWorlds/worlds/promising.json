@@ -1,0 +1,1222 @@
+{
+  "Earth": {
+    "systemName": "Solar System",
+    "systemType": "Single",
+    "parentSun": "Sun",
+    "spectralClass": "G2V",
+    "distToSun": 0,
+    "type": "Planet",
+    "orbit": 1.0000010178,
+    "radius": 6378.14,
+    "mass": 1,
+    "moonCount": 1,
+    "thumbnail": "img/real/earth.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Earth"
+    }
+  },
+  "Pandora": {
+    "altName": "Polyphemus IV",
+    "systemName": "Alpha Centauri",
+    "systemType": "Triple",
+    "parentSun": "Alpha Centauri A",
+    "spectralClass": "G2V",
+    "distToSun": 1.339,
+    "type": "Moon",
+    "parent": "Polyphemus",
+    "orbit": 0.005815459156799,
+    "radius": 5723.5,
+    "mass": 0.72,
+    "moonCount": 0,
+    "thumbnail": "img/fictional/pandora.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Pandora"
+    }
+  },
+  "Proxima Centauri b": {
+    "systemName": "Alpha Centauri",
+    "systemType": "Triple",
+    "parentSun": "Proxima Centauri",
+    "spectralClass": "M5.5V",
+    "distToSun": 1.29,
+    "type": "Planet",
+    "orbit": 0.04848,
+    "radius": 8346.00977,
+    "mass": 1.05499995,
+    "moonCount": 0,
+    "thumbnail": "img/real/proximab.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Proxima Centauri b"
+    }
+  },
+  "Barnard c": {
+    "systemName": "Barnard's System",
+    "systemType": "Single",
+    "parentSun": "Barnard's Star",
+    "spectralClass": "M4V",
+    "distToSun": 1.8,
+    "type": "Planet",
+    "orbit": 0.0274,
+    "radius": 5041.71143,
+    "mass": 0.335003,
+    "moonCount": 2,
+    "thumbnail": "img/real/barnardc.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Barnard c"
+    }
+  },
+  "Ross 128 b": {
+    "systemName": "Ross 128 System",
+    "systemType": "Single",
+    "parentSun": "Ross 128",
+    "spectralClass": "M4V",
+    "distToSun": 3.38,
+    "type": "Planet",
+    "orbit": 0.0496,
+    "radius": 7396.69434,
+    "mass": 1.398493,
+    "moonCount": 0,
+    "thumbnail": "img/real/ross128b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Ross 128 b"
+    }
+  },
+  "Tau Ceti e": {
+    "systemName": "Tau Ceti System",
+    "systemType": "Single",
+    "parentSun": "Tau Ceti",
+    "spectralClass": "G8V",
+    "distToSun": 3.6,
+    "type": "Planet",
+    "orbit": 0.538,
+    "radius": 9486.08008,
+    "mass": 3.93000007,
+    "moonCount": 0,
+    "thumbnail": "img/real/taucetie.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Tau Ceti e"
+    }
+  },
+  "GJ 1061 b": {
+    "systemName": "GJ 1061 System",
+    "systemType": "Single",
+    "parentSun": "GJ 1061",
+    "spectralClass": "M5.5V",
+    "distToSun": 3.6732,
+    "type": "Planet",
+    "orbit": 0.021,
+    "radius": 1.4592,
+    "mass": 1.4592,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj1061b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "GJ 1061 b"
+    }
+  },
+  "GJ 1061 c": {
+    "systemName": "GJ 1061 System",
+    "systemType": "Single",
+    "parentSun": "GJ 1061",
+    "spectralClass": "M5.5V",
+    "distToSun": 3.6732,
+    "type": "Planet",
+    "orbit": 0.035,
+    "radius": 7663.1,
+    "mass": 1.7767,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj1061c.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "GJ 1061 b"
+    }
+  },
+  "Luyten b": {
+    "systemName": "Luyten's System",
+    "systemType": "Single",
+    "parentSun": "Luyten's Star",
+    "spectralClass": "M3.5V",
+    "distToSun": 3.8,
+    "type": "Planet",
+    "orbit": 0.091,
+    "radius": 8887.90039,
+    "mass": 2.930479,
+    "moonCount": 0,
+    "thumbnail": "img/real/luytenb.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Luyten b"
+    }
+  },
+  "Teegarden b": {
+    "systemName": "Teegarden's System",
+    "systemType": "Single",
+    "parentSun": "Teegarden's Star",
+    "spectralClass": "M6V",
+    "distToSun": 3.83078,
+    "type": "Planet",
+    "orbit": 0.0259,
+    "radius": 8364.6,
+    "mass": 2.6254,
+    "moonCount": 0,
+    "thumbnail": "img/real/teegardenb.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Teegarden c"
+    }
+  },
+  "Teegarden c": {
+    "systemName": "Teegarden's System",
+    "systemType": "Single",
+    "parentSun": "Teegarden's Star",
+    "spectralClass": "M6V",
+    "distToSun": 3.83078,
+    "type": "Planet",
+    "orbit": 0.0455,
+    "radius": 8059.4,
+    "mass": 2.3096,
+    "moonCount": 0,
+    "thumbnail": "img/real/teegardenc.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Teegarden c"
+    }
+  },
+  "Wolf 1061 d": {
+    "systemName": "Wolf 1061 System",
+    "systemType": "Single",
+    "parentSun": "Wolf 1061",
+    "spectralClass": "M3V",
+    "distToSun": 4.29,
+    "type": "Planet",
+    "orbit": 0.47,
+    "radius": 14118.5,
+    "mass": 7.7,
+    "moonCount": 0,
+    "thumbnail": "img/real/wolf1061d.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Wolf 1061 d"
+    }
+  },
+  "GJ 1002 b": {
+    "systemName": "GJ 1002 System",
+    "systemType": "Single",
+    "parentSun": "GJ 1002",
+    "spectralClass": "M5.5V",
+    "distToSun": 4.84867,
+    "type": "Planet",
+    "orbit": 0.0457,
+    "radius": 7222.5,
+    "mass": 1.08188,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj1002b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "GJ 1002 b"
+    }
+  },
+  "GJ 1002 c": {
+    "systemName": "GJ 1002 System",
+    "systemType": "Single",
+    "parentSun": "GJ 1002",
+    "spectralClass": "M5.5V",
+    "distToSun": 4.84867,
+    "type": "Planet",
+    "orbit": 0.0738,
+    "radius": 7473.7,
+    "mass": 1.361896,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj1002c.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "GJ 1002 b"
+    }
+  },
+  "Gliese 667 C c": {
+    "systemName": "Gliese 667 System",
+    "systemType": "Triple",
+    "parentSun": "Gliese 667 C",
+    "spectralClass": "M1.5V",
+    "distToSun": 6.84,
+    "type": "Planet",
+    "orbit": 0.125,
+    "radius": 14118.5,
+    "mass": 9425.2,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj667cc.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Gliese 667 C c"
+    }
+  },
+  "Gliese 667 C f": {
+    "systemName": "Gliese 667 System",
+    "systemType": "Triple",
+    "parentSun": "Gliese 667 C",
+    "spectralClass": "M1.5V",
+    "distToSun": 6.84,
+    "type": "Planet",
+    "orbit": 0.156,
+    "radius": 8559.5,
+    "mass": 2.7047,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj667cf.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Gliese 667 C c"
+    }
+  },
+  "Gliese 667 C e": {
+    "systemName": "Gliese 667 System",
+    "systemType": "Triple",
+    "parentSun": "Gliese 667 C",
+    "spectralClass": "M1.5V",
+    "distToSun": 6.84,
+    "type": "Planet",
+    "orbit": 0.213,
+    "radius": 8732.6,
+    "mass": 2.7047,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj667ce.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Gliese 667 C c"
+    }
+  },
+  "Wolf 1069 b": {
+    "systemName": "Wolf 1069 System",
+    "systemType": "Single",
+    "parentSun": "Wolf 1069",
+    "spectralClass": "M5V",
+    "distToSun": 9.58341,
+    "type": "Planet",
+    "orbit": 0.0672,
+    "radius": 8278.4,
+    "mass": 1.260072,
+    "moonCount": 0,
+    "thumbnail": "img/real/wolf1069b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Wolf 1069 b"
+    }
+  },
+  "Gliese 12 b": {
+    "systemName": "Gliese 12 System",
+    "systemType": "Single",
+    "parentSun": "Gliese 12",
+    "spectralClass": "M3V",
+    "distToSun": 12.21,
+    "type": "Planet",
+    "orbit": 0.066,
+    "radius": 5765.8298,
+    "mass": 0.708782,
+    "moonCount": 0,
+    "thumbnail": "img/real/gj12b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Gliese 12 b"
+    }
+  },
+  "TRAPPIST-1 d": {
+    "systemName": "TRAPPIST-1 System",
+    "systemType": "Single",
+    "parentSun": "TRAPPIST-1",
+    "spectralClass": "M8V",
+    "distToSun": 12.43,
+    "type": "Planet",
+    "orbit": 0.02227,
+    "radius": 5020.3,
+    "mass": 0.388,
+    "moonCount": 0,
+    "thumbnail": "img/real/trappist1d.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TRAPPIST-1 e"
+    }
+  },
+  "TRAPPIST-1 e": {
+    "systemName": "TRAPPIST-1 System",
+    "systemType": "Single",
+    "parentSun": "TRAPPIST-1",
+    "spectralClass": "M8V",
+    "distToSun": 12.43,
+    "type": "Planet",
+    "orbit": 0.02925,
+    "radius": 5861.3,
+    "mass": 0.692,
+    "moonCount": 0,
+    "thumbnail": "img/real/trappist1e.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TRAPPIST-1 e"
+    }
+  },
+  "TRAPPIST-1 f": {
+    "systemName": "TRAPPIST-1 System",
+    "systemType": "Single",
+    "parentSun": "TRAPPIST-1",
+    "spectralClass": "M8V",
+    "distToSun": 12.43,
+    "type": "Planet",
+    "orbit": 0.03849,
+    "radius": 6657.7,
+    "mass": 1.039,
+    "moonCount": 0,
+    "thumbnail": "img/real/trappist1f.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TRAPPIST-1 e"
+    }
+  },
+  "TRAPPIST-1 g": {
+    "systemName": "TRAPPIST-1 System",
+    "systemType": "Single",
+    "parentSun": "TRAPPIST-1",
+    "spectralClass": "M8V",
+    "distToSun": 12.43,
+    "type": "Planet",
+    "orbit": 0.03849,
+    "radius": 7192.9,
+    "mass": 1.321,
+    "moonCount": 0,
+    "thumbnail": "img/real/trappist1g.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TRAPPIST-1 e"
+    }
+  },
+  "HD 40307 g": {
+    "systemName": "HD 40307 System",
+    "systemType": "Single",
+    "parentSun": "HD 40307",
+    "spectralClass": "K3V",
+    "distToSun": 12.8,
+    "type": "Planet",
+    "orbit": 0.6,
+    "radius": 15297.5,
+    "mass": 7.09,
+    "moonCount": 0,
+    "thumbnail": "img/real/hd40307g.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "HD 40307 g"
+    }
+  },
+  "Habitable Exomoon": {
+    "altName": "Majriti VI",
+    "systemName": "Upsilon Andromedae System",
+    "systemType": "Binary",
+    "parentSun": "Titawin",
+    "spectralClass": "F8V",
+    "distToSun": 13.5736,
+    "type": "Moon",
+    "parent": "Majriti",
+    "orbit": 0.02250615349166,
+    "radius": 6729.03809,
+    "mass": 1.15805137,
+    "moonCount": 0,
+    "thumbnail": "img/fictional/majritimoon.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Habitable Exomoon"
+    }
+  },
+  "LHS 110 b": {
+    "systemName": "LHS 1140 System",
+    "systemType": "Single",
+    "parentSun": "LHS 1140",
+    "spectralClass": "M4.5V",
+    "distToSun": 14.9861,
+    "type": "Planet",
+    "orbit": 0.0946,
+    "radius": 11022,
+    "mass": 5.6,
+    "moonCount": 0,
+    "thumbnail": "img/real/lhs1140b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "LHS 1140 b"
+    }
+  },
+  "TOI-1452 b": {
+    "systemName": "TOI-1452 System",
+    "systemType": "Single",
+    "parentSun": "TOI-1452",
+    "spectralClass": "M4V",
+    "distToSun": 30.5212,
+    "type": "Planet",
+    "orbit": 0.061,
+    "radius": 10664.2451,
+    "mass": 4.82,
+    "moonCount": 0,
+    "thumbnail": "img/real/toi1452b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TOI-1452 b"
+    }
+  },
+  "TOI-700 e": {
+    "systemName": "TOI-700 System",
+    "systemType": "Single",
+    "parentSun": "TOI-700",
+    "spectralClass": "M2V",
+    "distToSun": 31.1265,
+    "type": "Planet",
+    "orbit": 0.134,
+    "radius": 6078.24984,
+    "mass": 0.43869,
+    "moonCount": 0,
+    "thumbnail": "img/real/toi700e.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TOI-700 d"
+    }
+  },
+  "TOI-700 d": {
+    "systemName": "TOI-700 System",
+    "systemType": "Single",
+    "parentSun": "TOI-700",
+    "spectralClass": "M2V",
+    "distToSun": 31.1265,
+    "type": "Planet",
+    "orbit": 0.1633,
+    "radius": 6843.92916,
+    "mass": 2.415579,
+    "moonCount": 0,
+    "thumbnail": "img/real/toi700d.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TOI-700 d"
+    }
+  },
+  "LP 890-9 c": {
+    "systemName": "LP 890-9 System",
+    "systemType": "Single",
+    "parentSun": "LP 890-9",
+    "spectralClass": "M6V",
+    "distToSun": 32.3,
+    "type": "Planet",
+    "orbit": 0.03984,
+    "radius": 8722.024,
+    "mass": 25.32872,
+    "moonCount": 0,
+    "thumbnail": "img/real/lp8909c.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "LP 890-9 c"
+    }
+  },
+  "K2-18 b": {
+    "systemName": "K2-18 System",
+    "systemType": "Single",
+    "parentSun": "K2-18",
+    "spectralClass": "M2.5V",
+    "distToSun": 38.0266,
+    "type": "Planet",
+    "orbit": 0.429,
+    "radius": 15696.5952,
+    "mass": 7.2,
+    "moonCount": 0,
+    "thumbnail": "img/real/k218b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "K2-18 b"
+    }
+  },
+  "TOI-715 b": {
+    "systemName": "TOI-715 System",
+    "systemType": "Single",
+    "parentSun": "TOI-1452",
+    "spectralClass": "M4V",
+    "distToSun": 42.4048,
+    "type": "Planet",
+    "orbit": 0.083,
+    "radius": 9865.896,
+    "mass": 1.3666,
+    "moonCount": 0,
+    "thumbnail": "img/real/toi715b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "TOI-715 b"
+    }
+  },
+  "K2-3 d": {
+    "systemName": "K2-3 System",
+    "systemType": "Single",
+    "parentSun": "K2-3",
+    "spectralClass": "M0V",
+    "distToSun": 44.0727,
+    "type": "Planet",
+    "orbit": 0.083,
+    "radius": 9651.42,
+    "mass": 11.10518,
+    "moonCount": 0,
+    "thumbnail": "img/real/k23d.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "K2-3 d"
+    }
+  },
+  "K2-72 e": {
+    "systemName": "K2-72 System",
+    "systemType": "Single",
+    "parentSun": "K2-72",
+    "spectralClass": "M2V",
+    "distToSun": 66.56,
+    "type": "Planet",
+    "orbit": 0.106,
+    "radius": 8221.58,
+    "mass": 1.0614,
+    "moonCount": 0,
+    "thumbnail": "img/real/k272e.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "K2-72 e"
+    }
+  },
+  "Kepler-1649 c": {
+    "systemName": "Kepler-1649 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-1649",
+    "spectralClass": "M5V",
+    "distToSun": 92.43,
+    "type": "Planet",
+    "orbit": 0.0830175519,
+    "radius": 6791.74,
+    "mass": 0.6285,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler1649c.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-1649 c"
+    }
+  },
+  "Kepler-186 f": {
+    "systemName": "Kepler-186 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-186",
+    "spectralClass": "M1V",
+    "distToSun": 178.5,
+    "type": "Planet",
+    "orbit": 0.432,
+    "radius": 7435.168,
+    "mass": 1.44,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler186f.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-186 f"
+    }
+  },
+  "Kepler-22 b": {
+    "systemName": "Kepler-22 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-22",
+    "spectralClass": "G5V",
+    "distToSun": 194.642,
+    "type": "Planet",
+    "orbit": 0.812,
+    "radius": 13394.1,
+    "mass": 9.1,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler22b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-22 b"
+    }
+  },
+  "Kepler-438 b": {
+    "systemName": "Kepler-438 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-438",
+    "spectralClass": "MV",
+    "distToSun": 196,
+    "type": "Planet",
+    "orbit": 0.166,
+    "radius": 7135.5,
+    "mass": 0.7219,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler438b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-438 b"
+    }
+  },
+  "Kepler-296 A e": {
+    "systemName": "Kepler-296 System",
+    "systemType": "Binary",
+    "parentSun": "Kepler-296 A",
+    "spectralClass": "M1V",
+    "distToSun": 226,
+    "type": "Planet",
+    "orbit": 0.174,
+    "radius": 11152.752,
+    "mass": 5.7548,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler296ae.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-296 A e"
+    }
+  },
+  "Kepler-1229 b": {
+    "systemName": "Kepler-1229 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-1229",
+    "spectralClass": "M0V",
+    "distToSun": 236,
+    "type": "Planet",
+    "orbit": 0.2899,
+    "radius": 8936.5,
+    "mass": 1.3722,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler1229b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-1229 b"
+    }
+  },
+  "Kepler-1652 b": {
+    "systemName": "Kepler-1652 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-1652",
+    "spectralClass": "M2V",
+    "distToSun": 252,
+    "type": "Planet",
+    "orbit": 0.1654,
+    "radius": 10223.356,
+    "mass": 4.3151,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler1652b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-1652 b"
+    }
+  },
+  "KOI-5554.01": {
+    "systemName": "KOI-5554 System",
+    "systemType": "Single",
+    "parentSun": "KOI-5554",
+    "spectralClass": "G0V",
+    "distToSun": 213.69,
+    "type": "Planet",
+    "orbit": 0.952,
+    "radius": 6123.012,
+    "mass": 0.43568,
+    "moonCount": 0,
+    "thumbnail": "img/real/koi5554.01.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "KOI-5554.01"
+    }
+  },
+  "Celis": {
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Planet",
+    "orbit": 4.86432855,
+    "radius": 6378.14,
+    "mass": 1,
+    "moonCount": 9,
+    "thumbnail": "img/fictional/celis.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Celis"
+    }
+  },
+  "Nexus Legendary": {
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Ba, Bb",
+    "spectralClass": "G3.4V, G9.8V",
+    "distToSun": 300,
+    "type": "Planet",
+    "orbit": 1.27619637,
+    "radius": 12971,
+    "mass": 10.5262604,
+    "moonCount": 77,
+    "thumbnail": "img/fictional/nexuslegendary.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Nexus Legendary"
+    }
+  },
+  "KOI-4878.01": {
+    "systemName": "KOI-4878 System",
+    "systemType": "Single",
+    "parentSun": "KOI-4878",
+    "spectralClass": "G6V",
+    "distToSun": 329,
+    "type": "Planet",
+    "orbit": 1.1392,
+    "radius": 6516,
+    "mass": 0.53457,
+    "moonCount": 0,
+    "thumbnail": "img/real/koi4878.01.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "KOI-4878.01"
+    }
+  },
+  "KOI-3456.02": {
+    "systemName": "Kepler-1505 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-1505",
+    "spectralClass": "G3V",
+    "distToSun": 359,
+    "type": "Planet",
+    "orbit": 1.1497,
+    "radius": 8610.485,
+    "mass": 1.2399,
+    "moonCount": 0,
+    "thumbnail": "img/real/koi3456.02.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "KOI-3456.02"
+    }
+  },
+  "Kepler-1410 b": {
+    "systemName": "Kepler-1410 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-1410",
+    "spectralClass": "M0V",
+    "distToSun": 367,
+    "type": "Planet",
+    "orbit": 0.2543,
+    "radius": 11340.5,
+    "mass": 3.2072351,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler1410b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-1410 b"
+    }
+  },
+  "Kepler-62 e": {
+    "systemName": "Kepler-62 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-62",
+    "spectralClass": "M0V",
+    "distToSun": 368,
+    "type": "Planet",
+    "orbit": 0.4277330796,
+    "radius": 11946.251,
+    "mass": 14.476,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler62e.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-62 e"
+    }
+  },
+  "Kepler-62 f": {
+    "systemName": "Kepler-62 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-62",
+    "spectralClass": "M0V",
+    "distToSun": 368,
+    "type": "Planet",
+    "orbit": 0.7199991667,
+    "radius": 9822.331,
+    "mass": 1.8132,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler62f.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-62 e"
+    }
+  },
+  "Kepler-442 b": {
+    "systemName": "Kepler-442 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-442",
+    "spectralClass": "KV",
+    "distToSun": 370,
+    "type": "Planet",
+    "orbit": 0.409,
+    "radius": 8546.704,
+    "mass": 2.3,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler442b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-442 b"
+    }
+  },
+  "Pyron": {
+    "systemName": "Vesper System",
+    "systemType": "Single",
+    "parentSun": "Vesper",
+    "spectralClass": "B8.7V",
+    "distToSun": 500,
+    "type": "Planet",
+    "orbit": 11,
+    "radius": 17234.54,
+    "mass": 2.0381,
+    "moonCount": 8,
+    "thumbnail": "img/fictional/pyron.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Pyron"
+    }
+  },
+  "Kepler-452 b": {
+    "systemName": "Kepler-452 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-452",
+    "spectralClass": "G2V",
+    "distToSun": 561,
+    "type": "Planet",
+    "orbit": 1.046,
+    "radius": 10366.34,
+    "mass": 3.0806,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler452b.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-452 b"
+    }
+  },
+  "Orval": {
+    "systemName": "La Trappe System",
+    "systemType": "Single",
+    "parentSun": "La Trappe",
+    "spectralClass": "L0V",
+    "distToSun": 600,
+    "type": "Planet",
+    "orbit": 0.009,
+    "radius": 6614.1377,
+    "mass": 1.00908375,
+    "moonCount": 0,
+    "thumbnail": "img/fictional/orval.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Orval"
+    }
+  },
+  "Kepler-69 c": {
+    "systemName": "Kepler-69 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-69",
+    "spectralClass": "G4V",
+    "distToSun": 732.601,
+    "type": "Planet",
+    "orbit": 0.64,
+    "radius": 7478,
+    "mass": 2.14,
+    "moonCount": 0,
+    "thumbnail": "img/real/kepler69c.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-69 c"
+    }
+  },
+  "KOI-5737.01": {
+    "systemName": "Kepler-5737 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-5737",
+    "spectralClass": "GV",
+    "distToSun": 833.17,
+    "type": "Planet",
+    "orbit": 1.0124,
+    "radius": 8419.141,
+    "mass": 1.1262,
+    "moonCount": 0,
+    "thumbnail": "img/real/koi5737.01.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "KOI-5737.01"
+    }
+  },
+  "KOI-5715.01": {
+    "systemName": "KOI-5715 System",
+    "systemType": "Single",
+    "parentSun": "KOI-5715",
+    "spectralClass": "K0V",
+    "distToSun": 886,
+    "type": "Planet",
+    "orbit": 0.6606,
+    "radius": 12309.81,
+    "mass": 3.8849,
+    "moonCount": 0,
+    "thumbnail": "img/real/koi5715.01.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "KOI-5715.01"
+    }
+  },
+  "Terrania": {
+    "systemName": "Hexan System",
+    "systemType": "Binary",
+    "parentSun": "Hexan A, B",
+    "spectralClass": "G7.5V, M5.0V",
+    "distToSun": 899.999981,
+    "type": "Planet",
+    "orbit": 0.9,
+    "radius": 6623.2002,
+    "mass": 1.08000004,
+    "moonCount": 4,
+    "thumbnail": "img/fictional/terrania.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Terrania"
+    }
+  },
+  "Kepler-160 f": {
+    "systemName": "Kepler-160 System",
+    "systemType": "Single",
+    "parentSun": "Kepler-160",
+    "spectralClass": "G5V",
+    "distToSun": 962.92,
+    "type": "Planet",
+    "orbit": 0.98378976,
+    "radius": 12182.2368,
+    "mass": 3.5023,
+    "moonCount": 1,
+    "thumbnail": "img/real/kepler160f.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kepler-160 f"
+    }
+  },
+  "Kerbin": {
+    "systemName": "Kerbol System",
+    "systemType": "Single",
+    "parentSun": "Kerbol",
+    "spectralClass": "G2V",
+    "distToSun": 1000,
+    "type": "Planet",
+    "orbit": 1,
+    "radius": 6000,
+    "mass": 0.886024535,
+    "moonCount": 2,
+    "thumbnail": "img/fictional/kerbin.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Kerbin"
+    }
+  },
+  "Satyr": {
+    "systemName": "Lilith System",
+    "systemType": "Quadruple",
+    "parentSun": "Khepri",
+    "spectralClass": "K8.2V",
+    "distToSun": 862766.74,
+    "type": "Planet",
+    "orbit": 0.415260489,
+    "radius": 9236.62793,
+    "mass": 3.78445816,
+    "moonCount": 0,
+    "thumbnail": "img/fictional/Satyr.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Satyr"
+    }
+  },
+  "Drakara": {
+    "systemName": "Keryx System",
+    "systemType": "Triple",
+    "parentSun": "Sentinel",
+    "spectralClass": "K4.4V",
+    "distToSun": 38035965.2,
+    "type": "Planet",
+    "orbit": 0.313517529,
+    "radius": 6378.14,
+    "mass": 1,
+    "moonCount": 1,
+    "thumbnail": "img/fictional/drakara.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Drakara"
+    }
+  },
+  "Altan": {
+    "systemName": "Keryx System",
+    "systemType": "Triple",
+    "parentSun": "Sentinel",
+    "spectralClass": "K4.4V",
+    "distToSun": 38035965.2,
+    "type": "Planet",
+    "orbit": 0.415260489,
+    "radius": 6105,
+    "mass": 0.92,
+    "moonCount": 1,
+    "thumbnail": "img/fictional/altan.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Drakara"
+    }
+  },
+  "Vague": {
+    "systemName": "Void System",
+    "systemType": "Binary",
+    "parentSun": "Void",
+    "spectralClass": "X",
+    "distToSun": 38106000,
+    "type": "Planet",
+    "orbit": 47.3431429,
+    "radius": 9098.05273,
+    "mass": 3.98152089,
+    "moonCount": 2,
+    "thumbnail": "img/fictional/vague.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Vague"
+    }
+  },
+  "Verdant": {
+    "systemName": "Void System",
+    "systemType": "Binary",
+    "parentSun": "Essence",
+    "spectralClass": "G8.8V",
+    "distToSun": 38106000,
+    "type": "Planet",
+    "orbit": 0.7,
+    "radius": 4851.34473,
+    "mass": 0.477668345,
+    "moonCount": 0,
+    "thumbnail": "img/fictional/verdant.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Vague"
+    }
+  }
+}

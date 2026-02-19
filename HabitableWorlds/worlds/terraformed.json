@@ -1,0 +1,334 @@
+{
+  "Venus": {
+    "systemName": "Solar System",
+    "systemType": "Single",
+    "parentSun": "Sun",
+    "spectralClass": "G2V",
+    "distToSun": 0,
+    "type": "Planet",
+    "orbit": 0.7233,
+    "radius": 6052,
+    "mass": 0.815,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/venus.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Earth"
+    }
+  },
+  "Mars": {
+    "systemName": "Solar System",
+    "systemType": "Single",
+    "parentSun": "Sun",
+    "spectralClass": "G2V",
+    "distToSun": 0,
+    "type": "Planet",
+    "orbit": 1.5237,
+    "radius": 3396.19,
+    "mass": 0.10747,
+    "moonCount": 2,
+    "thumbnail": "img/terraformed/mars.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Earth"
+    }
+  },
+  "Leo": {
+    "altName": "Celis II",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Celis",
+    "orbit": 0.000892983207,
+    "radius": 1524.80005,
+    "mass": 0.0197480004,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/leo.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Celis"
+    }
+  },
+  "Kora": {
+    "altName": "Zerk I",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Zerk",
+    "orbit": 0.00611307243693,
+    "radius": 1711.42664,
+    "mass": 0.0111508202,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/kora.png",
+    "life": {
+      "exists": false,
+      "type": "",
+      "biome": "",
+      "origin": ""
+    }
+  },
+  "Kai": {
+    "altName": "Zerk II",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Zerk",
+    "orbit": 0.01754990661107,
+    "radius": 1855.84473,
+    "mass": 0.0142763304,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/kai.png",
+    "life": {
+      "exists": false,
+      "type": "",
+      "biome": "",
+      "origin": ""
+    }
+  },
+  "Husk": {
+    "altName": "Astrus I",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Astrus",
+    "orbit": 0.0174826447,
+    "radius": 3463.33765,
+    "mass": 0.106853552,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/husk.png",
+    "life": {
+      "exists": false,
+      "type": "",
+      "biome": "",
+      "origin": ""
+    }
+  },
+  "Diego": {
+    "altName": "Astrus II",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Astrus",
+    "orbit": 0.0249688762,
+    "radius": 3274.51685,
+    "mass": 0.0888816863,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/diego.png",
+    "life": {
+      "exists": false,
+      "type": "",
+      "biome": "",
+      "origin": ""
+    }
+  },
+  "Akira": {
+    "altName": "Astrus III",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Astrus",
+    "orbit": 0.0351213377,
+    "radius": 2980.78149,
+    "mass": 0.0656134114,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/akira.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Akira"
+    }
+  },
+  "Horus": {
+    "altName": "Astrus IV",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Aa, Ab",
+    "spectralClass": "A2.8V, K0.6V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Astrus",
+    "orbit": 0.0351213377,
+    "radius": 3093.12158,
+    "mass": 0.0737013519,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/horus.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Akira"
+    }
+  },
+  "Radon": {
+    "altName": "Nexus Legendary I",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Ba, Bb",
+    "spectralClass": "G3.4V, G9.8V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Nexus Legendary",
+    "orbit": 0.000808428141,
+    "radius": 697.77478,
+    "mass": 0.000679460005,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/radon.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Nexus Legendary"
+    }
+  },
+  "Cryptic": {
+    "altName": "Nexus Legendary II",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Ba, Bb",
+    "spectralClass": "G3.4V, G9.8V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Nexus Legendary",
+    "orbit": 0.00136846064,
+    "radius": 574.289734,
+    "mass": 0.000373170013,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/cryptic.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Nexus Legendary"
+    }
+  },
+  "Loki": {
+    "altName": "Nexus Ultima III",
+    "systemName": "Nexus System",
+    "systemType": "Octuple",
+    "parentSun": "Nexus Ca, Cb",
+    "spectralClass": "K1.7V, K3.8V",
+    "distToSun": 300,
+    "type": "Moon",
+    "parent": "Nexus Ultima",
+    "orbit": 0.012,
+    "radius": 1616.84131,
+    "mass": 0.00929962005,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/loki.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Celis"
+    }
+  },
+  "Xynor": {
+    "altName": "Pyron III",
+    "systemName": "Vesper System",
+    "systemType": "Single",
+    "parentSun": "Vesper",
+    "spectralClass": "B8.7V",
+    "distToSun": 500,
+    "type": "Moon",
+    "parent": "Pyron",
+    "orbit": 0.002395223216235,
+    "radius": 341.147827,
+    "mass": 8.42899972e-5,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/xynor.png",
+    "life": {
+      "exists": false,
+      "type": "",
+      "biome": "",
+      "origin": ""
+    }
+  },
+  "Nebelyn": {
+    "altName": "Kronix I",
+    "systemName": "Keryx System",
+    "systemType": "Triple",
+    "parentSun": "Sentinel",
+    "spectralClass": "K4.4V",
+    "distToSun": 38035965.2,
+    "type": "Moon",
+    "parent": "Kronix",
+    "orbit": 0.003933072070123,
+    "radius": 3061.0437,
+    "mass": 0.0718289986,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/nebelyn.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Nebelyn"
+    }
+  },
+  "Pholion": {
+    "altName": "Nythra I",
+    "systemName": "Evora System",
+    "systemType": "Single",
+    "parentSun": "Evora",
+    "spectralClass": "S1.6",
+    "distToSun": 38035965.2,
+    "type": "Moon",
+    "parent": "Nythra",
+    "orbit": 0.003002518156831,
+    "radius": 2342.51709,
+    "mass": 0.0317829996,
+    "moonCount": 1,
+    "thumbnail": "img/terraformed/pholion.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Panspermia)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Nemesis"
+    }
+  },
+  "Nemesis": {
+    "altName": "Voron II",
+    "systemName": "Evora System",
+    "systemType": "Single",
+    "parentSun": "Evora",
+    "spectralClass": "S1.6",
+    "distToSun": 38035965.2,
+    "type": "Moon",
+    "parent": "Voron",
+    "orbit": 0.006535529820212,
+    "radius": 2375.95483,
+    "mass": 0.0341502391,
+    "moonCount": 0,
+    "thumbnail": "img/terraformed/nemesis.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Nemesis"
+    }
+  }
+}

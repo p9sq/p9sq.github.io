@@ -1,0 +1,26 @@
+{
+  "MYSTIC-1": {
+    "thumbnail": "img/catalogued/1.png",
+    "designation": "RS 8513-928-8-12589735-56",
+    "discDate": "2026.02.09 07:09:41.77",
+    "discMethod": "Gravitational Microlensing",
+    "pioneer": "p9sq",
+    "systemType": "Single",
+    "parentSun": "N/A",
+    "spectralClass": "P",
+    "distToSun": 896.36,
+    "planetCount": {
+      "major": 1,
+      "dwarf": 0
+    },
+    "moonCount": {
+      "major": 4,
+      "dwarf": 12
+    },
+    "life": {
+      "exists": false,
+      "objectsWithLife": 0,
+      "types": ""
+    }
+  }
+}
