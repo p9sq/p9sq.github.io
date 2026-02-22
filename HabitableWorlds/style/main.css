@@ -149,6 +149,7 @@ h1 {
 
 .btn:hover {
   background-color: var(--accent-dark);
+  cursor: pointer;
 }
 
 .container {
