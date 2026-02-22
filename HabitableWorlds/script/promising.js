@@ -81,6 +81,21 @@ function renderPlanets(planets) {
       })} M♃`;
     }
 
+    let dist, unit;
+    if (world.distToSun >= 0 && world.distToSun <= 999) {
+      dist = world.distToSun;
+      unit = "ly";
+    } else if (world.distToSun >= 1000 && world.distToSun <= 999999) {
+      dist = world.distToSun / 1000;
+      unit = "kly";
+    } else if (world.distToSun >= 1000000 && world.distToSun <= 999999999) {
+      dist = world.distToSun / 1000000;
+      unit = "mly";
+    } else if (world.distToSun >= 1000000000) {
+      dist = world.distToSun / 1000000000;
+      unit = "gly";
+    }
+
     card.innerHTML = `
                 <div class="world-info">
                     <div><strong><i class="fa-solid fa-address-card"></i> Name:</strong> ${
@@ -98,29 +113,24 @@ function renderPlanets(planets) {
                     <div><strong><i class="fa-solid fa-wave-square"></i> Spectral Class:</strong> ${
                       world.spectralClass
                     } (${getStarType(world.spectralClass)})</div>
-                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${(
-                      world.distToSun * 3.262
-                    ).toLocaleString({
-                      minimumFractionDigits: 3,
-                      maximumFractionDigits: 3,
-                    })} ly</div>
+                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${(dist * 3.262).toFixed(3)} ${unit}</div>
                     <div><strong><i class="fa-solid fa-globe"></i> Type:</strong> ${parentText}</div>
                     <div><strong><i class="fa-solid fa-arrows-rotate"></i> Orbit:</strong> ${world.orbit.toFixed(
-                      3
+                      3,
                     )} AU</div>
                     <div><strong><i class="fa-solid fa-arrows-left-right"></i> Radius:</strong> ${world.radius.toLocaleString(
                       {
                         minimumFractionDigits: 3,
                         maximumFractionDigits: 3,
-                      }
+                      },
                     )} km (${(world.radius / 6371.01).toLocaleString({
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-    })} R🜨)</div>
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
+                    })} R🜨)</div>
                     <div><strong><i class="fa-solid fa-scale-balanced"></i> Mass:</strong> ${displayMass}</div>
                     <div><strong><i class="fa-solid fa-layer-group"></i> Density:</strong> ${calculateDensity(
                       world.radius,
-                      world.mass
+                      world.mass,
                     )} g/cm³</div>
                     <div><strong><i class="fa-solid fa-moon"></i> Moons:</strong> ${
                       world.moonCount
@@ -135,8 +145,8 @@ function renderPlanets(planets) {
                 </div>
                 <div class="world-image">
                     <img src="${world.thumbnail}" alt="${
-      world.name
-    }" class=\"world-image\">
+                      world.name
+                    }" class=\"world-image\">
                 </div>
             `;
 

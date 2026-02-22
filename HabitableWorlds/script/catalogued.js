@@ -14,8 +14,23 @@ async function loadSystems() {
       const dMoonCount = Array.isArray(mc)
         ? mc.reduce((sum, n) => sum + n, 0)
         : typeof mc === "number"
-        ? mc
-        : 0;
+          ? mc
+          : 0;
+
+      let dist, unit;
+      if (system.distToSun >= 0 && system.distToSun <= 999) {
+        dist = system.distToSun;
+        unit = "ly";
+      } else if (system.distToSun >= 1000 && system.distToSun <= 999999) {
+        dist = system.distToSun / 1000;
+        unit = "kly";
+      } else if (system.distToSun >= 1000000 && system.distToSun <= 999999999) {
+        dist = system.distToSun / 1000000;
+        unit = "mly";
+      } else if (system.distToSun >= 1000000000) {
+        dist = system.distToSun / 1000000000;
+        unit = "gly";
+      }
 
       card.innerHTML = `
                 <div class="system-info">
@@ -41,21 +56,16 @@ async function loadSystems() {
                     <div><strong><i class="fa-solid fa-wave-square"></i> Spectral Class:</strong> ${
                       system.spectralClass
                     } (${getStarType(system.spectralClass)})</div>
-                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${(
-                      system.distToSun * 3.262
-                    ).toLocaleString({
-                      minimumFractionDigits: 3,
-                      maximumFractionDigits: 3,
-                    })} ly</div>
+                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${(dist * 3.262).toFixed(3)} ${unit}</div>
                     <div><strong><i class="fa-solid fa-globe"></i> Planet Count:</strong> Major: ${
                       system.planetCount.major
                     }, Dwarf: ${
-        system.planetCount.dwarf
-      } - Total: ${(system.planetCount.major += system.planetCount.dwarf)}</div>
+                      system.planetCount.dwarf
+                    } - Total: ${(system.planetCount.major += system.planetCount.dwarf)}</div>
                     <div><strong><i class="fa-solid fa-moon"></i> Moon Count:</strong> Major: ${
                       system.moonCount.major
                     }, Dwarf: ${dMoonCount} - Total: ${(system.moonCount.major +=
-        dMoonCount)}</div>
+                      dMoonCount)}</div>
                     <div><strong><i class="fa-solid fa-dna"></i> Life?:</strong> ${
                       system.life.exists ? "Yes" : "No"
                     }</div>

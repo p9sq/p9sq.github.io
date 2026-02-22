@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -14,16 +14,29 @@
       src="https://kit.fontawesome.com/d403d0de2b.js"
       crossorigin="anonymous"
     ></script>
+    <script src="script/global.js"></script>
 
     <link rel="stylesheet" href="style/main.css" />
   </head>
   <body>
     <nav>
-      <a href="index.html">Home</a>
-      <a href="catalogued.html">Catalogued Systems</a>
-      <a href="#">Plans</a>
-      <a href="#">About</a>
-      <a href="#">Contact</a>
+      <div class="nav-left">
+        <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
+
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dropdown-item" id="themeButton">
+            <i class="fa-solid fa-palette"></i> Theme
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-center">
+        <a href="index.html">Home</a>
+        <a href="catalogued.html">Catalogued Systems</a>
+        <a href="#">Plans</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </div>
     </nav>
 
     <h1>Terraformed Worlds</h1>
@@ -46,5 +59,33 @@
     <div class="container" id="worldContainer"></div>
 
     <script src="script/terraformed.js"></script>
+    <div class="theme-overlay" id="themeOverlay">
+      <div class="theme-panel">
+        <h2>Select Theme</h2>
+        <br />
+
+        <button class="btn theme-option" data-theme="dark">
+          <i class="fa-solid fa-moon"></i> Dark (Default)
+        </button>
+
+        <button class="btn theme-option" data-theme="light">
+          <i class="fa-solid fa-sun"></i> Light
+        </button>
+
+        <button class="btn theme-option" data-theme="nebula">
+          <i class="fa-solid fa-star"></i> Nebula
+        </button>
+
+        <button class="btn theme-option" data-theme="midnight">
+          <i class="fa-solid fa-circle"></i> Midnight Blue
+        </button>
+
+        <br /><br />
+
+        <button id="closeTheme" class="btn">
+          <i class="fa-solid fa-xmark"></i> Close
+        </button>
+      </div>
+    </div>
   </body>
 </html>
