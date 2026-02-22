@@ -131,7 +131,9 @@ h1 {
   align-items: center;
   min-height: 200px;
   border: 1px solid #30363d;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .world-card:hover,
@@ -176,6 +178,29 @@ h1 {
 
 .tooltip:hover .tooltiptext {
   visibility: visible;
+}
+
+.sort-controls {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.sort-controls select {
+  background-color: #161b22;
+  color: #e6edf3;
+  border: 1px solid #30363d;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: "Lexend", sans-serif;
+  font-weight: 300;
+}
+
+.sort-controls select:focus {
+  outline: none;
+  border-color: #58a6ff;
 }
 
 .container::-webkit-scrollbar {

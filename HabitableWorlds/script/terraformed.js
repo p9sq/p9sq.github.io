@@ -1,11 +1,11 @@
+let planetsArray = [];
+
 async function loadPlanets() {
   try {
     const response = await fetch("worlds/terraformed.json");
     const data = await response.json();
 
-    const container = document.getElementById("worldContainer");
-
-    Object.entries(data).forEach(([name, world]) => {
+    planetsArray = Object.entries(data).map(([name, world]) => {
       const card = document.createElement("div");
       card.classList.add("world-card");
 
@@ -36,11 +36,71 @@ async function loadPlanets() {
         })} M♃`;
       }
 
-      card.innerHTML = `
+      return {
+        name: name,
+        systemName: world.systemName,
+        systemType: world.systemType,
+        parentSun: world.parentSun,
+        spectralClass: world.spectralClass,
+        distToSun: world.distToSun,
+        type: world.type,
+        orbit: world.orbit,
+        radius: world.radius,
+        mass: world.mass,
+        moonCount: world.moonCount,
+        thumbnail: world.thumbnail,
+        life: {
+          exists: world.life.exists,
+          type: world.life.type,
+          biome: world.life.biome,
+          origin: world.life.origin,
+        },
+      };
+    });
+
+    renderPlanets(planetsArray);
+  } catch (error) {
+    console.error("Error loading JSON:", error);
+  }
+}
+
+loadPlanets();
+
+function renderPlanets(planets) {
+  if (!planets || !Array.isArray(planets)) {
+    console.error("renderPlanets received invalid data:", planets);
+    return;
+  }
+
+  const container = document.getElementById("worldContainer");
+  container.innerHTML = ""; // clear previous results
+
+  planets.forEach((world) => {
+    const card = document.createElement("div");
+    card.classList.add("world-card");
+
+    let displayMass;
+    let parentText;
+
+    if (world.type === "Moon") {
+      parentText = `${world.type} (Parent: ${world.parent})`;
+    } else {
+      parentText = world.type;
+    }
+
+    if (world.mass < 0.05) {
+      displayMass = `${(world.mass * 81.28).toFixed(3)} M☾`;
+    } else if (world.mass < 90) {
+      displayMass = `${world.mass.toFixed(3)} M🜨`;
+    } else {
+      displayMass = `${(world.mass / 317.9).toFixed(3)} M♃`;
+    }
+
+    card.innerHTML = `
                 <div class="world-info">
-                    <div><strong><i class="fa-solid fa-address-card"></i> Name:</strong> ${name} ${
-        world.altName ? `(${world.altName})</div>` : "</div>"
-      }
+                    <div><strong><i class="fa-solid fa-address-card"></i> Name:</strong> ${world.name} ${
+                      world.altName ? `(${world.altName})</div>` : "</div>"
+                    }
                     <div><strong><i class="fa-solid fa-tag"></i> System Name:</strong> ${
                       world.systemName
                     }</div>
@@ -61,21 +121,21 @@ async function loadPlanets() {
                     })} ly</div>
                     <div><strong><i class="fa-solid fa-globe"></i> Type:</strong> ${parentText}</div>
                     <div><strong><i class="fa-solid fa-arrows-rotate"></i> Orbit:</strong> ${world.orbit.toFixed(
-                      3
+                      3,
                     )} AU</div>
                     <div><strong><i class="fa-solid fa-arrows-left-right"></i> Radius:</strong> ${world.radius.toLocaleString(
                       {
                         minimumFractionDigits: 3,
                         maximumFractionDigits: 3,
-                      }
+                      },
                     )} km (${(world.radius / 6371.01).toLocaleString({
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3,
-      })} R🜨)</div>
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
+                    })} R🜨)</div>
                     <div><strong><i class="fa-solid fa-scale-balanced"></i> Mass:</strong> ${displayMass}</div>
                     <div><strong><i class="fa-solid fa-layer-group"></i> Density:</strong> ${calculateDensity(
                       world.radius,
-                      world.mass
+                      world.mass,
                     )} g/cm³</div>
                     <div><strong><i class="fa-solid fa-moon"></i> Moons:</strong> ${
                       world.moonCount
@@ -91,18 +151,31 @@ async function loadPlanets() {
                 <div class="world-image">
                     <img src="${
                       world.thumbnail
-                    }" alt="${name}" class=\"world-image\">
+                    }" alt="${world.name}" class=\"world-image\">
                 </div>
             `;
 
-      container.appendChild(card);
-    });
-  } catch (error) {
-    console.error("Error loading JSON:", error);
-  }
+    container.appendChild(card);
+  });
 }
 
-loadPlanets();
+document.getElementById("sortBy").addEventListener("change", sortPlanets);
+document.getElementById("sortOrder").addEventListener("change", sortPlanets);
+
+function sortPlanets() {
+  const sortBy = document.getElementById("sortBy").value;
+  const order = document.getElementById("sortOrder").value;
+
+  const sorted = [...planetsArray].sort((a, b) => {
+    if (order === "asc") {
+      return a[sortBy] - b[sortBy];
+    } else {
+      return b[sortBy] - a[sortBy];
+    }
+  });
+
+  renderPlanets(sorted);
+}
 
 function calculateDensity(radiusKm, massEarths) {
   const radiusEarths = radiusKm / 6378.14;

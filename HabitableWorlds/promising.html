@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -27,6 +27,21 @@
     </nav>
 
     <h1>Promising Worlds</h1>
+
+    <div class="sort-controls">
+      <label for="sortBy">Sort By:</label>
+      <select id="sortBy">
+        <option value="mass">Mass</option>
+        <option value="radius">Radius</option>
+        <option value="distance">Distance</option>
+      </select>
+
+      <label for="sortOrder">Order:</label>
+      <select id="sortOrder">
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
+      </select>
+    </div>
 
     <div class="container" id="worldContainer"></div>
 
