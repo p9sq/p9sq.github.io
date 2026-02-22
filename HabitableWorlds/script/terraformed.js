@@ -9,34 +9,8 @@ async function loadPlanets() {
       const card = document.createElement("div");
       card.classList.add("world-card");
 
-      const mass = world.mass;
-      let displayMass;
-      let parentText;
-
-      if (world.type === "Moon") {
-        parentText = `${world.type} (Parent: ${world.parent})`;
-      } else {
-        parentText = world.type;
-      }
-
-      if (mass < 0.05) {
-        displayMass = `${(world.mass * 81.28).toLocaleString({
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3,
-        })} M☾`;
-      } else if (mass > 0.05 && mass < 90) {
-        displayMass = `${world.mass.toLocaleString({
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3,
-        })} M🜨`;
-      } else if (mass >= 90) {
-        displayMass = `${(world.mass / 317.9).toLocaleString({
-          minimumFractionDigits: 3,
-          maximumFractionDigits: 3,
-        })} M♃`;
-      }
-
       return {
+        altName: world.altName,
         name: name,
         systemName: world.systemName,
         systemType: world.systemType,
@@ -74,12 +48,13 @@ function renderPlanets(planets) {
   }
 
   const container = document.getElementById("worldContainer");
-  container.innerHTML = ""; // clear previous results
+  container.innerHTML = "";
 
   planets.forEach((world) => {
     const card = document.createElement("div");
     card.classList.add("world-card");
 
+    const mass = world.mass;
     let displayMass;
     let parentText;
 
@@ -89,12 +64,21 @@ function renderPlanets(planets) {
       parentText = world.type;
     }
 
-    if (world.mass < 0.05) {
-      displayMass = `${(world.mass * 81.28).toFixed(3)} M☾`;
-    } else if (world.mass < 90) {
-      displayMass = `${world.mass.toFixed(3)} M🜨`;
-    } else {
-      displayMass = `${(world.mass / 317.9).toFixed(3)} M♃`;
+    if (mass < 0.05) {
+      displayMass = `${(world.mass * 81.28).toLocaleString({
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      })} M☾`;
+    } else if (mass > 0.05 && mass < 90) {
+      displayMass = `${world.mass.toLocaleString({
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      })} M🜨`;
+    } else if (mass >= 90) {
+      displayMass = `${(world.mass / 317.9).toLocaleString({
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      })} M♃`;
     }
 
     card.innerHTML = `
@@ -170,7 +154,7 @@ function sortPlanets() {
   const sorted = [...planetsArray].sort((a, b) => {
     if (order === "asc") {
       return a[sortBy] - b[sortBy];
-    } else {
+    } else if (order === "desc") {
       return b[sortBy] - a[sortBy];
     }
   });
