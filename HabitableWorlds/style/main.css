@@ -62,7 +62,7 @@ h1 {
 .container {
   width: 100%;
   max-width: calc(100vh + 800px);
-  height: calc(100vh - 190px);
+  height: calc(100vh - 240px);
   min-height: 400px;
   background-color: #161b22;
   border-radius: 20px;
@@ -131,9 +131,7 @@ h1 {
   align-items: center;
   min-height: 200px;
   border: 1px solid #30363d;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .world-card:hover,
