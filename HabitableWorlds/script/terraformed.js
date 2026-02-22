@@ -44,6 +44,7 @@ async function loadPlanets() {
         spectralClass: world.spectralClass,
         distToSun: world.distToSun,
         type: world.type,
+        parent: world.parent,
         orbit: world.orbit,
         radius: world.radius,
         mass: world.mass,
@@ -98,9 +99,9 @@ function renderPlanets(planets) {
 
     card.innerHTML = `
                 <div class="world-info">
-                    <div><strong><i class="fa-solid fa-address-card"></i> Name:</strong> ${world.name} ${
-                      world.altName ? `(${world.altName})</div>` : "</div>"
-                    }
+                    <div><strong><i class="fa-solid fa-address-card"></i> Name:</strong> ${
+                      world.name
+                    } ${world.altName ? `(${world.altName})</div>` : "</div>"}
                     <div><strong><i class="fa-solid fa-tag"></i> System Name:</strong> ${
                       world.systemName
                     }</div>
@@ -121,21 +122,21 @@ function renderPlanets(planets) {
                     })} ly</div>
                     <div><strong><i class="fa-solid fa-globe"></i> Type:</strong> ${parentText}</div>
                     <div><strong><i class="fa-solid fa-arrows-rotate"></i> Orbit:</strong> ${world.orbit.toFixed(
-                      3,
+                      3
                     )} AU</div>
                     <div><strong><i class="fa-solid fa-arrows-left-right"></i> Radius:</strong> ${world.radius.toLocaleString(
                       {
                         minimumFractionDigits: 3,
                         maximumFractionDigits: 3,
-                      },
+                      }
                     )} km (${(world.radius / 6371.01).toLocaleString({
-                      minimumFractionDigits: 3,
-                      maximumFractionDigits: 3,
-                    })} R🜨)</div>
+      minimumFractionDigits: 3,
+      maximumFractionDigits: 3,
+    })} R🜨)</div>
                     <div><strong><i class="fa-solid fa-scale-balanced"></i> Mass:</strong> ${displayMass}</div>
                     <div><strong><i class="fa-solid fa-layer-group"></i> Density:</strong> ${calculateDensity(
                       world.radius,
-                      world.mass,
+                      world.mass
                     )} g/cm³</div>
                     <div><strong><i class="fa-solid fa-moon"></i> Moons:</strong> ${
                       world.moonCount
@@ -149,9 +150,9 @@ function renderPlanets(planets) {
                     }</div>
                 </div>
                 <div class="world-image">
-                    <img src="${
-                      world.thumbnail
-                    }" alt="${world.name}" class=\"world-image\">
+                    <img src="${world.thumbnail}" alt="${
+      world.name
+    }" class=\"world-image\">
                 </div>
             `;
 
