@@ -123,8 +123,8 @@
     "distToSun": 3.6732,
     "type": "Planet",
     "orbit": 0.021,
-    "radius": 1.4592,
-    "mass": 7272.5,
+    "radius": 7272.5,
+    "mass": 1.4592,
     "moonCount": 0,
     "thumbnail": "img/promising/gj1061b.png",
     "life": {
