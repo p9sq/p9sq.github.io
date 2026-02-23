@@ -10,7 +10,7 @@
     "radius": 6378.14,
     "mass": 1,
     "moonCount": 1,
-    "thumbnail": "img/real/earth.png",
+    "thumbnail": "img/promising/earth.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -50,7 +50,7 @@
     "radius": 8346.00977,
     "mass": 1.05499995,
     "moonCount": 0,
-    "thumbnail": "img/real/proximab.png",
+    "thumbnail": "img/promising/proximab.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -69,7 +69,7 @@
     "radius": 5041.71143,
     "mass": 0.335003,
     "moonCount": 2,
-    "thumbnail": "img/real/barnardc.png",
+    "thumbnail": "img/promising/barnardc.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -88,7 +88,7 @@
     "radius": 7396.69434,
     "mass": 1.398493,
     "moonCount": 0,
-    "thumbnail": "img/real/ross128b.png",
+    "thumbnail": "img/promising/ross128b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -107,7 +107,7 @@
     "radius": 9486.08008,
     "mass": 3.93000007,
     "moonCount": 0,
-    "thumbnail": "img/real/taucetie.png",
+    "thumbnail": "img/promising/taucetie.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -126,7 +126,7 @@
     "radius": 1.4592,
     "mass": 1.4592,
     "moonCount": 0,
-    "thumbnail": "img/real/gj1061b.png",
+    "thumbnail": "img/promising/gj1061b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -145,7 +145,7 @@
     "radius": 7663.1,
     "mass": 1.7767,
     "moonCount": 0,
-    "thumbnail": "img/real/gj1061c.png",
+    "thumbnail": "img/promising/gj1061c.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -164,7 +164,7 @@
     "radius": 8887.90039,
     "mass": 2.930479,
     "moonCount": 0,
-    "thumbnail": "img/real/luytenb.png",
+    "thumbnail": "img/promising/luytenb.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -183,7 +183,7 @@
     "radius": 8364.6,
     "mass": 2.6254,
     "moonCount": 0,
-    "thumbnail": "img/real/teegardenb.png",
+    "thumbnail": "img/promising/teegardenb.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -202,7 +202,7 @@
     "radius": 8059.4,
     "mass": 2.3096,
     "moonCount": 0,
-    "thumbnail": "img/real/teegardenc.png",
+    "thumbnail": "img/promising/teegardenc.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -221,7 +221,7 @@
     "radius": 14118.5,
     "mass": 7.7,
     "moonCount": 0,
-    "thumbnail": "img/real/wolf1061d.png",
+    "thumbnail": "img/promising/wolf1061d.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -240,7 +240,7 @@
     "radius": 7222.5,
     "mass": 1.08188,
     "moonCount": 0,
-    "thumbnail": "img/real/gj1002b.png",
+    "thumbnail": "img/promising/gj1002b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -259,7 +259,7 @@
     "radius": 7473.7,
     "mass": 1.361896,
     "moonCount": 0,
-    "thumbnail": "img/real/gj1002c.png",
+    "thumbnail": "img/promising/gj1002c.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -278,7 +278,7 @@
     "radius": 14118.5,
     "mass": 3.814072,
     "moonCount": 0,
-    "thumbnail": "img/real/gj667cc.png",
+    "thumbnail": "img/promising/gj667cc.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -297,7 +297,7 @@
     "radius": 8559.5,
     "mass": 2.7047,
     "moonCount": 0,
-    "thumbnail": "img/real/gj667cf.png",
+    "thumbnail": "img/promising/gj667cf.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -316,7 +316,7 @@
     "radius": 8732.6,
     "mass": 2.7047,
     "moonCount": 0,
-    "thumbnail": "img/real/gj667ce.png",
+    "thumbnail": "img/promising/gj667ce.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -335,7 +335,7 @@
     "radius": 8278.4,
     "mass": 1.260072,
     "moonCount": 0,
-    "thumbnail": "img/real/wolf1069b.png",
+    "thumbnail": "img/promising/wolf1069b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -354,7 +354,7 @@
     "radius": 5765.8298,
     "mass": 0.708782,
     "moonCount": 0,
-    "thumbnail": "img/real/gj12b.png",
+    "thumbnail": "img/promising/gj12b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -373,7 +373,7 @@
     "radius": 5020.3,
     "mass": 0.388,
     "moonCount": 0,
-    "thumbnail": "img/real/trappist1d.png",
+    "thumbnail": "img/promising/trappist1d.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -392,7 +392,7 @@
     "radius": 5861.3,
     "mass": 0.692,
     "moonCount": 0,
-    "thumbnail": "img/real/trappist1e.png",
+    "thumbnail": "img/promising/trappist1e.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -411,7 +411,7 @@
     "radius": 6657.7,
     "mass": 1.039,
     "moonCount": 0,
-    "thumbnail": "img/real/trappist1f.png",
+    "thumbnail": "img/promising/trappist1f.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -430,7 +430,7 @@
     "radius": 7192.9,
     "mass": 1.321,
     "moonCount": 0,
-    "thumbnail": "img/real/trappist1g.png",
+    "thumbnail": "img/promising/trappist1g.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -449,7 +449,7 @@
     "radius": 15297.5,
     "mass": 7.09,
     "moonCount": 0,
-    "thumbnail": "img/real/hd40307g.png",
+    "thumbnail": "img/promising/hd40307g.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -489,7 +489,7 @@
     "radius": 11022,
     "mass": 5.6,
     "moonCount": 0,
-    "thumbnail": "img/real/lhs1140b.png",
+    "thumbnail": "img/promising/lhs1140b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -508,7 +508,7 @@
     "radius": 10664.2451,
     "mass": 4.82,
     "moonCount": 0,
-    "thumbnail": "img/real/toi1452b.png",
+    "thumbnail": "img/promising/toi1452b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -527,7 +527,7 @@
     "radius": 6078.24984,
     "mass": 0.43869,
     "moonCount": 0,
-    "thumbnail": "img/real/toi700e.png",
+    "thumbnail": "img/promising/toi700e.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -546,7 +546,7 @@
     "radius": 6843.92916,
     "mass": 2.415579,
     "moonCount": 0,
-    "thumbnail": "img/real/toi700d.png",
+    "thumbnail": "img/promising/toi700d.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -565,7 +565,7 @@
     "radius": 8722.024,
     "mass": 25.32872,
     "moonCount": 0,
-    "thumbnail": "img/real/lp8909c.png",
+    "thumbnail": "img/promising/lp8909c.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -584,7 +584,7 @@
     "radius": 15696.5952,
     "mass": 7.2,
     "moonCount": 0,
-    "thumbnail": "img/real/k218b.png",
+    "thumbnail": "img/promising/k218b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -603,7 +603,7 @@
     "radius": 9865.896,
     "mass": 1.3666,
     "moonCount": 0,
-    "thumbnail": "img/real/toi715b.png",
+    "thumbnail": "img/promising/toi715b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -622,7 +622,7 @@
     "radius": 9651.42,
     "mass": 11.10518,
     "moonCount": 0,
-    "thumbnail": "img/real/k23d.png",
+    "thumbnail": "img/promising/k23d.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -641,7 +641,7 @@
     "radius": 8221.58,
     "mass": 1.0614,
     "moonCount": 0,
-    "thumbnail": "img/real/k272e.png",
+    "thumbnail": "img/promising/k272e.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -660,7 +660,7 @@
     "radius": 6791.74,
     "mass": 0.6285,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler1649c.png",
+    "thumbnail": "img/promising/kepler1649c.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -679,7 +679,7 @@
     "radius": 7435.168,
     "mass": 1.44,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler186f.png",
+    "thumbnail": "img/promising/kepler186f.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -698,7 +698,7 @@
     "radius": 13394.1,
     "mass": 9.1,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler22b.png",
+    "thumbnail": "img/promising/kepler22b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -717,7 +717,7 @@
     "radius": 7135.5,
     "mass": 0.7219,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler438b.png",
+    "thumbnail": "img/promising/kepler438b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -736,7 +736,7 @@
     "radius": 11152.752,
     "mass": 5.7548,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler296ae.png",
+    "thumbnail": "img/promising/kepler296ae.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -755,7 +755,7 @@
     "radius": 8936.5,
     "mass": 1.3722,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler1229b.png",
+    "thumbnail": "img/promising/kepler1229b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -774,7 +774,7 @@
     "radius": 10223.356,
     "mass": 4.3151,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler1652b.png",
+    "thumbnail": "img/promising/kepler1652b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -793,7 +793,7 @@
     "radius": 6123.012,
     "mass": 0.43568,
     "moonCount": 0,
-    "thumbnail": "img/real/koi5554.01.png",
+    "thumbnail": "img/promising/koi5554.01.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -850,7 +850,7 @@
     "radius": 6516,
     "mass": 0.53457,
     "moonCount": 0,
-    "thumbnail": "img/real/koi4878.01.png",
+    "thumbnail": "img/promising/koi4878.01.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -869,7 +869,7 @@
     "radius": 8610.485,
     "mass": 1.2399,
     "moonCount": 0,
-    "thumbnail": "img/real/koi3456.02.png",
+    "thumbnail": "img/promising/koi3456.02.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -888,7 +888,7 @@
     "radius": 11340.5,
     "mass": 3.2072351,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler1410b.png",
+    "thumbnail": "img/promising/kepler1410b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -907,7 +907,7 @@
     "radius": 11946.251,
     "mass": 14.476,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler62e.png",
+    "thumbnail": "img/promising/kepler62e.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -926,7 +926,7 @@
     "radius": 9822.331,
     "mass": 1.8132,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler62f.png",
+    "thumbnail": "img/promising/kepler62f.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -945,7 +945,7 @@
     "radius": 8546.704,
     "mass": 2.3,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler442b.png",
+    "thumbnail": "img/promising/kepler442b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -983,7 +983,7 @@
     "radius": 10366.34,
     "mass": 3.0806,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler452b.png",
+    "thumbnail": "img/promising/kepler452b.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1021,7 +1021,7 @@
     "radius": 7478,
     "mass": 2.14,
     "moonCount": 0,
-    "thumbnail": "img/real/kepler69c.png",
+    "thumbnail": "img/promising/kepler69c.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1040,7 +1040,7 @@
     "radius": 8419.141,
     "mass": 1.1262,
     "moonCount": 0,
-    "thumbnail": "img/real/koi5737.01.png",
+    "thumbnail": "img/promising/koi5737.01.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1059,7 +1059,7 @@
     "radius": 12309.81,
     "mass": 3.8849,
     "moonCount": 0,
-    "thumbnail": "img/real/koi5715.01.png",
+    "thumbnail": "img/promising/koi5715.01.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1097,7 +1097,7 @@
     "radius": 12182.2368,
     "mass": 3.5023,
     "moonCount": 1,
-    "thumbnail": "img/real/kepler160f.png",
+    "thumbnail": "img/promising/kepler160f.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
