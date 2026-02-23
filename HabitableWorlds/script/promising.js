@@ -82,17 +82,18 @@ function renderPlanets(planets) {
     }
 
     let dist, unit;
-    if (world.distToSun >= 0 && world.distToSun <= 999) {
-      dist = world.distToSun;
+    const distToSun = world.distToSun * 3.262;
+    if (distToSun >= 0 && distToSun <= 999) {
+      dist = distToSun;
       unit = "ly";
-    } else if (world.distToSun >= 1000 && world.distToSun <= 999999) {
-      dist = world.distToSun / 1000;
+    } else if (distToSun >= 1000 && distToSun <= 999999) {
+      dist = distToSun / 1000;
       unit = "kly";
-    } else if (world.distToSun >= 1000000 && world.distToSun <= 999999999) {
-      dist = world.distToSun / 1000000;
+    } else if (distToSun >= 1000000 && distToSun <= 999999999) {
+      dist = distToSun / 1000000;
       unit = "mly";
-    } else if (world.distToSun >= 1000000000) {
-      dist = world.distToSun / 1000000000;
+    } else if (distToSun >= 1000000000) {
+      dist = distToSun / 1000000000;
       unit = "gly";
     }
 
@@ -113,7 +114,7 @@ function renderPlanets(planets) {
                     <div><strong><i class="fa-solid fa-wave-square"></i> Spectral Class:</strong> ${
                       world.spectralClass
                     } (${getStarType(world.spectralClass)})</div>
-                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${(dist * 3.262).toFixed(3)} ${unit}</div>
+                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${dist.toFixed(3)} ${unit}</div>
                     <div><strong><i class="fa-solid fa-globe"></i> Type:</strong> ${parentText}</div>
                     <div><strong><i class="fa-solid fa-arrows-rotate"></i> Orbit:</strong> ${world.orbit.toFixed(
                       3,

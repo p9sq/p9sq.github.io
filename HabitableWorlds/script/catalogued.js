@@ -18,17 +18,18 @@ async function loadSystems() {
           : 0;
 
       let dist, unit;
-      if (system.distToSun >= 0 && system.distToSun <= 999) {
-        dist = system.distToSun;
+      const distToSun = system.distToSun * 3.262;
+      if (distToSun >= 0 && distToSun <= 999) {
+        dist = distToSun;
         unit = "ly";
-      } else if (system.distToSun >= 1000 && system.distToSun <= 999999) {
-        dist = system.distToSun / 1000;
+      } else if (distToSun >= 1000 && distToSun <= 999999) {
+        dist = distToSun / 1000;
         unit = "kly";
-      } else if (system.distToSun >= 1000000 && system.distToSun <= 999999999) {
-        dist = system.distToSun / 1000000;
+      } else if (distToSun >= 1000000 && distToSun <= 999999999) {
+        dist = distToSun / 1000000;
         unit = "mly";
-      } else if (system.distToSun >= 1000000000) {
-        dist = system.distToSun / 1000000000;
+      } else if (distToSun >= 1000000000) {
+        dist = distToSun / 1000000000;
         unit = "gly";
       }
 
@@ -56,7 +57,7 @@ async function loadSystems() {
                     <div><strong><i class="fa-solid fa-wave-square"></i> Spectral Class:</strong> ${
                       system.spectralClass
                     } (${getStarType(system.spectralClass)})</div>
-                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${(dist * 3.262).toFixed(3)} ${unit}</div>
+                    <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${dist.toFixed(3)} ${unit}</div>
                     <div><strong><i class="fa-solid fa-globe"></i> Planet Count:</strong> Major: ${
                       system.planetCount.major
                     }, Dwarf: ${
