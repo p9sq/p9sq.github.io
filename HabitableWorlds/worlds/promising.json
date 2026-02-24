@@ -31,7 +31,7 @@
     "radius": 5723.5,
     "mass": 0.72,
     "moonCount": 0,
-    "thumbnail": "img/fictional/pandora.png",
+    "thumbnail": "img/promising/pandora.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -470,7 +470,7 @@
     "radius": 6729.03809,
     "mass": 1.15805137,
     "moonCount": 0,
-    "thumbnail": "img/fictional/majritimoon.png",
+    "thumbnail": "img/promising/majritimoon.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -812,7 +812,7 @@
     "radius": 6378.14,
     "mass": 1,
     "moonCount": 9,
-    "thumbnail": "img/fictional/celis.png",
+    "thumbnail": "img/promising/celis.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -831,7 +831,7 @@
     "radius": 12971,
     "mass": 10.5262604,
     "moonCount": 77,
-    "thumbnail": "img/fictional/nexuslegendary.png",
+    "thumbnail": "img/promising/nexuslegendary.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -964,7 +964,7 @@
     "radius": 17234.54,
     "mass": 2.0381,
     "moonCount": 8,
-    "thumbnail": "img/fictional/pyron.png",
+    "thumbnail": "img/promising/pyron.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1002,7 +1002,7 @@
     "radius": 6614.1377,
     "mass": 1.00908375,
     "moonCount": 0,
-    "thumbnail": "img/fictional/orval.png",
+    "thumbnail": "img/promising/orval.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1078,7 +1078,7 @@
     "radius": 6623.2002,
     "mass": 1.08000004,
     "moonCount": 4,
-    "thumbnail": "img/fictional/terrania.png",
+    "thumbnail": "img/promising/terrania.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1116,7 +1116,7 @@
     "radius": 6000,
     "mass": 0.886024535,
     "moonCount": 2,
-    "thumbnail": "img/fictional/kerbin.png",
+    "thumbnail": "img/promising/kerbin.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1135,7 +1135,7 @@
     "radius": 9236.62793,
     "mass": 3.78445816,
     "moonCount": 0,
-    "thumbnail": "img/fictional/satyr.png",
+    "thumbnail": "img/promising/satyr.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1154,7 +1154,7 @@
     "radius": 6378.14,
     "mass": 1,
     "moonCount": 1,
-    "thumbnail": "img/fictional/drakara.png",
+    "thumbnail": "img/promising/drakara.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1173,7 +1173,7 @@
     "radius": 6105,
     "mass": 0.92,
     "moonCount": 1,
-    "thumbnail": "img/fictional/altan.png",
+    "thumbnail": "img/promising/altan.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Panspermia)",
@@ -1192,7 +1192,7 @@
     "radius": 9098.05273,
     "mass": 3.98152089,
     "moonCount": 2,
-    "thumbnail": "img/fictional/vague.png",
+    "thumbnail": "img/promising/vague.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
@@ -1211,7 +1211,7 @@
     "radius": 4851.34473,
     "mass": 0.477668345,
     "moonCount": 0,
-    "thumbnail": "img/fictional/verdant.png",
+    "thumbnail": "img/promising/verdant.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
