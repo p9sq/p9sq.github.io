@@ -457,7 +457,7 @@
       "origin": "HD 40307 g"
     }
   },
-  "Habitable Exomoon": {
+  "Najma": {
     "altName": "Majriti VI",
     "systemName": "Upsilon Andromedae System",
     "systemType": "Binary",
@@ -470,12 +470,12 @@
     "radius": 6729.03809,
     "mass": 1.15805137,
     "moonCount": 0,
-    "thumbnail": "img/promising/majritimoon.png",
+    "thumbnail": "img/promising/najma.png",
     "life": {
       "exists": true,
       "type": "Organic Multicellular (Abiogenesis)",
       "biome": "Marine, Terrestrial",
-      "origin": "Habitable Exomoon"
+      "origin": "Najma"
     }
   },
   "LHS 110 b": {
