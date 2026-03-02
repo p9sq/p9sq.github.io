@@ -188,9 +188,9 @@ h1 {
   gap: 60px;
 }
 
-.container-plans {
+.container-wide {
   width: 100%;
-  max-width: calc(100vh + 800px);
+  max-width: calc(100vh + 2000px);
   height: calc(100vh - 220px);
   min-height: 400px;
   background-color: var(--nav-bg);
