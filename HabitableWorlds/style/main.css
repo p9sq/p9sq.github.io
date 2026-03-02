@@ -188,6 +188,22 @@ h1 {
   gap: 60px;
 }
 
+.container-plans {
+  width: 100%;
+  max-width: calc(100vh + 800px);
+  height: calc(100vh - 220px);
+  min-height: 400px;
+  background-color: var(--nav-bg);
+  border-radius: 20px;
+  padding: 25px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
 @media (max-width: 768px) {
   .container {
     height: calc(100vh - 170px);
