@@ -18,6 +18,25 @@
       "origin": "Earth"
     }
   },
+  "Proxima Centauri b": {
+    "systemName": "Alpha Centauri",
+    "systemType": "Triple",
+    "parentSun": "Proxima Centauri",
+    "spectralClass": "M5.5V",
+    "distToSun": 1.29,
+    "type": "Planet",
+    "orbit": 0.04848,
+    "radius": 7030.16,
+    "mass": 1.44,
+    "moonCount": 0,
+    "thumbnail": "img/promising/proximab.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Proxima Centauri b"
+    }
+  },
   "Pandora": {
     "altName": "Polyphemus IV",
     "systemName": "Alpha Centauri",
@@ -37,25 +56,6 @@
       "type": "Organic Multicellular (Abiogenesis)",
       "biome": "Marine, Terrestrial",
       "origin": "Pandora"
-    }
-  },
-  "Proxima Centauri b": {
-    "systemName": "Alpha Centauri",
-    "systemType": "Triple",
-    "parentSun": "Proxima Centauri",
-    "spectralClass": "M5.5V",
-    "distToSun": 1.29,
-    "type": "Planet",
-    "orbit": 0.04848,
-    "radius": 8346.00977,
-    "mass": 1.05499995,
-    "moonCount": 0,
-    "thumbnail": "img/promising/proximab.png",
-    "life": {
-      "exists": true,
-      "type": "Organic Multicellular (Abiogenesis)",
-      "biome": "Marine, Terrestrial",
-      "origin": "Proxima Centauri b"
     }
   },
   "Barnard c": {
