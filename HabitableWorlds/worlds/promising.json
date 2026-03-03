@@ -267,6 +267,25 @@
       "origin": "GJ 1002 b"
     }
   },
+  "Terrania": {
+    "systemName": "Hexan System",
+    "systemType": "Binary",
+    "parentSun": "Hexan A, B",
+    "spectralClass": "G7.5V, M5.0V",
+    "distToSun": 6.714374,
+    "type": "Planet",
+    "orbit": 0.9,
+    "radius": 6623.2002,
+    "mass": 1.08000004,
+    "moonCount": 4,
+    "thumbnail": "img/promising/terrania.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Terrania"
+    }
+  },
   "Gliese 667 C c": {
     "systemName": "Gliese 667 System",
     "systemType": "Triple",
@@ -1065,25 +1084,6 @@
       "type": "Organic Multicellular (Abiogenesis)",
       "biome": "Marine, Terrestrial",
       "origin": "KOI-5715.01"
-    }
-  },
-  "Terrania": {
-    "systemName": "Hexan System",
-    "systemType": "Binary",
-    "parentSun": "Hexan A, B",
-    "spectralClass": "G7.5V, M5.0V",
-    "distToSun": 899.999981,
-    "type": "Planet",
-    "orbit": 0.9,
-    "radius": 6623.2002,
-    "mass": 1.08000004,
-    "moonCount": 4,
-    "thumbnail": "img/promising/terrania.png",
-    "life": {
-      "exists": true,
-      "type": "Organic Multicellular (Abiogenesis)",
-      "biome": "Marine, Terrestrial",
-      "origin": "Terrania"
     }
   },
   "Kepler-160 f": {

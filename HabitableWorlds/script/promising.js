@@ -124,7 +124,7 @@ function renderPlanets(planets) {
                         minimumFractionDigits: 3,
                         maximumFractionDigits: 3,
                       },
-                    )} km (${(world.radius / 6371.01).toLocaleString({
+                    )} km (${(world.radius / 6378.14).toLocaleString({
                       minimumFractionDigits: 3,
                       maximumFractionDigits: 3,
                     })} R🜨)</div>
@@ -173,12 +173,10 @@ function sortPlanets() {
   renderPlanets(sorted);
 }
 
-function calculateDensity(radiusKm, massEarths) {
-  const radiusEarths = radiusKm / 6378.14;
-
-  const EARTH_DENSITY = 5.5136;
-
-  const density = EARTH_DENSITY * (massEarths / Math.pow(radiusEarths, 3));
+function calculateDensity(meanRadius, massEarths) {
+  const mass = massEarths * 5.972e24;
+  const density =
+    (mass * 1.0e-12) / ((4.0 / 3.0) * Math.PI * Math.pow(meanRadius, 3));
 
   return density.toFixed(3);
 }
