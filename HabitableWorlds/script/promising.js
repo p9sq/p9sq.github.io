@@ -14,12 +14,12 @@ async function loadPlanets() {
         name: name,
         systemName: world.systemName,
         systemType: world.systemType,
-        parentSun: world.parentSun,
+        parentStar: world.parentStar,
         spectralClass: world.spectralClass,
         distToSun: world.distToSun,
         type: world.type,
         parent: world.parent,
-        orbit: world.orbit,
+        sma: world.sma,
         radius: world.radius,
         mass: world.mass,
         moonCount: world.moonCount,
@@ -97,6 +97,8 @@ function renderPlanets(planets) {
       unit = "gly";
     }
 
+    const radiusEarths = world.radius / 6371;
+
     card.innerHTML = `
                 <div class="world-info">
                     <div><strong><i class="fa-solid fa-address-card"></i> Name:</strong> ${
@@ -109,25 +111,17 @@ function renderPlanets(planets) {
                       world.systemType
                     }</div>
                     <div><strong><i class="fa-solid fa-sun"></i> Parent Sun:</strong> ${
-                      world.parentSun
+                      world.parentStar
                     }</div>
                     <div><strong><i class="fa-solid fa-wave-square"></i> Spectral Class:</strong> ${
                       world.spectralClass
                     } (${getStarType(world.spectralClass)})</div>
                     <div><strong><i class="fa-solid fa-ruler-horizontal"></i> Distance to Sun:</strong> ${dist.toFixed(3)} ${unit}</div>
                     <div><strong><i class="fa-solid fa-globe"></i> Type:</strong> ${parentText}</div>
-                    <div><strong><i class="fa-solid fa-arrows-rotate"></i> Orbit:</strong> ${world.orbit.toFixed(
+                    <div><strong><i class="fa-solid fa-arrows-rotate"></i> Semimajor Axis:</strong> ${world.sma.toFixed(
                       3,
                     )} AU</div>
-                    <div><strong><i class="fa-solid fa-arrows-left-right"></i> Radius:</strong> ${world.radius.toLocaleString(
-                      {
-                        minimumFractionDigits: 3,
-                        maximumFractionDigits: 3,
-                      },
-                    )} km (${(world.radius / 6378.14).toLocaleString({
-                      minimumFractionDigits: 3,
-                      maximumFractionDigits: 3,
-                    })} R🜨)</div>
+                    <div><strong><i class="fa-solid fa-arrows-left-right"></i> Radius:</strong> ${world.radius.toFixed(2)} km (${radiusEarths.toFixed(4)} R🜨)</div>
                     <div><strong><i class="fa-solid fa-scale-balanced"></i> Mass:</strong> ${displayMass}</div>
                     <div><strong><i class="fa-solid fa-layer-group"></i> Density:</strong> ${calculateDensity(
                       world.radius,
@@ -174,11 +168,11 @@ function sortPlanets() {
 }
 
 function calculateDensity(meanRadius, massEarths) {
-  const mass = massEarths * 5.972e24;
+  const mass = massEarths * 5.9724e24;
   const density =
     (mass * 1.0e-12) / ((4.0 / 3.0) * Math.PI * Math.pow(meanRadius, 3));
 
-  return density.toFixed(3);
+  return density.toFixed(4);
 }
 
 function getStarType(spectralClass) {
