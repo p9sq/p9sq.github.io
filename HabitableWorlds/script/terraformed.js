@@ -110,7 +110,7 @@ function renderPlanets(planets) {
                     <div><strong><i class="fa-solid fa-diagram-project"></i> System Type:</strong> ${
                       world.systemType
                     }</div>
-                    <div><strong><i class="fa-solid fa-sun"></i> Parent Sun:</strong> ${
+                    <div><strong><i class="fa-solid fa-sun"></i> Parent Star:</strong> ${
                       world.parentStar
                     }</div>
                     <div><strong><i class="fa-solid fa-wave-square"></i> Spectral Class:</strong> ${
