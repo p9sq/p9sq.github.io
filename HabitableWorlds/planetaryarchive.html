@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Official Planetary Archive maintained by Exoplanet Corporation under TIRA authority. Cataloguing habitable and candidate exoplanets beyond the Hexan System."
+    />
+    <title>Planetary Archive | Exoplanet Corporation</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- https://fontawesome.com/search?q=moon&ip=classic&s=solid&ic=free-collection -->
+    <script
+      src="https://kit.fontawesome.com/d403d0de2b.js"
+      crossorigin="anonymous"
+      defer
+    ></script>
+    <script src="script/global.js" defer></script>
+
+    <link rel="stylesheet" href="style/main.css" />
+  </head>
+
+  <body>
+    <nav>
+      <div class="nav-left">
+        <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
+
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dropdown-item" id="themeButton">
+            <i class="fa-solid fa-palette"></i> Theme
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-center">
+        <a href="index.html">Home</a>
+        <a href="catalogued.html">Catalogued Systems</a>
+      </div>
+    </nav>
+
+    <h1>Planetary Archive - Mapping the Future of Life</h1>
+
+    <div class="main">
+      <div class="container-main">
+        <section>
+          <h2><i class="fa-solid fa-circle-info"></i> About</h2>
+          <p>
+            The Planetary Archive is maintained by Exoplanet Corporation, the
+            Terranian organisation dedicated to exploring and understanding
+            worlds beyond the Hexan System. It catalogues all known exoplanets
+            discovered through advanced telescopes and interstellar probes,
+            providing detailed information on their characteristics,
+            habitability, and potential for Terranian colonisation.
+          </p>
+          <br />
+          <p>
+            Planetary exploration is guided by the Terranian Interplanetary
+            Research Authority (TIRA), which focuses on the detection of
+            extraterrestrial life, the study of biosignatures, and the ethical
+            assessment of new worlds. Together, TIRA and Exoplanet Corporation
+            work to identify Terrania-class planets, study their environments,
+            and prepare for humanity's future among the stars.
+          </p>
+          <br />
+          <p>
+            This archive is your window into the next frontier - a growing
+            collection of candidate worlds that may one day become Terrania 2.0.
+          </p>
+        </section>
+      </div>
+      <div class="container-main">
+        <section>
+          <h2>Explore worlds with potential for Terranian habitability</h2>
+          <br />
+          <p>
+            <a href="promising.html" class="btn"
+              ><i class="fa-solid fa-dna"></i> Promising Worlds</a
+            >
+            <br /><br />
+            <a href="terraformed.html" class="btn"
+              ><i class="fa-solid fa-screwdriver-wrench"></i> Terraformed
+              Worlds</a
+            >
+          </p>
+        </section>
+      </div>
+    </div>
+    <div class="theme-overlay" id="themeOverlay">
+      <div class="theme-panel">
+        <h2>Select Theme</h2>
+        <br />
+
+        <button class="btn theme-option" data-theme="dark">
+          <i class="fa-solid fa-moon"></i> Dark (Default)
+        </button>
+
+        <button class="btn theme-option" data-theme="light">
+          <i class="fa-solid fa-sun"></i> Light
+        </button>
+
+        <button class="btn theme-option" data-theme="nebula">
+          <i class="fa-solid fa-star"></i> Nebula
+        </button>
+
+        <button class="btn theme-option" data-theme="midnight">
+          <i class="fa-solid fa-circle"></i> Midnight Blue
+        </button>
+
+        <br /><br />
+
+        <button id="closeTheme" class="btn">
+          <i class="fa-solid fa-xmark"></i> Close
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

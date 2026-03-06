@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plans | Exoplanet Corporation</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- https://fontawesome.com/search?q=moon&ip=classic&s=solid&ic=free-collection -->
+    <script
+      src="https://kit.fontawesome.com/d403d0de2b.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="script/global.js"></script>
+
+    <link rel="stylesheet" href="style/main.css" />
+  </head>
+
+  <body>
+    <nav>
+      <div class="nav-left">
+        <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
+
+        <div class="dropdown-menu" id="dropdownMenu">
+          <div class="dropdown-item" id="themeButton">
+            <i class="fa-solid fa-palette"></i> Theme
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-center">
+        <a href="index.html">Home</a>
+        <a href="catalogued.html">Catalogued Systems</a>
+        <a href="plans.html">Plans</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </div>
+    </nav>
+
+    <h1>Preparation and Promise: Terrania's Road to the Stars</h1>
+
+    <div class="main">
+      <div class="container-wide">
+          <p>
+            The Terranian Interstellar Research Agency (TIRA) stands as
+            Terrania's foremost deep-space institution, founded not merely as an
+            analogue to early planetary space agencies, but as a long-horizon
+            strategic body tasked with preparing Terranian civilisation for
+            eventual interstellar expansion. While its public image centres on
+            exploration, telescope arrays, propulsion research, and
+            long-baseline observatories, TIRA's true mandate is generational: to
+            methodically solve the engineering, economic, and biological
+            constraints preventing crewed travel beyond the Hexan System. Its
+            current efforts focus on high-efficiency fusion propulsion
+            prototypes, autonomous interstellar precursor probes, and
+            megastructure-adjacent infrastructure such as solar power swarms and
+            outer-system staging facilities. Although often perceived as
+            ambitious to the point of idealism, TIRA operates with deliberate
+            patience — recognising that colonising the Milky Way is not a
+            near-term endeavour but a civilizational trajectory measured in
+            centuries.
+          </p>
+          <br />
+          <p>
+            Operating semi-independently under TIRA's broader scientific
+            umbrella, Exoplanet Corporation represents a more targeted and
+            commercially driven initiative. Formed by a consortium of senior
+            TIRA researchers and private investors, its mission is pragmatic:
+            identify a true “Terrania 2.0” before propulsion technology fully
+            matures. Rather than sending starships prematurely, the Corporation
+            has invested in extreme-baseline astronomy, particularly solar
+            gravitational lensing observatories positioned hundreds of
+            astronomical units from the system's primary star. By exploiting
+            relativistic light amplification, these observatories aim to produce
+            kilometre-scale surface resolution of nearby exoplanets — enough to
+            detect oceans, continents, atmospheric biosignatures, seasonal
+            variation, and even artificial night-side illumination. Where TIRA
+            builds the future infrastructure of expansion, Exoplanet Corporation
+            seeks certainty: a confirmed destination worthy of the immense cost
+            of interstellar migration. Together, they represent two
+            complementary philosophies — preparation and selection — shaping the
+            long arc of Terranian destiny.
+          </p>
+        </section>
+      </div>
+    </div>
+    <div class="theme-overlay" id="themeOverlay">
+      <div class="theme-panel">
+        <h2>Select Theme</h2>
+        <br />
+
+        <button class="btn theme-option" data-theme="dark">
+          <i class="fa-solid fa-moon"></i> Dark (Default)
+        </button>
+
+        <button class="btn theme-option" data-theme="light">
+          <i class="fa-solid fa-sun"></i> Light
+        </button>
+
+        <button class="btn theme-option" data-theme="nebula">
+          <i class="fa-solid fa-star"></i> Nebula
+        </button>
+
+        <button class="btn theme-option" data-theme="midnight">
+          <i class="fa-solid fa-circle"></i> Midnight Blue
+        </button>
+
+        <br /><br />
+
+        <button id="closeTheme" class="btn">
+          <i class="fa-solid fa-xmark"></i> Close
+        </button>
+      </div>
+    </div>
+  </body>
+</html>
