@@ -18,6 +18,25 @@
       "origin": "Earth"
     }
   },
+  "Mars": {
+    "systemName": "Solar System",
+    "systemType": "Single",
+    "parentStar": "Sun",
+    "spectralClass": "G2V",
+    "distToSun": 0,
+    "type": "Planet",
+    "sma": 1.5237,
+    "radius": 3389.51,
+    "mass": 0.10747,
+    "moonCount": 1,
+    "thumbnail": "img/promising/mars.png",
+    "life": {
+      "exists": true,
+      "type": "Organic Multicellular (Abiogenesis)",
+      "biome": "Marine, Terrestrial",
+      "origin": "Mars"
+    }
+  },
   "Proxima Centauri b": {
     "systemName": "Alpha Centauri",
     "systemType": "Triple",

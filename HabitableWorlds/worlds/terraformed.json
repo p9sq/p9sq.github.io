@@ -18,25 +18,6 @@
       "origin": "Earth"
     }
   },
-  "Mars": {
-    "systemName": "Solar System",
-    "systemType": "Single",
-    "parentStar": "Sun",
-    "spectralClass": "G2V",
-    "distToSun": 0,
-    "type": "Planet",
-    "sma": 1.5237,
-    "radius": 3389.51,
-    "mass": 0.10747,
-    "moonCount": 2,
-    "thumbnail": "img/terraformed/mars.png",
-    "life": {
-      "exists": true,
-      "type": "Organic Multicellular (Panspermia)",
-      "biome": "Marine, Terrestrial",
-      "origin": "Earth"
-    }
-  },
   "Leo": {
     "altName": "Celis II",
     "systemName": "Nexus System",
