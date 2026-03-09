@@ -287,9 +287,9 @@
     }
   },
   "Terrania": {
-    "systemName": "Hexan System",
+    "systemName": "Phoebe System",
     "systemType": "Binary",
-    "parentStar": "Hexan A, B",
+    "parentStar": "Phoebe, Amauros",
     "spectralClass": "G7.5V, M5.0V",
     "distToSun": 6.714374,
     "type": "Planet",
