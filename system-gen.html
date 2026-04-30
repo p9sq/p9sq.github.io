@@ -1,0 +1,2802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Star System Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #03060f;
+    --bg2: #060d1c;
+    --bg3: #0a1428;
+    --panel: #081020;
+    --border: #1a2f55;
+    --border-bright: #2a4f8f;
+    --accent: #4a9eff;
+    --accent2: #ff9f4a;
+    --accent3: #4affa9;
+    --text: #cde0ff;
+    --text-dim: #7a9acc;
+    --text-muted: #3a5888;
+    --star-o: #9bc4ff;
+    --star-b: #b8d4ff;
+    --star-a: #d4e8ff;
+    --star-f: #fff4e8;
+    --star-g: #fffbe0;
+    --star-k: #ffd580;
+    --star-m: #ff8855;
+    --star-l: #cc4433;
+    --glow: 0 0 20px rgba(74,158,255,0.3);
+    --glow2: 0 0 20px rgba(255,159,74,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Starfield background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(200,220,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 80%, rgba(200,220,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 15% 75%, rgba(255,240,200,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 50%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 15%, rgba(200,220,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 90%, rgba(200,220,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 65%, rgba(255,240,200,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 38% 28%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 72% 45%, rgba(200,220,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 70%, rgba(255,255,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* HEADER */
+  header {
+    text-align: center;
+    padding: 40px 20px 30px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  }
+  header h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(22px, 4vw, 40px);
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(74,158,255,0.6), 0 0 60px rgba(74,158,255,0.3);
+    text-transform: uppercase;
+  }
+  header p {
+    margin-top: 8px;
+    color: var(--text-dim);
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* CONTROL PANEL */
+  .control-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 30px;
+    max-width: 700px;
+    margin: 0 auto 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .control-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .form-row.full { grid-template-columns: 1fr; }
+  .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-group label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  input[type="text"], input[type="number"], select {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(74,158,255,0.15);
+  }
+  select option { background: var(--bg3); }
+
+  .seed-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+  .seed-row input { flex: 1; }
+  .seed-row button {
+    padding: 9px 14px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+  }
+  .checkbox-group input[type="checkbox"] {
+    width: 16px; height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+  .checkbox-group label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  button {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s;
+  }
+  button:hover::after { background: rgba(255,255,255,0.08); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #1a4a99, #2a6acc);
+    color: #fff;
+    flex: 1;
+    box-shadow: 0 2px 12px rgba(74,158,255,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 4px 20px rgba(74,158,255,0.5); }
+  .btn-secondary {
+    background: linear-gradient(135deg, #2a1a0a, #4a3010);
+    color: var(--accent2);
+    border: 1px solid rgba(255,159,74,0.3);
+  }
+  .btn-secondary:hover { box-shadow: 0 4px 20px rgba(255,159,74,0.3); }
+  .btn-small {
+    font-size: 10px;
+    padding: 9px 12px;
+    background: var(--bg3);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  /* OUTPUT AREA */
+  #output { margin-top: 20px; }
+
+  .system-title {
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .system-title h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(18px, 3vw, 30px);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(74,158,255,0.5);
+  }
+  .system-title .separation {
+    margin-top: 8px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.15em;
+  }
+
+  .panels-container {
+    display: flex;
+    gap: 20px;
+  }
+  .panels-container.single { display: block; }
+  .panels-container.dual .star-panel { flex: 1; min-width: 0; }
+
+  .star-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  /* Close binary: two stars stacked at top */
+  .close-binary-header {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .close-binary-header .star-header-half {
+    flex: 1;
+    padding: 20px;
+  }
+  .close-binary-header .star-header-half:first-child {
+    border-right: 1px solid var(--border);
+  }
+
+  .star-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .star-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .star-icon::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    opacity: 0.3;
+  }
+  .star-info h3 {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #fff;
+    margin-bottom: 3px;
+  }
+  .star-info .star-type-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .star-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .stat-cell {
+    padding: 12px 16px;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .sv {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 2px;
+  }
+  .stat-cell .sk {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* PLANETS */
+  .planets-section { padding: 16px; }
+  .planets-section h4 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .no-planets {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 13px;
+    padding: 12px 0;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .planet-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .planet-card:hover { border-color: var(--border-bright); }
+
+  .planet-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .planet-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .planet-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+    flex: 1;
+  }
+  .planet-type-badge {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .life-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 2px;
+    letter-spacing: 0.08em;
+    background: rgba(74,255,169,0.12);
+    color: var(--accent3);
+    border: 1px solid rgba(74,255,169,0.3);
+    cursor: default;
+    user-select: none;
+    white-space: nowrap;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .life-tag:hover { background: rgba(74,255,169,0.22); }
+  /* Popup is rendered in a fixed-position portal via JS to escape overflow:hidden */
+  .life-popup-portal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    background: var(--bg3);
+    border: 1px solid var(--accent3);
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.75);
+    min-width: 180px;
+    pointer-events: none;
+  }
+  .life-popup-row { margin-bottom: 3px; }
+  .life-popup-row:last-child { margin-bottom: 0; }
+  .life-popup-portal .lp-key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 1px;
+  }
+  .life-popup-portal .lp-val {
+    color: var(--accent3);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .planet-au {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+  .planet-expand-icon {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-left: 6px;
+    transition: transform 0.2s;
+  }
+  .planet-card.open .planet-expand-icon { transform: rotate(180deg); }
+
+  .planet-details {
+    display: none;
+    padding: 0 14px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .planet-card.open .planet-details { display: block; }
+
+  /* Split planet detail panel */
+  .planet-details-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1px;
+    margin-top: 10px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .planet-detail-col {
+    background: var(--bg);
+    padding: 10px 12px;
+  }
+  .detail-col-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-col-label.orbital { color: var(--accent2); }
+  .pd-row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 5px; }
+  .pd-row:last-child { margin-bottom: 0; }
+  .pd-key {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .pd-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    text-align: right;
+  }
+  .special-section {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .special-section .sp-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--accent3);
+    letter-spacing: 0.1em;
+    margin-bottom: 4px;
+  }
+  .special-section .sp-val {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.4;
+  }
+
+  /* ASTEROID BELT (shown inline between planets) */
+  .belt-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    margin-bottom: 8px;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.02);
+  }
+  .belt-row .belt-icon { font-size: 14px; }
+  .belt-row .belt-name {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    flex: 1;
+    letter-spacing: 0.08em;
+  }
+  .belt-row .belt-au {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* Type badge colors */
+  .badge-ferria    { background: rgba(180,100,60,0.2);  color: #d4885a; border: 1px solid rgba(180,100,60,0.3); }
+  .badge-rocky     { background: rgba(100,140,100,0.2); color: #88cc88; border: 1px solid rgba(100,140,100,0.3); }
+  .badge-carbonia  { background: rgba(80,80,80,0.3);    color: #aaaaaa; border: 1px solid rgba(80,80,80,0.4); }
+  .badge-gasgiant  { background: rgba(200,140,60,0.2);  color: #e8c060; border: 1px solid rgba(200,140,60,0.3); }
+  .badge-icegiant  { background: rgba(60,140,200,0.2);  color: #60aaff; border: 1px solid rgba(60,140,200,0.3); }
+  .badge-dwarf     { background: rgba(120,100,160,0.2); color: #aa88cc; border: 1px solid rgba(120,100,160,0.3); }
+  .badge-aquaria   { background: rgba(60,160,200,0.2);  color: #60ccee; border: 1px solid rgba(60,160,200,0.3); }
+
+  /* Scrollable container for many planets */
+  .planets-scroll {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .planets-scroll::-webkit-scrollbar { width: 4px; }
+  .planets-scroll::-webkit-scrollbar-track { background: transparent; }
+  .planets-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Divider for close binary planets section */
+  .planets-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    margin: 8px 0 16px;
+  }
+  .planets-companion-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  @media (max-width: 700px) {
+    .panels-container.dual { flex-direction: column; }
+    .form-row { grid-template-columns: 1fr; }
+    .form-row.three { grid-template-columns: 1fr 1fr; }
+    .star-stats { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* SETTINGS MODAL */
+  .settings-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .settings-btn::after { background: none; }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 28px 32px;
+    min-width: 300px;
+    max-width: 420px;
+    position: relative;
+  }
+  .modal-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    border-radius: 8px 8px 0 0;
+  }
+  .modal-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #fff;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .modal-close {
+    position: absolute;
+    top: 10px; right: 14px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-close::after { display: none; }
+  .modal-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+  .toggle-group {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .toggle-opt {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    padding: 6px 14px;
+    cursor: pointer;
+    background: var(--bg3);
+    color: var(--text-muted);
+    border: none;
+    letter-spacing: 0.08em;
+    transition: background 0.15s, color 0.15s;
+  }
+  .toggle-opt.active { background: var(--accent); color: #fff; }
+  .toggle-opt::after { display: none; }
+
+  .modal-section-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin: 18px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .slider-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    width: 28px;
+    flex-shrink: 0;
+  }
+  .slider-label.wide { width: 52px; }
+  .slider-wrap {
+    flex: 1;
+    position: relative;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(74,158,255,0.5);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+  }
+  .slider-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .modal-reset {
+    width: 100%;
+    margin-top: 18px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    padding: 9px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .modal-reset:hover { border-color: var(--accent2); color: var(--accent2); }
+  .modal-reset::after { display: none; }
+  .modal-box { max-height: 90vh; overflow-y: auto; max-width: 460px; }
+
+  /* SEED ERROR BOX */
+  .seed-error {
+    display: none;
+    margin: 0 0 14px;
+    padding: 11px 15px;
+    border: 1px solid #c0392b;
+    border-left: 3px solid #e74c3c;
+    border-radius: 5px;
+    background: rgba(231,76,60,0.08);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: #e07070;
+    letter-spacing: 0.05em;
+    line-height: 1.6;
+  }
+  .seed-error.visible { display: block; }
+  .seed-error strong { color: #e74c3c; }
+</style>
+</head>
+<body>
+<button class="settings-btn" onclick="openSettings()">⚙ Settings</button>
+
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeSettings()">✕</button>
+    <div class="modal-title">⚙ Settings</div>
+
+    <div class="modal-row">
+      <span class="modal-label">Units</span>
+      <div class="toggle-group">
+        <button class="toggle-opt active" id="unit-metric" onclick="setUnits('metric')">Metric</button>
+        <button class="toggle-opt" id="unit-imperial" onclick="setUnits('imperial')">Imperial</button>
+      </div>
+    </div>
+
+    <div class="modal-section-title">Star Type Frequency</div>
+    <div class="slider-row"><span class="slider-label">O</span><div class="slider-wrap"><input type="range" id="sl-O" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-O','sv-O')"></div><span class="slider-val" id="sv-O">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label">B</span><div class="slider-wrap"><input type="range" id="sl-B" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-B','sv-B')"></div><span class="slider-val" id="sv-B">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label">A</span><div class="slider-wrap"><input type="range" id="sl-A" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-A','sv-A')"></div><span class="slider-val" id="sv-A">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label">F</span><div class="slider-wrap"><input type="range" id="sl-F" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-F','sv-F')"></div><span class="slider-val" id="sv-F">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label">G</span><div class="slider-wrap"><input type="range" id="sl-G" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-G','sv-G')"></div><span class="slider-val" id="sv-G">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label">K</span><div class="slider-wrap"><input type="range" id="sl-K" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-K','sv-K')"></div><span class="slider-val" id="sv-K">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label">M</span><div class="slider-wrap"><input type="range" id="sl-M" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-M','sv-M')"></div><span class="slider-val" id="sv-M">1.00×</span></div>
+
+    <div class="modal-section-title">Life Frequency</div>
+    <div class="slider-row"><span class="slider-label wide">Global</span><div class="slider-wrap"><input type="range" id="sl-life" min="0" max="5" step="0.05" value="1" oninput="updateSliderVal('sl-life','sv-life')"></div><span class="slider-val" id="sv-life">1.00×</span></div>
+
+    <div class="modal-section-title">Stellar Remnant Frequency</div>
+    <div class="slider-row"><span class="slider-label wide">WD</span><div class="slider-wrap"><input type="range" id="sl-WD" min="0" max="5" step="0.05" value="1" oninput="updateSliderVal('sl-WD','sv-WD')"></div><span class="slider-val" id="sv-WD">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label wide">NS</span><div class="slider-wrap"><input type="range" id="sl-NS" min="0" max="5" step="0.05" value="1" oninput="updateSliderVal('sl-NS','sv-NS')"></div><span class="slider-val" id="sv-NS">1.00×</span></div>
+    <div class="slider-row"><span class="slider-label wide">BH</span><div class="slider-wrap"><input type="range" id="sl-BH" min="0" max="5" step="0.05" value="1" oninput="updateSliderVal('sl-BH','sv-BH')"></div><span class="slider-val" id="sv-BH">1.00×</span></div>
+
+    <button class="modal-reset" onclick="resetSettings()">↺ Reset to Defaults</button>
+  </div>
+</div>
+
+<div class="container">
+
+<header>
+  <h1>★ Star System Generator ★</h1>
+  <p>Procedural Stellar & Planetary Formation Engine</p>
+</header>
+
+<div class="control-panel">
+  <div class="form-row">
+    <div class="field-group">
+      <label>System Name</label>
+      <input type="text" id="inp-name" placeholder="e.g. Kepler-442" value="">
+    </div>
+    <div class="field-group">
+      <label>Seed</label>
+      <div class="seed-row">
+        <input type="text" id="inp-seed" placeholder="Enter or roll a seed…" maxlength="18" pattern="[0-9]*" inputmode="numeric">
+        <button class="btn-small" onclick="randomiseSeed()">🎲 Roll</button>
+      </div>
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="field-group">
+      <label>Companion Star</label>
+      <select id="inp-companion">
+        <option value="random">Random</option>
+        <option value="none">None</option>
+        <option value="close">Close</option>
+        <option value="distant">Distant</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>Planets</label>
+      <select id="inp-planets">
+        <option value="random">Random</option>
+        <option value="none">None</option>
+        <option value="few">Few</option>
+        <option value="several">Several</option>
+        <option value="many">Many</option>
+      </select>
+    </div>
+  </div>
+  <div class="form-row full">
+    <div class="checkbox-group">
+      <input type="checkbox" id="inp-terrestrial" name="terrestrial">
+      <label for="inp-terrestrial">Force Earth-like World</label>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn-primary" onclick="generate()">⊕ Create</button>
+    <button class="btn-secondary" onclick="randomAll()">✦ Random</button>
+  </div>
+  <div class="seed-error" id="seed-error">
+    <strong>No seed set.</strong> Press <strong>🎲 Roll</strong> or <strong>✦ Random</strong> to generate a seed first, then press <strong>⊕ Create</strong>.
+  </div>
+</div>
+
+<div id="output"></div>
+
+</div>
+
+<script>
+// ============================================================
+//  SEEDED PRNG (Mulberry32)
+// ============================================================
+let rng;
+function seedRng(seed) {
+  // Accept either a number or a numeric string. For large seeds (> 2^32) we hash
+  // the digit string so no precision is lost. Uses djb2-style mixing then fmix32.
+  const str = String(seed);
+  let h = 0x811c9dc5 >>> 0; // FNV-1a offset basis
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0; // FNV prime
+  }
+  // fmix32 avalanche
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0;
+  h = (h ^ (h >>> 16)) >>> 0;
+  if (h === 0) h = 1;
+  let s = h;
+  rng = () => {
+    s |= 0; s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function ri(a, b) { return Math.floor(rng() * (b - a + 1)) + a; }
+function rf(a, b) { return rng() * (b - a) + a; }
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+function roll(prob) { return rng() < prob; }
+function fmt(n, d=2) { return (+n).toFixed(d); }
+
+// ============================================================
+//  UNITS & SETTINGS
+// ============================================================
+let currentUnits = 'metric';
+
+// Star type frequency multipliers (applied to base weights in SPECTRAL_TYPES)
+const DEFAULT_STAR_MULTS = { O:1, B:1, A:1, F:1, G:1, K:1, M:1 };
+let starMults = { ...DEFAULT_STAR_MULTS };
+const DEFAULT_LIFE_MULT = 1;
+let lifeMult = DEFAULT_LIFE_MULT;
+const DEFAULT_REMNANT_MULTS = { WD:1, NS:1, BH:1 };
+let remnantMults = { ...DEFAULT_REMNANT_MULTS };
+
+function updateSliderVal(sliderId, valId) {
+  const v = parseFloat(document.getElementById(sliderId).value);
+  document.getElementById(valId).textContent = v.toFixed(2) + '×';
+  const key = sliderId.replace('sl-', '');
+  if (key === 'life') lifeMult = v;
+  else if (key === 'WD' || key === 'NS' || key === 'BH') remnantMults[key] = v;
+  else starMults[key] = v;
+}
+
+function resetSettings() {
+  Object.assign(starMults, DEFAULT_STAR_MULTS);
+  lifeMult = DEFAULT_LIFE_MULT;
+  Object.assign(remnantMults, DEFAULT_REMNANT_MULTS);
+  ['O','B','A','F','G','K','M'].forEach(t => {
+    document.getElementById('sl-' + t).value = 1;
+    document.getElementById('sv-' + t).textContent = '1.00×';
+  });
+  document.getElementById('sl-life').value = 1;
+  document.getElementById('sv-life').textContent = '1.00×';
+  ['WD','NS','BH'].forEach(t => {
+    document.getElementById('sl-' + t).value = 1;
+    document.getElementById('sv-' + t).textContent = '1.00×';
+  });
+}
+
+function openSettings() { document.getElementById('settings-modal').classList.add('open'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+
+function setUnits(u) {
+  currentUnits = u;
+  document.getElementById('unit-metric').classList.toggle('active', u === 'metric');
+  document.getElementById('unit-imperial').classList.toggle('active', u === 'imperial');
+  if (_lastSystem) renderSystem(_lastSystem);
+}
+let _lastSystem = null;
+
+// ============================================================
+//  STAR GENERATION
+// ============================================================
+const SPECTRAL_TYPES = [
+  // [type, minMass, maxMass, col, weight, isBD]
+  { t:'O', m0:16,   m1:80,   col:'#a8c8ff', w:0.0001, bd:false },
+  { t:'B', m0:2.1,  m1:16,   col:'#c0d8ff', w:0.001,  bd:false },
+  { t:'A', m0:1.4,  m1:2.1,  col:'#ddeeff', w:0.006,  bd:false },
+  { t:'F', m0:1.04, m1:1.4,  col:'#fff8ec', w:0.03,   bd:false },
+  { t:'G', m0:0.8,  m1:1.04, col:'#fffbe0', w:0.076,  bd:false },
+  { t:'K', m0:0.45, m1:0.8,  col:'#ffd070', w:0.121,  bd:false },
+  { t:'M', m0:0.08, m1:0.45, col:'#ff7040', w:0.765,  bd:false },
+  // Brown dwarfs: L (1300–2200 K), T (700–1300 K), Y (<700 K)
+  // Mass 0.013–0.08 M☉ (13–80 M_Jup); primary cannot be a BD, companion can
+  { t:'L', m0:0.040, m1:0.080, col:'#c03010', w:0, bd:true },
+  { t:'T', m0:0.020, m1:0.040, col:'#802808', w:0, bd:true },
+  { t:'Y', m0:0.013, m1:0.020, col:'#4a1a08', w:0, bd:true },
+];
+
+// Stellar evolution class: randomly assigned based on spectral type and age
+// 'MS'=main sequence, 'PMS'=pre-MS T Tauri/Herbig Ae-Be, 'SD'=sub-dwarf,
+// 'SG4'=sub-giant (IV), 'G3'=giant (III), 'BG2'=bright giant (II),
+// 'SGA'=supergiant (Ia), 'SGB'=supergiant (Ib)
+// BDs always stay BD; O/B/A can become supergiants; probability weights below
+const EVOL_WEIGHTS = {
+  // [MS, PMS, SD, SG4, G3, BG2, SGA, SGB]
+  O:  [0.50, 0.05, 0.00, 0.05, 0.10, 0.12, 0.10, 0.08],
+  B:  [0.55, 0.07, 0.00, 0.08, 0.12, 0.08, 0.05, 0.05],
+  A:  [0.65, 0.10, 0.01, 0.10, 0.08, 0.04, 0.01, 0.01],
+  F:  [0.70, 0.08, 0.02, 0.10, 0.07, 0.02, 0.00, 0.01],
+  G:  [0.72, 0.06, 0.03, 0.09, 0.07, 0.02, 0.00, 0.01],
+  K:  [0.68, 0.05, 0.04, 0.10, 0.10, 0.02, 0.00, 0.01],
+  M:  [0.82, 0.10, 0.02, 0.04, 0.01, 0.00, 0.00, 0.01],
+};
+const EVOL_KEYS = ['MS','PMS','SD','SG4','G3','BG2','SGA','SGB','WD','NS','BH'];
+// Remnant probabilities appended: [WD, NS, BH]
+// WD: end state of low/intermediate mass stars; NS/BH from high-mass
+// These are very rare as primaries but more common as companions (formed from an evolved binary partner)
+const REMNANT_PROB = {
+  // [WD, NS, BH]
+  // WD progenitors realistically: A, F, G (most common), upper-K (rare, ~0.8 M☉ border)
+  // M dwarfs cannot become WDs within the age of the universe — excluded entirely
+  // NS/BH: high-mass O/B stars only
+  O:  [0.00, 0.10, 0.08],  // O → almost always NS or BH
+  B:  [0.02, 0.06, 0.02],  // lower-mass B → WD possible; massive B → NS
+  A:  [0.04, 0.00, 0.00],  // A → WD (common endpoint)
+  F:  [0.03, 0.00, 0.00],  // F → WD
+  G:  [0.02, 0.00, 0.00],  // G → WD (Sun will become one)
+  K:  [0.005,0.00, 0.00],  // K → WD only for upper-K (~0.8 M☉); very slow evolution
+  M:  [0.00, 0.00, 0.00],  // M → cannot become WD in current universe age
+};
+
+function pickEvolClass(spType, isCompanion=false) {
+  if (!EVOL_WEIGHTS[spType]) return 'MS';
+  // Combine main evol weights with remnant probs
+  // Remnants slightly more common as companions (the other star evolved first)
+  const wMain = EVOL_WEIGHTS[spType];
+  const baseRem = REMNANT_PROB[spType] || [0,0,0];
+  // Apply per-remnant-type user multipliers [WD, NS, BH]
+  const wRem = [
+    baseRem[0] * (remnantMults.WD ?? 1) * (isCompanion ? 2.0 : 1.0),
+    baseRem[1] * (remnantMults.NS ?? 1) * (isCompanion ? 2.0 : 1.0),
+    baseRem[2] * (remnantMults.BH ?? 1) * (isCompanion ? 2.0 : 1.0),
+  ];
+  const w = [...wMain, ...wRem];
+  const keys = EVOL_KEYS;
+  let r = rng() * w.reduce((a,b)=>a+b,0);
+  for (let i=0; i<w.length; i++) { r-=w[i]; if(r<=0) return keys[i]; }
+  return 'MS';
+}
+
+function pickSpectralType(massConstraint=null) {
+  if (massConstraint !== null) {
+    // Find best matching type for this mass (includes BDs if mass < 0.08)
+    const valid = SPECTRAL_TYPES.filter(s => massConstraint >= s.m0 && massConstraint < s.m1);
+    if (valid.length) return valid[valid.length-1];
+    // Fallback: pick closest
+    const byDist = SPECTRAL_TYPES.slice().sort((a,b) =>
+      Math.min(Math.abs(massConstraint-a.m0), Math.abs(massConstraint-a.m1)) -
+      Math.min(Math.abs(massConstraint-b.m0), Math.abs(massConstraint-b.m1))
+    );
+    return byDist[0];
+  }
+  // Primary stars only: exclude BD entries (w:0); apply user frequency multipliers
+  const pool = SPECTRAL_TYPES.filter(s => !s.bd);
+  const total = pool.reduce((a,b) => a + b.w * (starMults[b.t] ?? 1), 0);
+  let r = rng() * total;
+  for (const s of pool) { r -= s.w * (starMults[s.t] ?? 1); if (r <= 0) return s; }
+  return pool[pool.length-1];
+}
+
+function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=null, forcedFeH=null) {
+  const sp = pickSpectralType(massConstraint);
+  // When a massConstraint is provided (companion), use it directly rather than re-rolling,
+  // so the spectral subclass is calculated from the actual constrained mass.
+  const mass = massConstraint !== null ? massConstraint : rf(sp.m0, sp.m1);
+
+  // Subclass 0 = hottest/most massive end of the type, 9 = coolest/least massive end.
+  // Derive from where mass falls within [m0, m1] — used as initial estimate before
+  // temperature is available; will be replaced by temp-derived value below.
+  const massFrac = sp.m1 > sp.m0 ? (mass - sp.m0) / (sp.m1 - sp.m0) : 0.5;
+  let subclass = Math.min(9, Math.max(0, Math.round((1 - massFrac) * 9)));
+  // One decimal place on subclass, generated ~40% of the time
+  const subclassDecimal = roll(0.4) ? ('.' + ri(1,9)) : '';
+
+  // Pick evolutionary class (BDs skip this)
+  let evolClass = sp.bd ? 'BD' : pickEvolClass(sp.t, isCompanion);
+
+  // Base MS luminosity — piecewise power law calibrated to observed values
+  // Sources: Pecaut & Mamajek 2013, Torres 2010, IAU 2015 nominal solar values
+  // M < 0.2:  L ~ 0.23 * M^2.3 (very low mass)
+  // 0.2–0.85: L ~ M^4 (lower main sequence)
+  // 0.85–2:   L ~ M^4 (solar neighbourhood, slightly boosted)
+  // 2–10:     L ~ 1.5 * M^3.5 (intermediate mass, exponent flattens)
+  // >10:      L ~ 3.2e4 * (M/30)^2.5 (massive stars, further flattening — avoids absurd values)
+  let lumMS;
+  if (sp.bd) {
+    lumMS = 3e-4 * Math.pow(mass / 0.05, 2.0) * rf(0.3, 2.0);
+  } else if (mass < 0.2) {
+    lumMS = 0.23 * Math.pow(mass, 2.3);
+  } else if (mass < 0.85) {
+    lumMS = Math.pow(mass, 4);
+  } else if (mass < 2.0) {
+    lumMS = 1.1 * Math.pow(mass, 4);
+  } else if (mass < 10.0) {
+    lumMS = 1.5 * Math.pow(mass, 3.5);
+  } else {
+    // Very massive stars: exponent flattens further (radiation pressure dominated)
+    lumMS = 3.2e4 * Math.pow(mass / 30.0, 2.5);
+  }
+  lumMS = Math.max(lumMS, 1e-7);
+
+  // Apply evolutionary class multipliers to lum and radius
+  // Sources: Lang Astrophysical Data, Drilling & Landolt in Allen's Astrophysical Quantities
+  let lum = lumMS;
+  let radiusMult = 1.0;
+  switch(evolClass) {
+    case 'PMS':
+      // T Tauri / Herbig Ae-Be: slightly larger, somewhat brighter than ZAMS
+      // Age is young (0.001 – 10 Myr range)
+      radiusMult = rf(1.5, 4.0);
+      lum = lumMS * rf(0.5, 3.0); // can be under- or over-luminous vs MS
+      break;
+    case 'SD':
+      // Two distinct subdwarf populations:
+      // HOT subdwarfs (sdB/sdO) — from O/B progenitors only; helium-burning stripped cores,
+      //   genuinely compact (~0.15–0.5 R☉), very hot 20k–80k K, quite underluminous.
+      // COOL subdwarfs (sdF/sdG/sdK/sdM) — metal-poor halo stars still fusing hydrogen;
+      //   only slightly smaller/hotter than MS equivalent. By definition 1.5–2 magnitudes
+      //   (factor ~4–6×) less luminous than MS star of the SAME spectral type, but a
+      //   K0 subdwarf is still more luminous than a K7 main sequence star.
+      //   Radius ~0.70–0.92× MS radius; luminosity ~0.17–0.25× same-type MS.
+      if (sp.t === 'O' || sp.t === 'B') {
+        // Hot sdB/sdO: genuinely extreme
+        radiusMult = rf(0.15, 0.50);
+        lum = lumMS * rf(0.01, 0.10);
+      } else {
+        // Cool subdwarfs (sdF through sdM): metal-poor, slightly sub-MS
+        // 1.5–2 mag below same spectral type = luminosity factor 0.17–0.25×
+        radiusMult = rf(0.70, 0.92);
+        lum = lumMS * rf(0.17, 0.28);
+      }
+      break;
+    case 'SG4':
+      // Sub-giant (IV): slightly expanded, 1–3× luminosity boost
+      radiusMult = rf(1.5, 3.5);
+      lum = lumMS * rf(1.5, 6.0);
+      break;
+    case 'G3':
+      // Giant (III): 10–100× luminosity, 10–50 R☉
+      radiusMult = rf(8, 50);
+      lum = lumMS * rf(10, 100);
+      break;
+    case 'BG2':
+      // Bright giant (II): 20–100 R☉, luminosity 100–3000 L☉
+      // (100 R☉ at ~4000 K gives ~1500 L☉ via S-B; upper end is consistent)
+      radiusMult = rf(20, 100);
+      lum = lumMS * rf(100, 3000);
+      break;
+    case 'SGA':
+      // Supergiant Ia (most luminous): 100–1500 R☉, 30000–500000 L☉ (absolute)
+      // Using absolute range avoids runaway values for already-luminous O-star progenitors
+      radiusMult = rf(100, 1500);
+      lum = rf(30000, 500000);
+      break;
+    case 'SGB':
+      // Supergiant Ib: 30–400 R☉, 10000–100000 L☉ (absolute)
+      radiusMult = rf(30, 400);
+      lum = rf(10000, 100000);
+      break;
+    case 'WD':
+      // White dwarf: Earth-sized (~0.008–0.02 R☉), mass 0.5–1.4 M☉
+      // Luminosity absolute: 0.0001–0.05 L_Sun (not relative to progenitor lumMS,
+      // which would overestimate brightness for high-mass progenitors like A stars)
+      radiusMult = rf(0.008, 0.020);
+      lum = rf(0.0001, 0.10); // absolute L_Sun range for WDs; age-dependence via temp formula
+      break;
+    case 'NS':
+      // Neutron star: ~10 km radius (~0.000014 R☉), 1.1–2.3 M☉
+      // Very hot but tiny → actual luminosity ~1e-5 to ~1e-3 L_Sun (Özel & Freire 2016)
+      radiusMult = 0.000014;
+      lum = rf(1e-5, 1e-3); // absolute L_Sun
+      break;
+    case 'BH':
+      // Stellar-mass black hole: 3–20 M☉, no real photosphere
+      // We represent with near-zero radius/lum; accretion disc optional
+      radiusMult = 0.0000001;
+      lum = 0;
+      break;
+    default: // MS or BD
+      radiusMult = 1.0;
+      break;
+  }
+  lum = Math.max(lum, 1e-10);
+
+  // Metallicity: Gaussian around solar ([Fe/H]=0, σ≈0.22 dex) clipped to [-1.0, +0.5]
+  // Approximated via Box-Muller transform using two uniform RNG calls
+  const FeH = forcedFeH !== null ? forcedFeH : (() => {
+    const u1 = Math.max(rng(), 1e-10), u2 = rng();
+    const gauss = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    return Math.min(Math.max(gauss * 0.22, -1.0), 0.5);
+  })();
+
+  // Age: PMS stars are very young; evolved stars must be older; MS normal range
+  const tMain = 10 * (mass / lumMS); // MS lifetime in Gyr
+  let age;
+  if (forcedAge !== null) {
+    // Binary companion: share the primary's age exactly.
+    // If the forced age is incompatible with the evolClass (e.g. a giant that needs age > tMain*0.5
+    // but primary is young), override evolClass back to MS to stay consistent.
+    age = forcedAge;
+    const minAgeForEvol = {
+      PMS: 0, MS: 0, SD: 0.5,
+      SG4: tMain * 0.5, G3: tMain * 0.6,
+      BG2: tMain * 0.7, SGA: 0.001, SGB: 0.002
+    }[evolClass] ?? 0;
+    const maxAgeForEvol = {
+      PMS: 0.010, MS: tMain * 0.9,
+      SD: tMain * 0.9, SG4: tMain * 0.95,
+      G3: tMain * 0.95, BG2: tMain * 0.95,
+      SGA: tMain * 0.98, SGB: tMain * 0.98
+    }[evolClass] ?? 12;
+    // If the system is in PMS age territory (<10 Myr) and this companion was assigned
+    // MS, force it to PMS — stars in a young system are all pre-main-sequence
+    if (forcedAge < 0.010 && evolClass === 'MS' && !sp.bd) {
+      evolClass = 'PMS';
+      radiusMult = rf(1.5, 4.0);
+      lum = lumMS * rf(0.5, 3.0);
+    } else if (age < minAgeForEvol || age > Math.min(maxAgeForEvol, 13.8)) {
+      // Otherwise demote to MS if forced age is incompatible with the chosen evolClass
+      evolClass = 'MS';
+      radiusMult = 1.0;
+      lum = lumMS;
+    }
+  } else if (evolClass === 'PMS') {
+    age = rf(0.000001, 0.010); // 1 kyr – 10 Myr in Gyr
+  } else if (evolClass === 'SGA' || evolClass === 'SGB' || evolClass === 'BG2') {
+    age = rf(0.003, Math.min(tMain * 0.98, 0.5)); // massive stars die young
+  } else if (evolClass === 'G3' || evolClass === 'SG4') {
+    age = rf(tMain * 0.5, Math.min(tMain * 0.95, 12));
+  } else {
+    age = rf(0.1, Math.min(tMain * 0.9, 12));
+  }
+
+  // Radius: BDs ≈ Jupiter-sized; MS ≈ M^0.8; evolved classes use multiplier
+  const radius = sp.bd ? rf(0.08, 0.12) : Math.pow(mass, 0.8) * radiusMult;
+
+  // Temperature
+  let temp;
+  if (evolClass === 'WD') {
+    // White dwarfs cool over time; older ones are cooler
+    const wdAge = age > 0 ? age : 1;
+    temp = Math.max(5000, 80000 * Math.pow(0.1 / wdAge, 0.4) * rf(0.7, 1.3));
+  } else if (evolClass === 'NS') {
+    temp = Math.max(100000, 1e6 * Math.pow(0.001 / Math.max(age, 0.001), 0.5) * rf(0.5, 1.5));
+  } else if (evolClass === 'BH') {
+    temp = 0;
+  } else if (sp.bd) {
+    if (sp.t === 'L') temp = rf(1300, 2200);
+    else if (sp.t === 'T') temp = rf(700, 1300);
+    else temp = rf(300, 700);
+  } else if (evolClass === 'MS' || evolClass === 'PMS' || evolClass === 'SD') {
+    // Use empirical mass→temperature relations instead of Stefan-Boltzmann,
+    // which produces wildly wrong temps for cool/low-mass stars.
+    // Piecewise fit calibrated to actual observed Teff vs mass (Pecaut & Mamajek 2013,
+    // Torres et al. 2010, and IAU 2015 nominal values).
+    let tMS;
+    if (mass >= 16)        tMS = 35000 + (mass - 16) * 1100;           // O
+    else if (mass >= 2.1)  tMS = 10000 + (mass - 2.1) / (16 - 2.1) * 25000; // B
+    else if (mass >= 1.4)  tMS = 7600  + (mass - 1.4) / (2.1 - 1.4) * 2400; // A
+    else if (mass >= 1.04) tMS = 6300  + (mass - 1.04) / (1.4 - 1.04) * 1300; // F
+    else if (mass >= 0.80) tMS = 5270  + (mass - 0.80) / (1.04 - 0.80) * 1030; // G
+    else if (mass >= 0.45) tMS = 3700  + (mass - 0.45) / (0.80 - 0.45) * 1570; // K
+    else if (mass >= 0.08) tMS = 2200  + (mass - 0.08) / (0.45 - 0.08) * 1500; // M
+    else                   tMS = 2200;
+    // Small scatter (±3%) for natural stellar variation
+    tMS *= rf(0.97, 1.03);
+    // PMS stars are slightly cooler for their mass (still contracting)
+    if (evolClass === 'PMS') tMS *= rf(0.80, 0.97);
+    // Sub-dwarfs are hotter for their mass/luminosity class (helium-rich, compact)
+    if (evolClass === 'SD') {
+      if (sp.t === 'O' || sp.t === 'B') {
+        // Hot sdB/sdO: temperature 20,000–80,000 K regardless of progenitor subclass
+        tMS = rf(20000, 80000);
+      } else {
+        // Cool subdwarfs (sdF through sdM): slightly hotter than MS of same mass
+        tMS *= rf(1.10, 1.35);
+      }
+    }
+    temp = tMS;
+  } else {
+    // Evolved giants/supergiants: S-B is appropriate here since radius dominates
+    temp = 5778 * Math.pow(lum / (radius * radius), 0.25);
+  }
+
+
+
+  // Brown dwarfs use subclass 0-9 within type; stars add luminosity class Roman numeral
+  // PMS stars still carry luminosity class V but with 'e' emission suffix
+  // (T Tauri / Herbig Ae-Be are identified by emission lines, not a separate MK numeral)
+  // Override mass to realistic remnant values after evolClass is settled
+  let finalMass = mass;
+  if (evolClass === 'WD') finalMass = rf(0.5, 1.35);   // Chandrasekhar limit 1.4
+  else if (evolClass === 'NS') finalMass = rf(1.1, 2.3);
+  else if (evolClass === 'BH') finalMass = rf(3.0, 20.0);
+  // Use finalMass for display; original mass used for tMain calc above
+  const displayMass = finalMass;
+
+  const lumClassSuffix = sp.bd ? '' : { MS:'V', PMS:'Ve', SD:'VI', SG4:'IV', G3:'III', BG2:'II', SGA:'Ia', SGB:'Ib', WD:'VII', NS:'', BH:'' }[evolClass] || 'V';
+
+  // Derive spectral subclass from temperature, matching how real astronomy classifies stars.
+  // Boundary temperatures (K) for each integer subclass within each type (IAU/MK standards).
+  // Each entry [t0, t1] is the temp range for subclass N (index 0–9).
+  // For non-MS evolved stars the S-B temperature is used directly against these same boundaries.
+  if (!sp.bd && evolClass !== 'WD' && evolClass !== 'NS' && evolClass !== 'BH') {
+    const SUBCLASS_TEMPS = {
+      O: [52500,45000,41000,38000,35800,34000,32000,30000,28000,26500],
+      B: [26500,22000,20600,18500,17000,15400,14000,13000,11400,10500],
+      A: [10500,9800, 9200, 8800, 8600, 8400, 8200, 8000, 7800, 7600],
+      F: [7600, 7500, 7350, 7200, 7050, 6900, 6750, 6600, 6450, 6300],
+      G: [6300, 6150, 6000, 5850, 5750, 5660, 5570, 5480, 5380, 5270],
+      K: [5270, 5080, 4900, 4730, 4590, 4460, 4300, 4100, 3900, 3700],
+      M: [3700, 3600, 3500, 3400, 3200, 3000, 2800, 2600, 2400, 2200],
+    };
+    const bounds = SUBCLASS_TEMPS[sp.t];
+    if (bounds && temp > 0) {
+      // Find which subclass band the temperature falls in
+      let best = 0;
+      let bestDiff = Infinity;
+      for (let i = 0; i < bounds.length; i++) {
+        const diff = Math.abs(temp - bounds[i]);
+        if (diff < bestDiff) { bestDiff = diff; best = i; }
+      }
+      subclass = best;
+    }
+  }
+
+  // One decimal refinement: interpolate within the subclass band for the decimal digit
+  // (already computed above as subclassDecimal, which is independent of subclass integer)
+
+  const spectralClass = sp.t + subclass + subclassDecimal;
+  const wdSubtype = ['DA','DB','DC','DO','DQ','DZ'][Math.floor(rng()*6)]; // WD spectral subtypes
+
+  // Stellar rotation: young stars spin fast, braking over time
+  // Period in hours: roughly scales with age^0.5 * mass^-0.5, calibrated to Sun (~600 hr)
+  // Close-binary tidal locking handled in generateSystem after separation is known
+  let rotationHours;
+  if (evolClass === 'NS') {
+    // Neutron stars / pulsars: spin periods 0.001–10 seconds; show in seconds converted to hours
+    const periodSec = roll(0.3) ? rf(0.001, 0.1) : rf(0.1, 10.0); // ms pulsar vs normal
+    rotationHours = periodSec / 3600;
+  } else if (evolClass === 'BH') {
+    rotationHours = 0; // undefined / event horizon
+  } else if (evolClass === 'WD') {
+    // WDs spin hours to days
+    rotationHours = rf(0.5, 240);
+  } else {
+    const baseRotHours = 600 * Math.pow(Math.max(age,0.001) / 4.6, 0.5) * Math.pow(Math.max(mass,0.08), -0.5) * rf(0.5, 1.8);
+    rotationHours = Math.max(5, baseRotHours);
+  }
+
+  // Protoplanetary disk (PMS only)
+  // Disk destroyed faster by high-luminosity/UV; low-mass PMS (T Tauri) keep disks 1–10 Myr
+  // High-mass (Herbig Ae-Be) lose disk in ~0.1–3 Myr (UV/radiation pressure)
+  let protoplanDisk = null;
+  if (evolClass === 'PMS') {
+    // Disk lifetime check: massive stars blow away disks quickly
+    const diskLifeMyr = sp.t === 'O' ? rf(0.05, 0.3)
+                      : sp.t === 'B' ? rf(0.1, 1.0)
+                      : sp.t === 'A' ? rf(0.5, 3.0)  // Herbig Ae-Be
+                      : rf(1.0, 10.0);                 // T Tauri (F/G/K/M)
+    const ageMyr = age * 1000;
+    if (ageMyr < diskLifeMyr) {
+      // Disk inner edge: dust sublimation radius ∝ sqrt(L), ~0.05–0.3 AU typically
+      const diskInner = Math.max(0.03, 0.07 * Math.sqrt(lum));
+      // Disk outer edge: scales with stellar mass; typically 50–500 AU for T Tauri
+      // Herbig Ae-Be can be 200–1000 AU; very massive stars truncated by radiation
+      const diskOuterBase = sp.t === 'O' ? rf(10, 80)
+                          : sp.t === 'B' ? rf(20, 150)
+                          : sp.t === 'A' ? rf(50, 400)
+                          : rf(50, 500);
+      protoplanDisk = { inner: diskInner, outer: diskOuterBase, lifeMyr: diskLifeMyr };
+    }
+  }
+
+  const isRemnant = (evolClass === 'WD' || evolClass === 'NS' || evolClass === 'BH');
+  let col = sp.col;
+  if (evolClass === 'WD') col = temp > 40000 ? '#b0c8ff' : temp > 15000 ? '#ddeeff' : temp > 8000 ? '#fff8f0' : '#ffddaa';
+  else if (evolClass === 'NS') col = '#88aaff'; // blue-tinged hot neutron star
+  else if (evolClass === 'BH') col = '#111111'; // black
+  return { label, sp, spectralClass, wdSubtype, lumClassSuffix, evolClass, mass: displayMass, lum, radius, temp, FeH, age, rotationHours, tidallyLocked: false, col, isBD: sp.bd || false, isRemnant, protoplanDisk };
+}
+
+// ============================================================
+//  SYSTEM ARCHITECTURE
+// ============================================================
+function generateSystem(name, companionOpt, planetsOpt, forceTerrestrial, seed) {
+  seedRng(seed);
+
+  // Primary star
+  const primary = generateStar('Primary');
+
+  // Companion
+  let companion = null;
+  let companionType = 'none';
+  let separation = null;
+
+  if (companionOpt === 'random') {
+    const r = rng();
+    if (r < 0.50) companionType = 'none';
+    else if (r < 0.75) companionType = 'distant';
+    else companionType = 'close';
+  } else {
+    companionType = companionOpt;
+  }
+
+  // Stellar orbital eccentricity and inclination
+  let stellarEcc = 0, stellarIncl = 0;
+
+  if (companionType !== 'none') {
+    // ~15% chance of a brown dwarf companion (L/T/Y) instead of a star
+    const isBDComp = roll(0.15);
+    let compMass;
+    if (isBDComp) {
+      // BD mass: 13–80 M_Jup = 0.0124–0.0763 M☉
+      compMass = rf(0.013, 0.076);
+    } else {
+      compMass = rf(0.08, primary.mass * 0.95);
+    }
+    // Pass primary.age so companion is born with the same system age,
+    // and its evolClass is validated/demoted if incompatible with that age.
+    companion = generateStar('Companion', compMass, true, primary.age, primary.FeH);
+    // Recompute companion rotation with shared age (unless we'll tidal-lock below)
+    if (!companion.tidallyLocked) {
+      const cBaseRot = 600 * Math.pow(companion.age / 4.6, 0.5) * Math.pow(companion.mass, -0.5) * rf(0.5, 1.8);
+      companion.rotationHours = Math.max(5, cBaseRot);
+    }
+
+    if (companionType === 'close') {
+      separation = rf(0.05, 0.5);
+      // Close binary eccentricity: circularised by tides, moderately low
+      // Tighter orbits → lower eccentricity; sample from Beta(2,5) scaled to 0–0.45
+      stellarEcc = Math.pow(rng(), 2) * (separation < 0.2 ? 0.15 : 0.40);
+      // Inclination relative to sky plane: near-coplanar with any disc, small scatter
+      stellarIncl = rf(0, 15) * (roll(0.15) ? rf(1,6) : 1); // rare high-incl systems
+
+      // Tidal locking for close binary
+      const lockThresh = (primary.age > 5) ? 0.30 : 0.15;
+      if (separation < lockThresh) {
+        primary.tidallyLocked   = true;
+        primary.rotationHours   = separation * 365.25 * 24 * Math.sqrt(Math.pow(separation, 3) / (primary.mass + companion.mass));
+        companion.tidallyLocked = true;
+        companion.rotationHours = primary.rotationHours;
+      }
+    } else {
+      separation = rf(100, 5000);
+      // Distant companions: eccentricity can be anything in a stable range (0–0.9)
+      // High-ecc wide binaries are common; use a roughly uniform-ish distribution
+      stellarEcc = rf(0.0, 0.85) * rf(0.5, 1.0); // bias slightly away from e→1
+      // Inclination: can be anything 0–180° (retrograde wide companions exist)
+      stellarIncl = rf(0, 180);
+      // Distant companions NEVER tidally locked
+    }
+    companion.stellarEcc  = stellarEcc;
+    companion.stellarIncl = stellarIncl;
+  }
+
+  // Determine planet count
+  let nPlanets;
+  const pMap = { none: 0, few: [1,3], several: [4,6], many: [7,12] };
+  if (planetsOpt === 'none') nPlanets = 0;
+  else if (planetsOpt === 'few') nPlanets = ri(...pMap.few);
+  else if (planetsOpt === 'several') nPlanets = ri(...pMap.several);
+  else if (planetsOpt === 'many') nPlanets = ri(...pMap.many);
+  else { // random
+    const pr = rng();
+    if (pr < 0.05) nPlanets = 0;
+    else if (pr < 0.25) nPlanets = ri(1, 3);
+    else if (pr < 0.65) nPlanets = ri(3, 6);
+    else nPlanets = ri(6, 12);
+  }
+
+  const closeBinaryMaxAU = companionType === 'close' ? separation : null;
+  // For circumbinary systems, minimum stable orbit ~ 3.5 × separation (Holman & Wiegert)
+  // No upper AU cap for circumbinary (planets orbit both stars, no inner truncation from separation)
+  const circumbinaryMinAU = companionType === 'close' ? separation * 3.5 : null;
+  const primaryPlanets = generatePlanets(primary, nPlanets, false, null, circumbinaryMinAU);
+  const primaryBelts   = generateBelts(primary, primaryPlanets, null, circumbinaryMinAU, true);
+
+  // Distant companion planets + belts
+  let compPlanets = [];
+  let compBelts   = [];
+  if (companion && companionType === 'distant') {
+    const cn = roll(0.6) ? ri(0, 5) : 0;
+    compPlanets = generatePlanets(companion, cn, false, null);
+    compBelts   = generateBelts(companion, compPlanets, null, null, false);
+  }
+
+  // Force Earth-like planet: inject into habitable zone of a chosen star
+  if (forceTerrestrial) {
+    // For binary systems, randomly pick which star hosts the Earth-like planet
+    // (distant companion only; close binary planets orbit both stars already)
+    const useCompanion = companion && companionType === 'distant' && roll(0.5);
+    const targetStar   = useCompanion ? companion : primary;
+    const targetList   = useCompanion ? compPlanets : primaryPlanets;
+
+    const hz = calcHabZone(targetStar.lum);
+    // Pick a random position in the habitable zone
+    const hzA = rf(hz.inner, hz.outer);
+
+    // Find any existing planet already in the HZ and replace it;
+    // otherwise inject a new one at hzA
+    let replaced = false;
+    for (let i = 0; i < targetList.length; i++) {
+      if (targetList[i].a >= hz.inner && targetList[i].a <= hz.outer) {
+        targetList[i] = makeEarthlikePlanet(i, targetList[i].a, targetStar);
+        replaced = true;
+        break;
+      }
+    }
+    if (!replaced) {
+      // Insert sorted by semi-major axis
+      const ep = makeEarthlikePlanet(targetList.length, hzA, targetStar);
+      targetList.push(ep);
+      targetList.sort((a, b) => a.a - b.a);
+      // Re-index planet numbers after sort
+      targetList.forEach((p, i) => { p.idx = i + 1; });
+    }
+  }
+
+  // Suppress life if any star in the system is a NS or BH
+  const systemHasNSorBH = primary.isRemnant && (primary.evolClass === 'NS' || primary.evolClass === 'BH')
+    || (companion && companion.isRemnant && (companion.evolClass === 'NS' || companion.evolClass === 'BH'));
+  // Pass flag into planets (they inherit star reference, so set on star for convenience)
+  primary.systemHasNSorBH = systemHasNSorBH;
+  if (companion) companion.systemHasNSorBH = systemHasNSorBH;
+  // No planets naturally survive around NS/BH unless it's a pulsar planet (very rare, skip for now)
+  if (primary.evolClass === 'NS' || primary.evolClass === 'BH') {
+    primaryPlanets.length = 0;
+    primaryBelts.length   = 0;
+  }
+  if (companion && (companion.evolClass === 'NS' || companion.evolClass === 'BH')) {
+    compPlanets.length = 0;
+    compBelts.length   = 0;
+  }
+  return { name, primary, companion, companionType, separation, stellarEcc, stellarIncl, primaryPlanets, primaryBelts, compPlanets, compBelts };
+}
+
+// ============================================================
+//  PLANET GENERATION
+// ============================================================
+function calcHabZone(lum) {
+  return {
+    inner: Math.sqrt(lum / 1.1),
+    outer: Math.sqrt(lum / 0.53)
+  };
+}
+
+function tempClass(Teq) {
+  if (Teq >= 1000) return 'Torrid';
+  if (Teq >= 500)  return 'Hot';
+  if (Teq >= 330)  return 'Warm';
+  if (Teq >= 250)  return 'Temperate';
+  if (Teq >= 170)  return 'Cool';
+  if (Teq >= 90)   return 'Cold';
+  return 'Frigid';
+}
+
+function makeEarthlikePlanet(idx, a, star) {
+  // Builds a fully-specified Earth-like rocky planet at position a around star
+  const mEarth  = rf(0.7, 1.5);   // Earth-mass range
+  const rEarth  = Math.pow(mEarth, 0.27);
+  const rKm     = rEarth * 6371;
+  const albedo  = rf(0.25, 0.40); // Earth ~0.30
+  const Teq     = 278 * Math.pow(star.lum * (1 - albedo), 0.25) / Math.sqrt(a);
+  const tClass  = tempClass(Teq);
+  const period  = 365.25 * Math.sqrt(Math.pow(a, 3) / star.mass);
+  const ecc     = rf(0, 0.08);
+  const incl    = Math.abs(rf(-3,3) + rf(-3,3));
+  const escapeVel = 11.186 * Math.sqrt(mEarth / (rEarth * rEarth));
+  const esiR = Math.pow(1 - Math.abs(rEarth - 1.0) / (rEarth + 1.0), 0.57);
+  const esiM = Math.pow(1 - Math.abs(mEarth - 1.0) / (mEarth + 1.0), 1.07);
+  const esiV = Math.pow(1 - Math.abs(escapeVel - 11.186) / (escapeVel + 11.186), 0.70);
+  const esiT = Math.pow(1 - Math.abs(Teq - 288) / (Teq + 288), 5.58);
+  const esi  = esiR * esiM * esiV * esiT;
+  const lockDays = Math.pow(star.age / 5.0, 1/3) * 10;
+  const tidallyLocked = (period <= lockDays);
+  const rotationHours = tidallyLocked ? period * 24 : rf(18, 30) * Math.pow(star.age / 4.6, 0.15);
+  const special = ['Large moon via impactor event'];
+  if (roll(0.3)) special.push('Magnetic field detected');
+  const densityGcm3 = 5.514 * mEarth / Math.pow(rEarth, 3);
+  return {
+    idx: idx + 1,
+    type: 'rocky', subClass: 'Terrestrial',
+    classLabel: `${tClass} Terrestrial`,
+    mEarth, rEarth, rKm, Teq, albedo, escapeVel, esi, densityGcm3,
+    a, ecc, inclination: incl,
+    ascNode: rf(-360,360), argPeri: rf(-360,360), meanAnom: rf(-360,360),
+    period, colour: '#5a9c5a', special, tClass,
+    rotationHours, tidallyLocked,
+    age: star.age,
+    life: { chemistry: 'organic', complexity: 'multicellular', habitats: ['marine', 'terrestrial'] }
+  };
+}
+
+function calcTeq(lum, a, albedo=0.3) {
+  return 278 * Math.pow(lum * (1 - albedo), 0.25) / Math.sqrt(a);
+}
+
+function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
+  if (nRaw === 0) return [];
+
+  const planets = [];
+  const hz = calcHabZone(star.lum);
+  const sp = star.sp.t;
+  const isRedDwarf = (sp === 'M');
+  const isCoolStar = (sp === 'M' || sp === 'K');
+
+  // Generate orbital slots
+  let innerEdge;
+  if (sp === 'O' || sp === 'B') innerEdge = rf(0.5, 2);
+  else if (sp === 'A') innerEdge = rf(0.1, 0.5);
+  else if (sp === 'F' || sp === 'G') innerEdge = rf(0.05, 0.2);
+  else if (sp === 'K') innerEdge = rf(0.03, 0.1);
+  else innerEdge = rf(0.01, 0.05); // M / BD
+  // For circumbinary orbits, enforce Holman-Wiegert minimum stable distance
+  if (minAU && innerEdge < minAU) innerEdge = minAU * rf(1.0, 1.3);
+
+  // Planetary spacing factor (Titus-Bode-like)
+  let aList = [innerEdge];
+  for (let i = 1; i < nRaw; i++) {
+    const prev = aList[aList.length - 1];
+    const factor = rf(1.4, 2.2);
+    aList.push(prev * factor);
+  }
+
+  // Optionally clamp to binary separation
+  if (maxAU) {
+    aList = aList.filter(a => a < maxAU * 0.3);
+  }
+
+  // Enforce mutual Hill sphere separation for long-term stability.
+  // Two adjacent planets are stable if their separation > K * R_Hill_mutual,
+  // where K ≈ 8–12 (we use 10) and R_Hill_mutual = ((m1+m2)/3M*)^(1/3) * (a1+a2)/2.
+  // Since we don't know masses yet, we use the empirical minimum spacing factor:
+  // adjacent semi-major axes must differ by at least a factor of ~1.3 (already enforced
+  // by Titus-Bode factor 1.4–2.2 above), but also remove any slot where the ratio
+  // to the previous is < 1.25 after circumbinary clamping may have collapsed spacing.
+  if (aList.length > 1) {
+    const filtered = [aList[0]];
+    for (let i = 1; i < aList.length; i++) {
+      if (aList[i] / filtered[filtered.length-1] >= 1.25) filtered.push(aList[i]);
+    }
+    aList = filtered;
+  }
+
+  // Classify each planet
+  for (let i = 0; i < aList.length; i++) {
+    const a = aList[i];
+    const Teq = calcTeq(star.lum, a);
+    const isHabitable = (a >= hz.inner && a <= hz.outer);
+
+    // Frost line: roughly where water ice is stable
+    const frostLine = 2.7 * Math.sqrt(star.lum);
+
+    // Determine type probabilities based on position, star, metallicity
+    const planet = classifyPlanet(i, a, Teq, frostLine, hz, star, isHabitable, forceTerrestrial && i === Math.floor(aList.length / 2), forceTerrestrial && i === Math.floor(aList.length / 2));
+    if (planet) planets.push(planet);
+  }
+
+  // ── Captured rogue planet (rare) ──
+  // ~5% chance per system; can be on eccentric orbit or stable circular one
+  if (roll(0.05) && aList.length > 0) {
+    // Pick a random orbital slot not already occupied, preferably outer system
+    const existingAUs = planets.map(p => p.a);
+    // Place it at a random position, often in the outer half of the system
+    const outerSlots = aList.filter(a => a > (aList[aList.length-1] * 0.5));
+    const slotPool = outerSlots.length ? outerSlots : aList;
+    let rogueA = pick(slotPool) * rf(0.8, 2.5);
+    if (maxAU && rogueA >= maxAU * 0.3) rogueA = maxAU * 0.3 * rf(0.5, 0.95);
+    if (rogueA < (minAU || 0)) rogueA = (minAU || innerEdge) * rf(1.1, 3.0);
+
+    // Rogue planets tend to be gas giants or ice giants (they formed elsewhere)
+    const rogueTypes = ['gasGiant', 'gasGiant', 'iceGiant', 'iceGiant', 'rocky'];
+    const rogueType  = pick(rogueTypes);
+    const Teq = calcTeq(star.lum, rogueA);
+    const frostLine = 2.7 * Math.sqrt(star.lum);
+    const rogue = classifyPlanet(planets.length, rogueA, Teq, frostLine, calcHabZone(star.lum), star, false, false, false);
+    if (rogue) {
+      // Override with rogue-specific orbital properties
+      const isStable = roll(0.4); // 40% chance it settled into a stable circular orbit
+      rogue.ecc = isStable ? rf(0.01, 0.08) : rf(0.25, 0.75);
+      rogue.inclination = isStable ? rf(0, 10) : rf(15, 90); // high inclination if eccentric
+      rogue.isRogueCaptured = true;
+      rogue.rogueStable = isStable;
+      if (!rogue.special) rogue.special = [];
+      rogue.special.unshift(isStable
+        ? 'Captured rogue planet (stable circular orbit)'
+        : 'Captured rogue planet (eccentric/inclined orbit)');
+      // High-mass rogue on eccentric orbit may have destabilised inner system
+      if (!isStable && rogue.mEarth > 50) {
+        // Remove a random inner planet to represent destabilisation
+        const innerPlanets = planets.filter(p => p.a < rogueA);
+        if (innerPlanets.length > 1) {
+          const victim = innerPlanets[Math.floor(rng() * innerPlanets.length)];
+          const vi = planets.indexOf(victim);
+          if (vi !== -1) planets.splice(vi, 1);
+        }
+      }
+      planets.push(rogue);
+      planets.sort((a, b) => a.a - b.a);
+      planets.forEach((p, i) => { p.idx = i + 1; });
+    }
+  }
+
+  return planets;
+}
+
+function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRocky, forceEarthlike=false) {
+  const sp = star.sp.t;
+  const isRedDwarf = sp === 'M';
+  const metal = star.FeH;
+  const age = star.age;
+
+  let type, classLabel, mass, radius, colour;
+
+  const beyondFrost = a > frostLine;
+  const veryFar = a > frostLine * 3;
+
+  // Metallicity bonus to gas giant formation
+  const metalBonus = Math.pow(10, metal); // 1.0 at solar, ~3x at +0.5 dex
+
+  // Probability weights
+  let w = {
+    ferria:    0,
+    rocky:     0,
+    carbonia:  0,
+    gasGiant:  0,
+    iceGiant:  0,
+    dwarf:     0,
+    aquaria:   0,
+    chthonian: 0,  // stripped hot Jupiter
+  };
+
+  if (!beyondFrost) {
+    // Inner system: rocky worlds dominate
+    w.ferria   = a < 0.3 ? 0.3 : 0.1;
+    w.rocky    = 0.5;
+    w.carbonia = metal < -0.3 ? 0.15 : 0.05;
+    if (isRedDwarf) {
+      w.gasGiant = 0.01 * metalBonus; // gas giants are very rare around M dwarfs
+      w.iceGiant = 0.05;
+    } else {
+      w.gasGiant = 0.08 * metalBonus * (a < 0.1 ? 2 : 1); // hot Jupiters possible
+      w.iceGiant = 0.04;
+    }
+    w.dwarf    = 0.03;
+    w.aquaria  = 0.02;
+    // Chthonian: stripped hot Jupiter remnant, rare, only very close to star
+    w.chthonian = (a < 0.1 && !isRedDwarf) ? 0.03 : 0.0;
+  } else if (beyondFrost && !veryFar) {
+    // Mid outer: gas/ice giants, some dwarf
+    if (isRedDwarf) {
+      w.rocky    = 0.25;
+      w.iceGiant = 0.35;
+      w.gasGiant = 0.03 * metalBonus;
+      w.dwarf    = 0.2;
+      w.aquaria  = 0.17;
+    } else {
+      w.gasGiant = 0.35 * metalBonus;
+      w.iceGiant = 0.3;
+      w.dwarf    = 0.15;
+      w.aquaria  = 0.1;
+      w.rocky    = 0.1;
+    }
+  } else {
+    // Far outer: ice giants, dwarfs, aquaria
+    if (isRedDwarf) {
+      w.iceGiant = 0.3;
+      w.dwarf    = 0.35;
+      w.aquaria  = 0.35;
+    } else {
+      w.iceGiant = 0.25;
+      w.gasGiant = 0.1 * metalBonus;
+      w.dwarf    = 0.4;
+      w.aquaria  = 0.25;
+    }
+  }
+
+  if (forceRocky) { Object.keys(w).forEach(k => w[k] = 0); w.rocky = 1; }
+
+  // Normalise and pick
+  const total = Object.values(w).reduce((a,b)=>a+b,0);
+  let r = rng() * total;
+  for (const [k, v] of Object.entries(w)) {
+    r -= v;
+    if (r <= 0) { type = k; break; }
+  }
+  if (!type) type = 'rocky';
+
+  // Sub-classification and physical properties
+  let subClass = '';
+  let mEarth, rEarth;
+
+  switch (type) {
+    case 'ferria':
+      mEarth = rf(0.05, 1.5);
+      rEarth = Math.pow(mEarth, 0.28) * 0.8;
+      subClass = mEarth > 0.5 ? 'Super-Mercury' : 'Mercury-like';
+      colour = '#b07850';
+      break;
+
+    case 'rocky':
+      mEarth = rf(0.05, 5.0);
+      rEarth = Math.pow(mEarth, 0.27);
+      if (mEarth > 2) subClass = isHabitable ? 'Super-Earth' : 'Super-Venus';
+      else if (mEarth < 0.2) subClass = 'Sub-Earth';
+      else if (isHabitable) subClass = 'Terrestrial';
+      else if (Teq > 340) subClass = 'Venus-like';
+      else subClass = 'Barren Rocky';
+      // Hycean check: near HZ, some water
+      if (mEarth >= 1 && mEarth <= 8 && isHabitable && roll(0.15)) subClass = 'Hycean';
+      colour = isHabitable ? '#5a9c5a' : (Teq > 340 ? '#c08040' : '#8a8a7a');
+      break;
+
+    case 'carbonia':
+      mEarth = rf(0.3, 3.0);
+      rEarth = Math.pow(mEarth, 0.28) * 0.95;
+      subClass = 'Carbon Planet';
+      colour = '#555555';
+      break;
+
+    case 'gasGiant': {
+      // Sub-classify gas giant
+      const mJup = rf(0.1, 13.0);
+      mEarth = mJup * 317.8;
+
+      // First classify so we know if it's a hot Jupiter (affects radius)
+      let gjSubClass, gjColour;
+      if (a < 0.1 && Teq > 700) {
+        gjSubClass = 'Hot Jupiter';
+        gjColour   = '#e89040';
+      } else if (a < frostLine && roll(0.3)) {
+        gjSubClass = 'Eccentric Jupiter';
+        gjColour   = '#d4a060';
+      } else if (mJup < 0.5) {
+        gjSubClass = roll(0.4) ? 'Super-Puff' : 'Mini-Neptune';
+        gjColour   = '#80b8e0';
+      } else if (mJup > 5) {
+        gjSubClass = 'Super-Jupiter';
+        gjColour   = '#c06030';
+      } else {
+        gjSubClass = 'Gas Giant';
+        gjColour   = '#c8a050';
+      }
+      subClass = gjSubClass;
+      colour   = gjColour;
+
+      // Radius — empirical piecewise based on Thorngren et al. (2019) + known planets:
+      // • Mini-Neptune / Super-Puff: 3–8 R_Earth (handled separately)
+      // • Cold gas giants: roughly R ≈ R_Jup × (M/M_Jup)^0.06 for 0.3–4 M_Jup,
+      //   then slightly decreasing for >4 M_Jup (degeneracy pressure)
+      // • Hot Jupiter inflation: up to ~50% radius boost from stellar irradiation
+      if (gjSubClass === 'Mini-Neptune' || gjSubClass === 'Super-Puff') {
+        rEarth = mJup < 0.1 ? rf(3, 6) : rf(4, 8);
+      } else {
+        // Base cold-giant radius (R_Earth): anchored to Jupiter (11.2) and Saturn (9.46)
+        let baseR;
+        if (mJup <= 0.3)       baseR = 9.0  + (mJup / 0.3) * 1.5;  // sub-Saturn range
+        else if (mJup <= 1.0)  baseR = 10.5 + (mJup - 0.3) / 0.7 * 1.2; // Saturn→Jupiter
+        else if (mJup <= 4.0)  baseR = 11.2 + (mJup - 1.0) / 3.0 * 0.8; // Jupiter→super-J
+        else                   baseR = 12.0 - (mJup - 4.0) / 9.0 * 1.0; // degeneracy shrink
+        baseR = Math.max(baseR, 9.0);
+        // Hot Jupiter inflation: roughly +10–60% depending on irradiation
+        const inflationFactor = gjSubClass === 'Hot Jupiter' ? rf(1.10, 1.60) : 1.0;
+        rEarth = baseR * inflationFactor * rf(0.92, 1.08);
+      }
+      mass = mJup * 317.8; // store as Earth masses internally
+      break;
+    }
+
+    case 'iceGiant':
+      // Mass range: 5–55 M_Earth (Mini-Neptune through large ice giant)
+      // Uranus = 14.5 M_E, 4.0 R_E; Neptune = 17.2 M_E, 3.88 R_E
+      // Radius scales roughly as M^0.3 for ice giants (Fortney et al.)
+      mEarth = rf(5, 55);
+      if (mEarth < 10) {
+        // Mini-Neptune: 5–10 M_E, 2.5–3.5 R_E
+        rEarth = rf(2.5, 3.5);
+        subClass = 'Mini-Neptune';
+        colour = '#80b8d8';
+      } else if (mEarth < 20) {
+        // Uranus-like: ~10–20 M_E, 3.5–4.2 R_E (Uranus is the lighter one)
+        rEarth = rf(3.5, 4.2);
+        subClass = 'Uranus-like';
+        colour = '#70c0d0';
+      } else if (mEarth < 35) {
+        // Neptune-like: ~20–35 M_E, 3.7–4.5 R_E
+        rEarth = rf(3.7, 4.5);
+        subClass = 'Neptune-like';
+        colour = '#70c0d0';
+      } else {
+        // Large ice giant: 35–55 M_E
+        rEarth = rf(4.0, 5.0);
+        subClass = 'Ice Giant';
+        colour = '#70c0d0';
+      }
+      break;
+
+    case 'dwarf':
+      mEarth = rf(0.0001, 0.03); // in Earth masses (Pluto = 0.0022 M_E, 0.186 R_E)
+      // Icy/rocky dwarfs: lower density than Earth → R ∝ M^0.30 gives ~0.19 R_E for Pluto ✓
+      rEarth = Math.pow(mEarth, 0.30) * rf(0.90, 1.10);
+      if (a >= 1000)       subClass = 'Oort Cloud Object';
+      else if (veryFar)    subClass = 'Trans-Neptunian Object';
+      else if (beyondFrost) subClass = 'KBO';
+      else                  subClass = 'Dwarf Planet';
+      colour = '#888880';
+      break;
+
+    case 'aquaria':
+      mEarth = rf(0.005, 0.5);
+      // Icy ocean worlds: lower density than rocky (~1.0–1.5 g/cm³ vs 5.5 for Earth)
+      // Europa (0.008 M_E, 0.245 R_E), Ganymede (0.025 M_E, 0.413 R_E)
+      // R ≈ M^0.30 * 1.15 fits well across this range
+      rEarth = Math.pow(mEarth, 0.30) * rf(1.05, 1.25);
+      subClass = mEarth > 0.1 ? 'Ocean World' : 'Icy Moon-like';
+      colour = '#40a0c8';
+      break;
+
+    case 'chthonian':
+      // Chthonian planet: remnant core of a hot Jupiter that lost its atmosphere
+      // Core masses of gas giants are typically 10–20 M⊕; upper end ~25 M⊕
+      // (stripped from ~0.3–1 M_Jup progenitors)
+      mEarth = rf(8, 25);
+      rEarth = Math.pow(mEarth, 0.27) * rf(0.60, 0.82); // denser than rocky worlds
+      subClass = 'Chthonian';
+      colour = '#aa6633';
+      break;
+  }
+
+  const rKm = rEarth * 6371; // mKg not needed; mass displayed in Earth/Jup/Moon units
+
+  // Orbital period (Kepler's 3rd law)
+  const period = 365.25 * Math.sqrt(Math.pow(a, 3) / star.mass);
+
+  // Eccentricity
+  let ecc;
+  if (type === 'gasGiant' && subClass === 'Eccentric Jupiter') ecc = rf(0.2, 0.85);
+  else if (type === 'dwarf') ecc = rf(0.05, 0.4);
+  else ecc = rf(0, 0.12);
+
+  // Inclination relative to system invariable plane (degrees)
+  // Most planets are near-coplanar; occasional high-incl outliers (Kozai mechanism etc.)
+  let inclination;
+  {
+    const baseIncl = Math.abs(rf(-3, 3) + rf(-3, 3)); // peaked near 0°, Gaussian-ish
+    const isHighIncl = roll(type === 'gasGiant' ? 0.10 : 0.05); // eccentric Jupiters more likely
+    inclination = isHighIncl ? rf(10, 60) : Math.min(baseIncl, 8);
+  }
+
+  // Specials
+  // Atmosphere stripping: rocky/ferrian/carbonian/chthonian worlds that are torrid/hot
+  // and small enough to lose their atmosphere to stellar irradiation / Jeans escape
+  let isAirless = false;
+  if ((type === 'rocky' || type === 'ferria' || type === 'carbonia' || type === 'chthonian') && !forceEarthlike) {
+    // Use actual computed rEarth for escape velocity check (not re-derived from mass)
+    const escVelCheck = (mEarth > 0 && rEarth > 0) ? 11.186 * Math.sqrt(mEarth / (rEarth * rEarth)) : 0;
+    // Probability scales with temperature and inversely with escape velocity
+    // Torrid worlds with low escape velocity almost always airless
+    let pStrip = 0;
+    if (Teq >= 1000) pStrip = escVelCheck < 8 ? 0.90 : 0.60;  // Torrid
+    else if (Teq >= 500) pStrip = escVelCheck < 8 ? 0.55 : 0.25; // Hot
+    else if (Teq >= 330) pStrip = escVelCheck < 6 ? 0.20 : 0.05; // Warm, only small worlds
+    if (type === 'chthonian') pStrip = Math.max(pStrip, 0.95); // chthonians always airless
+    isAirless = roll(pStrip);
+  }
+  const tClass = tempClass(Teq);
+  if (isAirless) {
+    subClass = subClass + ' (Airless)';
+    classLabel = tClass + ' ' + subClass;
+    colour = type === 'ferria' ? '#8a6040' : '#999988';
+  }
+
+  const special = generateSpecials(type, mEarth || (rEarth > 4 ? rEarth * 14 : mEarth), rEarth, a, star);
+
+  classLabel = `${tClass} ${subClass}`;
+
+  // Tidal locking timescale: τ ∝ a^6 * R_planet^(-5) * M_star^(-1)
+  // Calibrated so Earth-mass planet at 1 AU around G star locks in ~50 Gyr (not locked),
+  // at 0.1 AU locks in ~50 Myr (locked for any system older than that).
+  // Using: τ_lock (Gyr) = 0.025 * (a/0.1)^6 * (1/star.mass) * (1/Math.pow(rEarth,5))
+  // Planet is locked if star.age > τ_lock.
+  // We clamp rEarth to avoid division issues for tiny dwarfs.
+  const rEarthClamped = Math.max(rEarth, 0.05);
+  const tau_lock_Gyr  = 0.025
+    * Math.pow(a / 0.1, 6)
+    * (1.0 / Math.max(star.mass, 0.08))
+    * (1.0 / Math.pow(rEarthClamped, 5));
+  const tidallyLocked = star.age > tau_lock_Gyr;
+
+  let rotationHours;
+  if (tidallyLocked) {
+    rotationHours = period * 24; // rotation = orbital period
+  } else {
+    // Prograde rotation, randomised
+    let baseRot;
+    if (type === 'gasGiant') {
+      // More massive gas giants spin faster: period ∝ M_Jup^-0.5
+      // Calibrated so 1 M_Jup ≈ 10h (Jupiter), 0.3 M_Jup ≈ 18h (Saturn-ish)
+      // Hot Jupiters are tidally locked already; this branch only reached if not locked
+      const mJup = (mEarth || 1) / 317.8;
+      const massScale = Math.pow(Math.max(mJup, 0.05), -0.5);
+      // Anchor: 1 M_Jup → ~10h baseline; scatter ±20%
+      baseRot = 10 * massScale * rf(0.85, 1.20);
+      // Clamp: fastest plausible ~6h (breakup risk), slowest ~30h
+      baseRot = Math.min(Math.max(baseRot, 6), 30);
+    } else if (type === 'iceGiant') {
+      // Uranus ~17h, Neptune ~16h at ~0.05 M_Jup; scale same way but anchored higher
+      const mJup = (mEarth || 1) / 317.8;
+      const massScale = Math.pow(Math.max(mJup, 0.01), -0.4);
+      baseRot = 16 * massScale * rf(0.85, 1.20);
+      baseRot = Math.min(Math.max(baseRot, 8), 28);
+    } else if (type === 'dwarf') {
+      baseRot = rf(4, 12);
+    } else {
+      baseRot = rf(10, 120); // rocky/ferria/carbonia/aquaria highly variable
+    }
+    // Slight age-dependent slowdown for rocky worlds (magnetic braking analogue)
+    if (type !== 'gasGiant' && type !== 'iceGiant') {
+      baseRot *= Math.pow(star.age / 4.6, 0.15);
+    }
+    rotationHours = baseRot * rf(0.9, 1.1);
+  }
+
+  // Keplerian angular elements: all uniform -360 to 360 deg (physically 0-360,
+  // but negative values valid as shorthand in many tools including Space Engine)
+  const ascNode  = rf(-360, 360);
+  const argPeri  = rf(-360, 360);
+  const meanAnom = rf(-360, 360);
+
+  // Albedo: type-dependent realistic bond albedo
+  let albedo;
+  if (type === 'gasGiant') {
+    albedo = subClass === 'Hot Jupiter' ? rf(0.03, 0.15) : rf(0.25, 0.65);
+  } else if (type === 'iceGiant') {
+    albedo = rf(0.25, 0.55);
+  } else if (type === 'rocky') {
+    if (isAirless) {
+      albedo = rf(0.04, 0.15); // airless rocky world: dark bare regolith like Mercury/Moon
+    } else if (tClass === 'Temperate' || tClass === 'Cool') {
+      albedo = rf(0.20, 0.45); // partial cloud/ice cover
+    } else if (tClass === 'Cold' || tClass === 'Frigid') {
+      albedo = rf(0.40, 0.75); // ice/snow covered
+    } else if (tClass === 'Hot' || tClass === 'Torrid') {
+      albedo = rf(0.55, 0.80); // Venus-like thick clouds if not airless
+    } else {
+      albedo = rf(0.10, 0.35);
+    }
+  } else if (type === 'ferria') {
+    albedo = rf(0.05, 0.15); // dark bare rock like Mercury
+  } else if (type === 'aquaria') {
+    albedo = rf(0.40, 0.70); // icy surfaces
+  } else if (type === 'dwarf') {
+    albedo = rf(0.04, 0.90); // huge range (Eris ~0.96, Arrokoth ~0.13)
+  } else if (type === 'carbonia') {
+    albedo = rf(0.02, 0.10); // very dark carbon surfaces
+  } else {
+    albedo = rf(0.10, 0.40);
+  }
+  albedo = Math.min(Math.max(albedo, 0.01), 0.99);
+
+  // Recalc Teq with actual albedo for display (earlier used fixed 0.3)
+  const TeqActual = 278 * Math.pow(star.lum * (1 - albedo), 0.25) / Math.sqrt(a);
+
+  // Escape velocity: v_esc = sqrt(2GM/R), in km/s
+  // G = 6.674e-11, M_Earth = 5.972e24 kg, R_Earth = 6.371e6 m
+  // v_esc_Earth = 11.186 km/s
+  const mActual = mEarth || 0;
+  const escapeVel = mActual > 0 ? 11.186 * Math.sqrt(mActual / (rEarth * rEarth)) : 0;
+
+  // ESI = Earth Similarity Index (Schulze-Makuch et al. 2011)
+  // ESI = product of (1 - |X_i - X_ref| / (X_i + X_ref))^w_i for each param
+  // Params: radius (w=0.57), density (w=1.07), escape velocity (w=0.70), surface temp (w=5.58)
+  // We use: radius, mass (proxy for density), escape velocity, temperature
+  // Reference: Earth radius=1, mass=1, v_esc=11.186 km/s, Tsurf=288 K
+  // Density: ρ = M / (4/3 π R³), in g/cm³. Earth = 5.514 g/cm³
+  const densityGcm3 = (mActual > 0 && rEarth > 0) ? (5.514 * mActual / Math.pow(rEarth, 3)) : 0;
+
+  // ESI (Schulze-Makuch et al. 2011): uses radius, bulk density, escape velocity, surface temp
+  // Reference: Earth R=1 R_E, ρ=5.514 g/cm³, v_esc=11.186 km/s, T=288 K
+  const esiR  = Math.pow(1 - Math.abs(rEarth - 1.0) / (rEarth + 1.0), 0.57);
+  const esiD  = densityGcm3 > 0 ? Math.pow(1 - Math.abs(densityGcm3 - 5.514) / (densityGcm3 + 5.514), 1.07) : 0;
+  const esiV  = escapeVel > 0 ? Math.pow(1 - Math.abs(escapeVel - 11.186) / (escapeVel + 11.186), 0.70) : 0;
+  const esiT  = Math.pow(1 - Math.abs(TeqActual - 288) / (TeqActual + 288), 5.58);
+  const esi   = (mActual > 0 && rEarth > 0) ? esiR * esiD * esiV * esiT : 0;
+
+  return {
+    idx: idx + 1,
+    type, subClass, classLabel,
+    mEarth: mActual, rEarth, rKm, Teq: TeqActual,
+    albedo, escapeVel, esi, densityGcm3,
+    a, ecc, inclination, ascNode, argPeri, meanAnom,
+    period, colour, special, tClass,
+    rotationHours, tidallyLocked,
+    age: star.age,
+    life: generateLife(type, subClass, tClass, TeqActual, mActual, star.age, tidallyLocked, a, star, forceEarthlike, isAirless)
+  };
+}
+
+// ============================================================
+//  LIFE GENERATION
+// ============================================================
+function generateLife(type, subClass, tClass, Teq, mEarth, age, tidallyLocked, a, star, forceEarthlike=false, isAirless=false) {
+  // Airless worlds cannot support surface life
+  if (isAirless) return null;
+  // Force Earth-like: guaranteed organic multicellular marine+terrestrial life
+  if (forceEarthlike) {
+    return { chemistry: 'organic', complexity: 'multicellular', habitats: ['marine', 'terrestrial'] };
+  }
+
+  // Only certain planet types can harbour life
+  // Gas giants / ice giants / dwarfs / carbonia: no surface life (but moons could; we skip that here)
+  if (type === 'gasGiant' || type === 'iceGiant' || type === 'dwarf') return null;
+  if (type === 'carbonia') return null; // carbon worlds considered inhospitable
+  if (type === 'chthonian') return null; // stripped remnant, no atmosphere
+
+  // Temperature range: life requires liquid water or exotic solvents
+  // Organic life: 200–370 K (wide range for extremophiles / sub-ice)
+  // Exotic life: can exist in wider range (e.g. liquid methane, supercritical CO2)
+  const canOrganic = (Teq >= 180 && Teq <= 400);
+  const canExotic  = (Teq >= 50  && Teq <= 600) && !canOrganic;
+  const canSubIce  = (Teq >= 60  && Teq <= 280) && type === 'aquaria'; // subsurface ocean
+
+  if (!canOrganic && !canExotic && !canSubIce) return null;
+
+  // Minimum age for life to emerge: ~0.5 Gyr for simple, ~1.5 Gyr for complex
+  if (age < 0.3) return null; // too young even for unicellular
+
+  // Suppress life entirely if system has NS or BH
+  if (star.systemHasNSorBH) return null;
+  // Reduce life chance around white dwarfs (habitable zone very narrow, radiation history)
+  const wdPenalty = (star.evolClass === 'WD') ? 0.15 : 1.0;
+
+  // Base probability of life existing at all
+  // Higher for habitable-zone rocky/aquaria worlds, lower otherwise
+  let pLife = 0;
+  if (type === 'rocky') {
+    if (tClass === 'Temperate') pLife = 0.18;
+    else if (tClass === 'Cool' || tClass === 'Warm') pLife = 0.10;
+    else if (tClass === 'Cold') pLife = 0.04;
+    else if (tClass === 'Hot') pLife = 0.02;
+    else pLife = 0.005;
+  } else if (type === 'ferria') {
+    pLife = tClass === 'Temperate' ? 0.03 : 0.008;
+  } else if (type === 'aquaria') {
+    pLife = canSubIce ? 0.08 : (tClass === 'Temperate' || tClass === 'Cool' ? 0.12 : 0.04);
+  }
+
+  // Tidally locked worlds: harsher but not impossible
+  if (tidallyLocked) pLife *= 0.4;
+
+  // Modest boost for older, stable systems
+  if (age > 4) pLife = Math.min(pLife * 1.3, 0.90);
+  pLife *= wdPenalty;
+  pLife = Math.min(pLife * lifeMult, 1.0);
+
+  if (!roll(pLife)) return null;
+
+  // ── Chemistry ──
+  // Organic (carbon-based) far more likely in temperate/water-friendly conditions
+  const isOrganic = canOrganic ? roll(0.88) : (canSubIce ? roll(0.70) : roll(0.30));
+  const chemistry = isOrganic ? 'organic' : 'exotic';
+
+  // ── Complexity ──
+  // Multicellular needs ~1 Gyr minimum; complex multicellular ~2 Gyr
+  let complexity;
+  if (age < 0.8) {
+    complexity = 'unicellular';
+  } else if (age < 1.8) {
+    complexity = roll(0.35) ? 'multicellular' : 'unicellular';
+  } else {
+    const r = rng();
+    if (r < 0.30) complexity = 'unicellular';
+    else complexity = 'multicellular';
+  }
+
+  // ── Habitat(s) ──
+  // Build a pool of possible habitats based on planet type and conditions
+  const habitatPool = [];
+
+  if (type === 'aquaria' || (type === 'rocky' && (tClass === 'Temperate' || tClass === 'Cool' || tClass === 'Cold'))) {
+    habitatPool.push('marine');
+  }
+  if (type === 'rocky' && (tClass === 'Temperate' || tClass === 'Warm' || tClass === 'Cool')) {
+    habitatPool.push('terrestrial');
+  }
+  if ((Teq < 260 || type === 'aquaria') && complexity !== 'unicellular') {
+    habitatPool.push('subglacial');
+  }
+  // Aerial life: only complex multicellular on worlds with thick atmospheres
+  if (complexity === 'multicellular' && mEarth > 0.3 && (tClass === 'Temperate' || tClass === 'Warm') && age > 2.5 && roll(0.25)) {
+    habitatPool.push('aerial');
+  }
+  // Fallback: unicellular always at least marine or subglacial
+  if (habitatPool.length === 0) {
+    habitatPool.push(type === 'aquaria' ? 'subglacial' : 'marine');
+  }
+
+  // Pick 1–3 habitats depending on complexity and age
+  let maxHabitats;
+  if (complexity === 'unicellular') maxHabitats = roll(0.3) ? 2 : 1;
+  else maxHabitats = age > 3 ? ri(1, habitatPool.length) : ri(1, Math.min(2, habitatPool.length));
+
+  // Shuffle pool and slice
+  const shuffled = habitatPool.slice().sort(() => rng() - 0.5);
+  const habitats = shuffled.slice(0, Math.min(maxHabitats, shuffled.length));
+  habitats.sort((a, b) => ['marine','subglacial','terrestrial','aerial'].indexOf(a) - ['marine','subglacial','terrestrial','aerial'].indexOf(b));
+
+  return { chemistry, complexity, habitats };
+}
+
+function generateSpecials(type, mEarth, rEarth, a, star) {
+  const parts = [];
+
+  // Rings
+  const hasRings = type === 'gasGiant' ? roll(0.45)
+                : type === 'iceGiant' ? roll(0.55)
+                : roll(0.05);
+  if (hasRings) {
+    const ringType = pick(['thin ring system', 'dense ring system', 'broad ring system', 'faint ring system']);
+    parts.push('Rings (' + ringType + ')');
+  }
+
+  // Moons
+  if (type === 'gasGiant' || type === 'iceGiant') {
+    const nMajor = ri(0, type === 'gasGiant' ? 6 : 4);
+    const nIrreg = ri(0, 60);
+    if (nMajor > 0) parts.push(`${nMajor} major regular moon${nMajor>1?'s':''}`);
+    if (nIrreg > 0) parts.push(`~${nIrreg} irregular moon${nIrreg>1?'s':''}`);
+  } else if (type === 'rocky' || type === 'ferria') {
+    if (mEarth > 0.3 && roll(0.12)) {
+      // Large moon formed by giant impactor event (like Earth's Moon)
+      parts.push('Large moon via impactor event');
+    } else if (mEarth > 0.5 && roll(0.25)) {
+      parts.push(ri(1,2) + ' natural moon' + (ri(1,2)>1?'s':''));
+    } else if (roll(0.04)) {
+      parts.push('1 captured moon');
+    }
+  } else if (type === 'aquaria') {
+    if (roll(0.2)) parts.push('Subsurface ocean');
+  } else if (type === 'dwarf') {
+    if (roll(0.15)) parts.push('1 companion body');
+  }
+
+  // Atmospheric special
+  if (type === 'rocky') {
+    if (roll(0.1)) parts.push('Thick atmosphere');
+    else if (roll(0.08)) parts.push('Tenuous atmosphere');
+  }
+  if (type === 'rocky' && mEarth > 0.5 && mEarth < 5 && roll(0.15)) {
+    parts.push('Magnetic field detected');
+  }
+
+  return parts.length ? parts : null;
+}
+
+// ============================================================
+//  BELT GENERATION
+// ============================================================
+// Returns array of belt objects: { name, minAU, maxAU, type }
+// type: 'asteroid' | 'kuiper' | 'oort'
+// minAU: circumbinary minimum stable orbit (3× binary separation); null for single stars
+function generateBelts(star, planets, maxAU, minAU=null, allowOort=false) {
+  const belts = [];
+  const sp = star.sp.t;
+  const frostLine = 2.7 * Math.sqrt(star.lum);
+
+  // Helper: clamp a belt's inner edge to at least minAU (circumbinary stability)
+  function clampInner(v) { return minAU ? Math.max(v, minAU * rf(1.0, 1.15)) : v; }
+
+  // ---- Asteroid belt (inner, between rocky & gas giant zones) ----
+  const asteroidProb = { O:0.15, B:0.20, A:0.35, F:0.55, G:0.65, K:0.55, M:0.30 }[sp] || 0.4;
+
+  if (roll(asteroidProb)) {
+    const beltCentre = clampInner(frostLine * rf(0.5, 1.1));
+    const halfWidth  = beltCentre * rf(0.12, 0.30);
+    const bMin = Math.max(minAU || 0.001, beltCentre - halfWidth);
+    const bMax = beltCentre + halfWidth;
+    if (!maxAU || bMax < maxAU * 0.3) {
+      belts.push({ name: 'Asteroid Belt', minAU: bMin, maxAU: bMax, type: 'asteroid', icon: '◌' });
+    }
+  }
+
+  // ---- Kuiper Belt analogue (outer cold belt) ----
+  const kuiperProb = { O:0.20, B:0.25, A:0.40, F:0.55, G:0.70, K:0.60, M:0.25 }[sp] || 0.45;
+
+  if (roll(kuiperProb)) {
+    const scale   = Math.sqrt(star.lum);
+    const kbInner = clampInner(rf(15, 25) * scale);
+    const kbOuter = kbInner * rf(1.6, 2.8);
+    if (!maxAU || kbInner < maxAU * 0.3) {
+      belts.push({ name: 'Kuiper Belt Analogue', minAU: kbInner, maxAU: kbOuter, type: 'kuiper', icon: '◎' });
+      // Scattered Disc beyond KB
+      if (roll(0.35)) {
+        const sdInner = kbOuter * rf(1.1, 1.4);
+        const sdOuter = kbOuter * rf(4, 10);
+        belts.push({ name: 'Scattered Disc', minAU: sdInner, maxAU: sdOuter, type: 'kuiper', icon: '◎' });
+      }
+    }
+  }
+
+  // ---- Hot dust / debris belt very close in (rare, like Fomalhaut inner ring) ----
+  if (roll(0.12)) {
+    const debrisInner = clampInner(rf(0.1, 0.4) * Math.sqrt(star.lum));
+    const debrisOuter = debrisInner * rf(1.1, 1.5);
+    if (!maxAU || debrisOuter < maxAU * 0.3) {
+      belts.push({ name: 'Debris Belt', minAU: debrisInner, maxAU: debrisOuter, type: 'asteroid', icon: '◌' });
+    }
+  }
+
+  // ---- Oort Cloud analogue (very distant, beyond 1000 AU) ----
+  // Only for single stars or close binaries (circumbinary), never distant-binary companions
+  const oortProb = { O:0.50, B:0.45, A:0.40, F:0.50, G:0.60, K:0.50, M:0.25 }[sp] || 0.35;
+  if (allowOort && roll(oortProb)) {
+    const oortInner = rf(1000, 2000);
+    const oortOuter = oortInner * rf(2.5, 5.0);
+    belts.push({ name: 'Oort Cloud', minAU: oortInner, maxAU: oortOuter, type: 'oort', icon: '○' });
+  }
+
+  return belts;
+}
+
+// Merge planets and belts into a single sorted list for rendering
+function mergeOrbitalItems(planets, belts) {
+  const items = [
+    ...planets.map(p => ({ kind: 'planet', a: p.a, data: p })),
+    ...belts.map(b  => ({ kind: 'belt',   a: (b.minAU + b.maxAU) / 2, data: b }))
+  ];
+  items.sort((x, y) => x.a - y.a);
+  return items;
+}
+
+// ============================================================
+//  MASS / RADIUS FORMATTING
+// ============================================================
+function formatMass(mEarth) {
+  const mMoon = mEarth * 81.3;
+  const mJup  = mEarth / 317.8;
+  if (mJup >= 1.0)      return fmt(mJup, 3)   + ' M♃';
+  if (mEarth >= 0.05)   return fmt(mEarth, 4)  + ' M⊕';
+  return fmt(mMoon, 4) + ' M☽';
+}
+
+function formatRadius(rEarth) {
+  const rKm = rEarth * 6371;
+  const rJup = rEarth / 11.2;
+  const imp = currentUnits === 'imperial';
+  if (rJup >= 1.0) {
+    const dist = imp ? (rKm * 0.621371).toFixed(0) + ' mi' : Math.round(rKm) + ' km';
+    return fmt(rJup, 3) + ' R♃ (' + dist + ')';
+  }
+  const dist = imp ? (rKm * 0.621371).toFixed(0) + ' mi' : Math.round(rKm) + ' km';
+  return fmt(rEarth, 3) + ' R⊕ (' + dist + ')';
+}
+
+function formatTemp(K) {
+  if (currentUnits === 'imperial') {
+    const F = (K - 273.15) * 9/5 + 32;
+    return Math.round(F) + ' °F';
+  }
+  return Math.round(K) + ' K';
+}
+
+function formatEscVel(kms) {
+  if (currentUnits === 'imperial') return fmt(kms * 0.621371, 3) + ' mi/s';
+  return fmt(kms, 3) + ' km/s';
+}
+
+function formatDensity(gcm3) {
+  if (currentUnits === 'imperial') return fmt(gcm3 * 0.0361273, 4) + ' lb/in³';
+  return fmt(gcm3, 2) + ' g/cm³';
+}
+
+function formatRotation(hours, tidallyLocked) {
+  if (tidallyLocked) return 'Tidally locked';
+  if (hours < 24)   return fmt(hours, 2) + ' hours';
+  const days = hours / 24;
+  if (days < 365)   return fmt(days, 2) + ' days (' + fmt(hours, 1) + ' h)';
+  return fmt(days / 365.25, 2) + ' years';
+}
+
+function formatPeriod(days) {
+  if (days < 2) return fmt(days * 24, 1) + ' hours';
+  if (days < 365) return fmt(days, 1) + ' days';
+  return fmt(days / 365.25, 2) + ' years';
+}
+
+// ============================================================
+//  RENDERING
+// ============================================================
+function badgeClass(type) {
+  const m = { ferria:'ferria', rocky:'rocky', carbonia:'carbonia', gasGiant:'gasgiant', iceGiant:'icegiant', dwarf:'dwarf', aquaria:'aquaria', chthonian:'ferria' };
+  return 'badge-' + (m[type] || 'rocky');
+}
+
+function planetDotColour(p) {
+  return p.colour;
+}
+
+function renderPlanetCard(p, prefix) {
+  const id = `pc-${prefix}-${p.idx}`;
+  const specialHtml = p.special
+    ? `<div class="special-section"><div class="sp-label">SPECIAL</div><div class="sp-val">${p.special.join(' &bull; ')}</div></div>`
+    : '';
+  const typeLabel = ({gasGiant:'Gas Giant',iceGiant:'Ice Giant',dwarf:'Dwarf Planet',chthonian:'Chthonian',ferria:'Ferria',rocky:'Rocky',carbonia:'Carbonia',aquaria:'Aquaria'}[p.type]) || (p.type.charAt(0).toUpperCase()+p.type.slice(1));
+  const lifeId = `life-${id}`;
+  const lifeTagHtml = p.life ? (() => {
+    const habStr = p.life.habitats.join('/');
+    const desc = `${p.life.chemistry} ${p.life.complexity} ${habStr}`;
+    // Popup content encoded as data attributes; rendered into a fixed portal on hover
+    const popHtml = `<div class='life-popup-row'><span class='lp-key'>Chemistry</span><span class='lp-val'>${p.life.chemistry}</span></div><div class='life-popup-row'><span class='lp-key'>Complexity</span><span class='lp-val'>${p.life.complexity}</span></div><div class='life-popup-row'><span class='lp-key'>Habitat</span><span class='lp-val'>${habStr}</span></div><div class='life-popup-row' style='margin-top:5px;padding-top:5px;border-top:1px solid #1a2f55'><span class='lp-val' style='font-size:11px;color:#7a9acc'>${desc}</span></div>`;
+    return `<span class="life-tag" onmouseenter="showLifePopup(event,this)" onmouseleave="hideLifePopup()" data-life-html="${encodeURIComponent(popHtml)}">✦ LIFE</span>`;
+  })() : '';
+
+  return `
+<div class="planet-card" id="${id}">
+  <div class="planet-header" onclick="togglePlanet('${id}')">
+    <div class="planet-dot" style="background:${p.colour};box-shadow:0 0 6px ${p.colour}66"></div>
+    <div class="planet-name">${prefix}-${p.idx}</div>
+    <span class="planet-type-badge ${badgeClass(p.type)}">${p.subClass}</span>
+    ${lifeTagHtml}
+    <span class="planet-au">${fmt(p.a,4)} AU</span>
+    <span class="planet-expand-icon">▼</span>
+  </div>
+  <div class="planet-details">
+    <div class="planet-details-panels">
+      <div class="planet-detail-col">
+        <div class="detail-col-label">Physical Properties</div>
+        <div class="pd-row"><span class="pd-key">TYPE</span><span class="pd-val">${typeLabel}</span></div>
+        <div class="pd-row"><span class="pd-key">CLASS</span><span class="pd-val">${p.classLabel}</span></div>
+        <div class="pd-row"><span class="pd-key">AGE</span><span class="pd-val">${p.age < 0.01 ? (p.age * 1000).toFixed(2) + ' Myr' : p.age < 0.1 ? fmt(p.age,4) + ' Gyr' : fmt(p.age,2) + ' Gyr'}</span></div>
+        <div class="pd-row"><span class="pd-key">MASS</span><span class="pd-val">${formatMass(p.mEarth)}</span></div>
+        <div class="pd-row"><span class="pd-key">RADIUS</span><span class="pd-val">${formatRadius(p.rEarth)}</span></div>
+        <div class="pd-row"><span class="pd-key">DENSITY</span><span class="pd-val">${p.densityGcm3 > 0 ? formatDensity(p.densityGcm3) : 'N/A'}</span></div>
+        <div class="pd-row"><span class="pd-key">EQ. TEMP</span><span class="pd-val">${formatTemp(p.Teq)}</span></div>
+        <div class="pd-row"><span class="pd-key">ALBEDO</span><span class="pd-val">${fmt(p.albedo,3)}</span></div>
+        <div class="pd-row"><span class="pd-key">ESC. VELOCITY</span><span class="pd-val">${p.escapeVel > 0 ? formatEscVel(p.escapeVel) : 'N/A'}</span></div>
+        <div class="pd-row"><span class="pd-key">ESI</span><span class="pd-val" style="${p.esi > 0.8 ? 'color:var(--accent3)' : p.esi > 0.5 ? 'color:var(--accent2)' : ''}">${p.esi > 0 ? fmt(p.esi*100,1)+'%' : 'N/A'}</span></div>
+        <div class="pd-row"><span class="pd-key">ROTATION</span><span class="pd-val">${formatRotation(p.rotationHours, p.tidallyLocked)}</span></div>
+      </div>
+      <div class="planet-detail-col">
+        <div class="detail-col-label orbital">Orbital Properties</div>
+        <div class="pd-row"><span class="pd-key">SEMI-MAJOR AXIS</span><span class="pd-val">${fmt(p.a,4)} AU</span></div>
+        <div class="pd-row"><span class="pd-key">PERIOD</span><span class="pd-val">${formatPeriod(p.period)}</span></div>
+        <div class="pd-row"><span class="pd-key">ECCENTRICITY</span><span class="pd-val">${fmt(p.ecc,4)}</span></div>
+        <div class="pd-row"><span class="pd-key">INCLINATION</span><span class="pd-val">${fmt(p.inclination,2)}°</span></div>
+        <div class="pd-row"><span class="pd-key">ASC. NODE (Ω)</span><span class="pd-val">${fmt(p.ascNode,2)}°</span></div>
+        <div class="pd-row"><span class="pd-key">ARG. PERICENTER (ω)</span><span class="pd-val">${fmt(p.argPeri,2)}°</span></div>
+        <div class="pd-row"><span class="pd-key">MEAN ANOMALY (M)</span><span class="pd-val">${fmt(p.meanAnom,2)}°</span></div>
+      </div>
+    </div>
+    ${specialHtml}
+  </div>
+</div>`;
+}
+
+function renderStarIcon(star) {
+  return `<div class="star-icon" style="background:radial-gradient(circle at 35% 35%, #fff8 10%, ${star.col} 50%, ${star.col}88 100%);box-shadow:0 0 16px ${star.col}aa,0 0 32px ${star.col}55"></div>`;
+}
+
+function renderStarStats(star) {
+  return `
+<div class="star-stats">
+  <div class="stat-cell"><span class="sv">${star.age < 0.01 ? (star.age*1000).toFixed(2)+' Myr' : star.age < 0.1 ? fmt(star.age,4)+' Gyr' : fmt(star.age,2)+' Gyr'}</span><span class="sk">Age</span></div>
+  <div class="stat-cell"><span class="sv">${fmt(star.mass,3)}</span><span class="sk">Mass (M☉)</span></div>
+  <div class="stat-cell"><span class="sv">${fmt(star.lum,4)}</span><span class="sk">Lum (L☉)</span></div>
+  <div class="stat-cell"><span class="sv">${fmt(star.radius,3)}</span><span class="sk">Radius (R☉)</span></div>
+  <div class="stat-cell"><span class="sv">${fmt(star.FeH,2)}</span><span class="sk">Met [Fe/H]</span></div>
+  <div class="stat-cell"><span class="sv">${Math.round(star.temp).toLocaleString()}</span><span class="sk">Temp (K)</span></div>
+  <div class="stat-cell" style="grid-column:1/-1"><span class="sv">${star.evolClass === 'BH' ? 'N/A' : star.evolClass === 'NS' ? (star.rotationHours * 3600 < 0.1 ? fmt(star.rotationHours*3600*1000,1)+' ms' : fmt(star.rotationHours*3600,3)+' s') : star.tidallyLocked ? 'Tidally locked' : (star.rotationHours < 24 ? fmt(star.rotationHours,2)+' h' : fmt(star.rotationHours/24,2)+' d ('+fmt(star.rotationHours,1)+' h)')}</span><span class="sk">Rotation Period</span></div>
+  ${star.protoplanDisk ? `<div class="stat-cell" style="grid-column:1/-1;color:var(--accent3)"><span class="sv" style="color:var(--accent3)">${fmt(star.protoplanDisk.inner,3)} – ${fmt(star.protoplanDisk.outer,1)} AU</span><span class="sk" style="color:var(--accent3)">Protoplanetary Disk</span></div>` : ''}
+</div>`;
+}
+
+function renderStarHeader(star, label) {
+  return `
+<div class="star-header">
+  ${renderStarIcon(star)}
+  <div class="star-info">
+    <h3>${label} — ${star.evolClass === 'WD' ? star.wdSubtype : star.evolClass === 'NS' ? 'NS' : star.evolClass === 'BH' ? 'BH' : star.spectralClass + (star.isBD ? '' : star.lumClassSuffix)}</h3>
+    <div class="star-type-label">${star.isRemnant ? getProgenitorLabel(star) + ' &bull; ' : (star.isBD ? '' : getStarTypeName(star.sp.t, star.evolClass) + ' &bull; ')}${getEvolClassName(star)}</div>
+  </div>
+</div>
+${renderStarStats(star)}`;
+}
+
+function renderBeltRow(belt) {
+  return `
+<div class="belt-row">
+  <span class="belt-icon">${belt.icon}</span>
+  <span class="belt-name">${belt.name}</span>
+  <span class="belt-au">${fmt(belt.minAU, 3)} – ${fmt(belt.maxAU, 3)} AU</span>
+</div>`;
+}
+
+function renderPlanetsList(planets, belts, prefix) {
+  const items = mergeOrbitalItems(planets, belts);
+  if (items.length === 0) return '<p class="no-planets">No bodies formed</p>';
+  const html = items.map(item =>
+    item.kind === 'planet'
+      ? renderPlanetCard(item.data, prefix)
+      : renderBeltRow(item.data)
+  ).join('');
+  return `<div class="planets-scroll">${html}</div>`;
+}
+
+function renderSystem(sys) {
+  _lastSystem = sys;
+  const el = document.getElementById('output');
+
+  // Title
+  let titleHtml = `<div class="system-title"><h2>${sys.name || 'Unnamed'} System</h2>`;
+  if (sys.companion) {
+    const sepLabel = sys.companionType === 'close'
+      ? `Stellar separation: ${fmt(sys.separation, 4)} AU (close binary)`
+      : `Stellar separation: ${fmt(sys.separation, 1)} AU (distant companion)`;
+    const orbLabel = ` &bull; e = ${fmt(sys.stellarEcc, 4)} &bull; i = ${fmt(sys.stellarIncl, 1)}°`;
+    titleHtml += `<div class="separation">${sepLabel}${orbLabel}</div>`;
+  }
+  titleHtml += '</div>';
+
+  let bodyHtml = '';
+  const nameParts = (sys.name || 'Star').trim().split(' ');
+  const base = nameParts[nameParts.length-1] || sys.name || 'Star';
+
+  if (!sys.companion) {
+    // Single star
+    bodyHtml = `
+<div class="panels-container single">
+  <div class="star-panel">
+    ${renderStarHeader(sys.primary, sys.name || 'Primary Star')}
+    <div class="planets-section">
+      <h4>Planetary System</h4>
+      ${renderPlanetsList(sys.primaryPlanets, sys.primaryBelts, base)}
+    </div>
+  </div>
+</div>`;
+
+  } else if (sys.companionType === 'close') {
+    // Close binary: more massive star always on the left.
+    // Preserve which object is primary and which is companion for correct labelling.
+    const primaryIsHeavier = sys.primary.mass >= sys.companion.mass;
+    const st1 = primaryIsHeavier ? sys.primary   : sys.companion;
+    const st2 = primaryIsHeavier ? sys.companion : sys.primary;
+    // lb1 = label for the heavier (left) star; lb2 = label for the lighter (right) star
+    const lb1 = primaryIsHeavier ? (sys.name||'Primary') : 'Companion';
+    const lb2 = primaryIsHeavier ? 'Companion' : (sys.name||'Primary');
+
+    bodyHtml = `
+<div class="panels-container single">
+  <div class="star-panel">
+    <div class="close-binary-header">
+      <div class="star-header-half">
+        ${renderStarIcon(st1)}
+        <div class="star-info" style="margin-top:8px">
+          <h3>${lb1} — ${st1.evolClass === 'WD' ? st1.wdSubtype : st1.evolClass === 'NS' ? 'NS' : st1.evolClass === 'BH' ? 'BH' : st1.spectralClass + (st1.isBD ? '' : st1.lumClassSuffix)}</h3>
+          <div class="star-type-label">${st1.isRemnant ? getProgenitorLabel(st1) + ' &bull; ' : (st1.isBD ? '' : getStarTypeName(st1.sp.t, st1.evolClass) + ' &bull; ')}${getEvolClassName(st1)}</div>
+        </div>
+        ${renderStarStats(st1)}
+      </div>
+      <div class="star-header-half">
+        ${renderStarIcon(st2)}
+        <div class="star-info" style="margin-top:8px">
+          <h3>${lb2} — ${st2.evolClass === 'WD' ? st2.wdSubtype : st2.evolClass === 'NS' ? 'NS' : st2.evolClass === 'BH' ? 'BH' : st2.spectralClass + (st2.isBD ? '' : st2.lumClassSuffix)}</h3>
+          <div class="star-type-label">${st2.isRemnant ? getProgenitorLabel(st2) + ' &bull; ' : (st2.isBD ? '' : getStarTypeName(st2.sp.t, st2.evolClass) + ' &bull; ')}${getEvolClassName(st2)}</div>
+        </div>
+        ${renderStarStats(st2)}
+      </div>
+    </div>
+    <div class="planets-section">
+      <h4>Circumbinary Planetary System</h4>
+      ${renderPlanetsList(sys.primaryPlanets, sys.primaryBelts, base)}
+    </div>
+  </div>
+</div>`;
+
+  } else {
+    // Distant binary: more massive star always on the left (A), less massive on right (B)
+    const [stA, stB, planetsA, beltsA, planetsB, beltsB] = sys.primary.mass >= sys.companion.mass
+      ? [sys.primary, sys.companion, sys.primaryPlanets, sys.primaryBelts, sys.compPlanets, sys.compBelts]
+      : [sys.companion, sys.primary, sys.compPlanets, sys.compBelts, sys.primaryPlanets, sys.primaryBelts];
+
+    bodyHtml = `
+<div class="panels-container dual">
+  <div class="star-panel">
+    ${renderStarHeader(stA, (sys.name||'Star') + ' A')}
+    <div class="planets-section">
+      <h4>Planetary System — ${base} A</h4>
+      ${renderPlanetsList(planetsA, beltsA, base + 'A')}
+    </div>
+  </div>
+  <div class="star-panel">
+    ${renderStarHeader(stB, (sys.name||'Star') + ' B')}
+    <div class="planets-section">
+      <h4>Planetary System — ${base} B</h4>
+      ${renderPlanetsList(planetsB, beltsB, base + 'B')}
+    </div>
+  </div>
+</div>`;
+  }
+
+  el.innerHTML = titleHtml + bodyHtml;
+}
+
+function getStarTypeName(t, evolClass='MS') {
+  // Base colour label per spectral type
+  const colours = {
+    O:'Blue', B:'Blue-White', A:'White', F:'Yellow-White',
+    G:'Yellow', K:'Orange', M:'Red', L:'Brown', T:'Brown', Y:'Brown'
+  };
+  const col = colours[t] || 'Main Sequence';
+
+  // For BDs and remnants the caller handles the label separately
+  if (t === 'L' || t === 'T' || t === 'Y') return col + ' Dwarf';
+
+  // Evolved classes get a colour-appropriate noun instead of "Dwarf"
+  switch (evolClass) {
+    case 'SG4': return col + ' Sub-Giant';
+    case 'G3':  return col + ' Giant';
+    case 'BG2': return col + ' Bright Giant';
+    case 'SGA': return col + ' Supergiant';
+    case 'SGB': return col + ' Supergiant';
+    case 'PMS': return col + ' Pre-Main Sequence Star';
+    case 'SD':  return col + ' Sub-Dwarf';
+    case 'MS':
+    default:
+      // Main sequence colour nouns — O/B/A/F don't get "Dwarf"
+      const msNoun = { O:'Star', B:'Star', A:'Star', F:'Star', G:'Dwarf', K:'Dwarf', M:'Dwarf' };
+      return col + ' ' + (msNoun[t] || 'Star');
+  }
+}
+
+function getProgenitorLabel(star) {
+  if (!star.isRemnant) return '';
+
+  // NS and BH: progenitor was always a massive O or B star
+  if (star.evolClass === 'NS' || star.evolClass === 'BH') {
+    return star.mass > 10 ? 'Blue Star (Progenitor)' : 'Blue-White Star (Progenitor)';
+  }
+
+  // WD: progenitor was a low-to-intermediate mass star (A, F, G, or upper-K).
+  // M dwarfs cannot produce WDs within the age of the universe, so if sp.t is
+  // M or K we map it to the lowest realistic WD progenitor (Orange/Yellow Dwarf).
+  // This handles any legacy seeds that may have assigned WD to an M star before the fix.
+  const t = star.sp.t;
+  const wdProgenitorNames = {
+    O: getStarTypeName('O','MS'),  // rare — most O stars go NS/BH
+    B: getStarTypeName('B','MS'),  // lower-mass B stars can end as WDs
+    A: getStarTypeName('A','MS'),  // Herbig Ae/Be → WD
+    F: getStarTypeName('F','MS'),  // common WD progenitor
+    G: getStarTypeName('G','MS'),  // Sun will become a WD
+    K: getStarTypeName('K','MS'),  // only upper-K (~0.8 M☉) qualifies
+    // M, L, T, Y → not physically possible; remap to minimum realistic type
+  };
+  const name = wdProgenitorNames[t] || 'Yellow Dwarf'; // fallback for M/BD edge cases
+  return name + ' (Progenitor)';
+}
+
+function getEvolClassName(star) {
+  if (star.isBD) return 'Brown Dwarf';
+  if (star.evolClass === 'WD') return 'White Dwarf';
+  if (star.evolClass === 'NS') return 'Neutron Star';
+  if (star.evolClass === 'BH') return 'Stellar Black Hole';
+  // For evolved classes, getStarTypeName already includes the type (e.g. "Yellow Giant"),
+  // so we just append "Evolved" as a simple qualifier to avoid redundancy like "Yellow Giant • Giant"
+  const map = { MS:'Main Sequence', PMS: star.mass < 2 ? 'T Tauri' : star.mass < 8 ? 'Herbig Ae/Be' : 'Massive PMS', SD:'Sub-Dwarf', SG4:'Evolved', G3:'Evolved', BG2:'Evolved', SGA:'Evolved', SGB:'Evolved' };
+  return map[star.evolClass] || 'Main Sequence';
+}
+
+function togglePlanet(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+  // Close any open life popups when toggling planet
+  // life popups now use hover portal, no click clearing needed
+}
+
+function showLifePopup(e, el) {
+  const portal = document.getElementById('life-popup-portal');
+  portal.innerHTML = decodeURIComponent(el.dataset.lifeHtml);
+  portal.style.display = 'block';
+  positionLifePopup(e, portal);
+}
+function positionLifePopup(e, portal) {
+  const W = portal.offsetWidth || 200;
+  const H = portal.offsetHeight || 120;
+  let x = e.clientX + 14;
+  let y = e.clientY + 14;
+  if (x + W > window.innerWidth  - 8) x = e.clientX - W - 8;
+  if (y + H > window.innerHeight - 8) y = e.clientY - H - 8;
+  portal.style.left = x + 'px';
+  portal.style.top  = y + 'px';
+}
+function hideLifePopup() {
+  const portal = document.getElementById('life-popup-portal');
+  if (portal) portal.style.display = 'none';
+}
+
+// ============================================================
+//  UI HELPERS
+// ============================================================
+function randomiseSeed() {
+  // Combine two Math.random() calls for ~53 bits of entropy, giving a 15-digit seed
+  const hi = Math.floor(Math.random() * 1e7);   // 0–9,999,999
+  const lo = Math.floor(Math.random() * 1e8);   // 0–99,999,999
+  const seed = String(hi * 1e8 + lo + 1).slice(0, 15); // at most 15 digits, always ≥ 1
+  document.getElementById('inp-seed').value = seed;
+  document.getElementById('seed-error').classList.remove('visible');
+}
+
+function randomAll() {
+  randomiseSeed();
+  document.getElementById('inp-companion').value = 'random';
+  document.getElementById('inp-planets').value = 'random';
+  generate();
+}
+
+// Track which seeds were generated with Force Earth-like enabled
+const seedForcedTerrestrial = new Map();
+
+function generate() {
+  const name = document.getElementById('inp-name').value.trim() || 'Unnamed';
+  const seedVal = document.getElementById('inp-seed').value.trim();
+  const errorBox = document.getElementById('seed-error');
+
+  if (!seedVal) {
+    errorBox.classList.add('visible');
+    return;
+  }
+  errorBox.classList.remove('visible');
+
+  // Keep seed as a string — seedRng handles hashing so no precision is lost
+  const seedStr  = seedVal.replace(/\D/g, '') || '1';
+  const seedNum  = parseInt(seedStr) || 1; // used only for the Map key (small enough)
+  const comp     = document.getElementById('inp-companion').value;
+  const planets  = document.getElementById('inp-planets').value;
+  const cbChecked = document.getElementById('inp-terrestrial').checked;
+
+  if (cbChecked) seedForcedTerrestrial.set(seedStr, true);
+  const forceT = cbChecked || (seedForcedTerrestrial.get(seedStr) === true);
+
+  const sys = generateSystem(name, comp, planets, forceT, seedStr);
+  renderSystem(sys);
+}
+
+// Auto-focus name field on load
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('inp-name').focus();
+  document.getElementById('settings-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeSettings();
+  });
+});
+</script>
+<div id="life-popup-portal" class="life-popup-portal"></div>
+<script>
+// Keep portal positioned near cursor while hovering
+document.addEventListener('mousemove', function(e) {
+  const portal = document.getElementById('life-popup-portal');
+  if (portal && portal.style.display === 'block') {
+    positionLifePopup(e, portal);
+  }
+});
+</script>
+</body>
+</html>
