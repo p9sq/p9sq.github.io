@@ -2,7 +2,7 @@
 pet_name = input("What is your pet's name? ")
 health = 10
 hunger = 5
-energy = 10
+energy = 8
 
 print(pet_name + " has arrived!")
 print("Health:", health)
@@ -10,10 +10,12 @@ print("Hunger:", hunger)
 print("Energy:", energy)
 
 # Part 2: Selection
-action = input("Do you want to 'feed' or 'play' with your pet? Or do you want to put it to 'sleep'? ")
+action = input("Do you want to 'feed' or 'play' with your pet? Or do you want to put it to 'sleep'? ").lower().strip()
 
 if action == "feed":
     hunger = hunger - 2
+    if hunger <= 0:
+        print("Your pet is full!")
     print("Munch munch! Hunger is now lower.")
 elif action == "play":
     health = health + 2
@@ -24,21 +26,22 @@ elif action == "sleep":
 else:
     print("Your pet looks confused...")
 
-if hunger <= 0:
-    print("Your pet is full!")
-
 # Part 3: Repetition
 is_alive = True
 
 while is_alive == True:
     print("\n--- Status Check ---")
-    action = input("Command (feed/play/sleep/quit): ")
+    action = input("Command (feed/play/sleep/quit/status): ").lower().strip()
 
     if action == "quit":
         is_alive = False
         print("Goodbye!")
+    elif action == "status":
+        print(f"Health {health}, Hunger: {hunger}, Energy: {energy}")
     elif action == "feed":
-        hunger = hunger - 2
+        hunger -= 2
+        if hunger <= 0:
+            print("Your pet is full!")
         print("Munch munch! Hunger is now lower.")
     elif action == "play":
         health = health + 2
