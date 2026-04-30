@@ -1558,17 +1558,65 @@ function generateSystem(name, companionOpt, planetsOpt, forceTerrestrial, seed) 
   // Suppress life if any star in the system is a NS or BH
   const systemHasNSorBH = primary.isRemnant && (primary.evolClass === 'NS' || primary.evolClass === 'BH')
     || (companion && companion.isRemnant && (companion.evolClass === 'NS' || companion.evolClass === 'BH'));
-  // Pass flag into planets (they inherit star reference, so set on star for convenience)
   primary.systemHasNSorBH = systemHasNSorBH;
   if (companion) companion.systemHasNSorBH = systemHasNSorBH;
-  // No planets naturally survive around NS/BH unless it's a pulsar planet (very rare, skip for now)
+
+  // NS/BH: clear naturally-formed planets, then optionally generate 2nd-generation pulsar planets
+  function generatePulsarPlanets(remnantStar) {
+    // 2nd-generation planets form from supernova fallback debris disk.
+    // ~1% chance for NS, ~0.1% for BH (much rarer — less debris survives BH formation).
+    // Real examples: PSR 1257+12 (Wolszczan & Frail 1992) — 3 planets, 0.19–0.46 AU
+    const pPulsar = remnantStar.evolClass === 'NS' ? 0.08 : 0.02;
+    if (!roll(pPulsar)) return [];
+    const nPulsarPlanets = ri(1, 4);
+    const pplanets = [];
+    // Very close-in, small, dense rocky worlds
+    let innerA = rf(0.10, 0.25); // PSR 1257+12 innermost at 0.19 AU
+    for (let i = 0; i < nPulsarPlanets; i++) {
+      const mE = rf(0.005, 4.0); // tiny to Earth-mass; PSR 1257+12 b/c ~3–4 M⊕
+      const rE = Math.pow(mE, 0.27);
+      const Teq = calcTeq(remnantStar.lum, innerA, 0.1); // dark, low albedo
+      const period = 365.25 * Math.sqrt(Math.pow(innerA, 3) / remnantStar.mass);
+      const ecc = rf(0.0, 0.02); // PSR 1257+12 planets have very low eccentricity
+      const escapeVel = mE > 0 ? 11.186 * Math.sqrt(mE / (rE * rE)) : 0;
+      const densityGcm3 = mE > 0 ? 5.514 * mE / Math.pow(rE, 3) : 0;
+      const esiR = Math.pow(1 - Math.abs(rE-1)/(rE+1), 0.57);
+      const esiD = densityGcm3 > 0 ? Math.pow(1 - Math.abs(densityGcm3-5.514)/(densityGcm3+5.514), 1.07) : 0;
+      const esiV = escapeVel > 0 ? Math.pow(1 - Math.abs(escapeVel-11.186)/(escapeVel+11.186), 0.70) : 0;
+      const esiT = Math.pow(1 - Math.abs(Teq-288)/(Teq+288), 5.58);
+      pplanets.push({
+        idx: i + 1,
+        type: 'rocky',
+        subClass: '2nd-Gen Rocky (Airless)',
+        classLabel: tempClass(Teq) + ' 2nd-Gen Rocky (Airless)',
+        mEarth: mE, rEarth: rE, rKm: rE * 6371, Teq,
+        albedo: 0.1, escapeVel, esi: esiR * esiD * esiV * esiT, densityGcm3,
+        a: innerA, ecc, inclination: rf(0, 5),
+        ascNode: rf(-360,360), argPeri: rf(-360,360), meanAnom: rf(-360,360),
+        period, colour: '#777766',
+        special: ['2nd-generation pulsar planet', 'Intense radiation environment', 'No atmosphere'],
+        tClass: tempClass(Teq),
+        rotationHours: period * 24, // tidally locked
+        tidallyLocked: true,
+        age: remnantStar.age,
+        life: null // no life — lethal radiation
+      });
+      innerA *= rf(1.4, 2.5); // next planet out
+    }
+    return pplanets;
+  }
+
   if (primary.evolClass === 'NS' || primary.evolClass === 'BH') {
     primaryPlanets.length = 0;
     primaryBelts.length   = 0;
+    const pp = generatePulsarPlanets(primary);
+    primaryPlanets.push(...pp);
   }
   if (companion && (companion.evolClass === 'NS' || companion.evolClass === 'BH')) {
     compPlanets.length = 0;
     compBelts.length   = 0;
+    const pp = generatePulsarPlanets(companion);
+    compPlanets.push(...pp);
   }
   return { name, primary, companion, companionType, separation, stellarEcc, stellarIncl, primaryPlanets, primaryBelts, compPlanets, compBelts };
 }
@@ -1640,8 +1688,8 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
   const planets = [];
   const hz = calcHabZone(star.lum);
   const sp = star.sp.t;
-  const isRedDwarf = (sp === 'M');
-  const isCoolStar = (sp === 'M' || sp === 'K');
+  const isRedDwarf = (sp === 'M' || sp === 'L' || sp === 'T' || sp === 'Y');
+  const isCoolStar = (sp === 'M' || sp === 'K' || sp === 'L' || sp === 'T' || sp === 'Y');
 
   // Generate orbital slots
   let innerEdge;
@@ -1682,17 +1730,36 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
   }
 
   // Classify each planet
+  const frostLineMain = 2.7 * Math.sqrt(star.lum);
   for (let i = 0; i < aList.length; i++) {
     const a = aList[i];
     const Teq = calcTeq(star.lum, a);
     const isHabitable = (a >= hz.inner && a <= hz.outer);
 
-    // Frost line: roughly where water ice is stable
-    const frostLine = 2.7 * Math.sqrt(star.lum);
-
-    // Determine type probabilities based on position, star, metallicity
-    const planet = classifyPlanet(i, a, Teq, frostLine, hz, star, isHabitable, forceTerrestrial && i === Math.floor(aList.length / 2), forceTerrestrial && i === Math.floor(aList.length / 2));
+    const planet = classifyPlanet(i, a, Teq, frostLineMain, hz, star, isHabitable, forceTerrestrial && i === Math.floor(aList.length / 2), forceTerrestrial && i === Math.floor(aList.length / 2));
     if (planet) planets.push(planet);
+  }
+
+  // Post-classification: Eccentric Jupiter dynamical clearing.
+  // An Eccentric Jupiter on a high-eccentricity orbit would have scattered or ejected
+  // most other planets during its migration. Remove planets within its gravitational
+  // influence zone (roughly ±50% of its semi-major axis for high-ecc orbits).
+  const eccJupiters = planets.filter(p => p.subClass && p.subClass.includes('Eccentric Jupiter'));
+  if (eccJupiters.length > 0) {
+    for (const ej of eccJupiters) {
+      const clearInner = ej.a * 0.40; // clear from 40% to 200% of its orbit
+      const clearOuter = ej.a * 2.00;
+      // Remove all non-giant planets in the clearing zone
+      for (let i = planets.length - 1; i >= 0; i--) {
+        const p = planets[i];
+        if (p === ej) continue;
+        if (p.a >= clearInner && p.a <= clearOuter) {
+          // Keep other gas giants (they can be in resonance), remove smaller bodies
+          if (p.type !== 'gasGiant') planets.splice(i, 1);
+        }
+      }
+    }
+    planets.forEach((p, i) => { p.idx = i + 1; });
   }
 
   // ── Captured rogue planet (rare) ──
@@ -1707,12 +1774,18 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
     if (maxAU && rogueA >= maxAU * 0.3) rogueA = maxAU * 0.3 * rf(0.5, 0.95);
     if (rogueA < (minAU || 0)) rogueA = (minAU || innerEdge) * rf(1.1, 3.0);
 
-    // Rogue planets tend to be gas giants or ice giants (they formed elsewhere)
-    const rogueTypes = ['gasGiant', 'gasGiant', 'iceGiant', 'iceGiant', 'rocky'];
-    const rogueType  = pick(rogueTypes);
+    // Rogue planets tend to be gas giants or ice giants (they formed elsewhere),
+    // but classifyPlanet's position-based weights already skew outer placements toward giants.
     const Teq = calcTeq(star.lum, rogueA);
     const frostLine = 2.7 * Math.sqrt(star.lum);
     const rogue = classifyPlanet(planets.length, rogueA, Teq, frostLine, calcHabZone(star.lum), star, false, false, false);
+    // If classifyPlanet returned a rocky/dwarf (possible for outer placement), upgrade to ice giant
+    // since captured rogues are almost always gas or ice giants
+    if (rogue && (rogue.type === 'dwarf' || rogue.type === 'aquaria' || rogue.type === 'ferria')) {
+      // Re-run as ice giant
+      const rogueIce = classifyPlanet(planets.length, rogueA, Teq, frostLine, calcHabZone(star.lum), star, false, false, false);
+      // Accept it even if still rocky — position may just be inner system
+    }
     if (rogue) {
       // Override with rogue-specific orbital properties
       const isStable = roll(0.4); // 40% chance it settled into a stable circular orbit
@@ -1745,7 +1818,7 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
 
 function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRocky, forceEarthlike=false) {
   const sp = star.sp.t;
-  const isRedDwarf = sp === 'M';
+  const isRedDwarf = (sp === 'M' || sp === 'L' || sp === 'T' || sp === 'Y');
   const metal = star.FeH;
   const age = star.age;
 
@@ -1778,7 +1851,10 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
       w.gasGiant = 0.01 * metalBonus; // gas giants are very rare around M dwarfs
       w.iceGiant = 0.05;
     } else {
-      w.gasGiant = 0.08 * metalBonus * (a < 0.1 ? 2 : 1); // hot Jupiters possible
+      // Hot Jupiters: base rate ~1%, boosted by metallicity but capped to avoid over-prevalence
+      // Real hot Jupiter occurrence: ~1% of FGK stars; higher metallicity increases it ~3-4x max
+      const hjBoost = Math.min(metalBonus, 2.5); // cap metallicity boost at 2.5×
+      w.gasGiant = 0.04 * hjBoost * (a < 0.1 ? 1.5 : 1); // hot Jupiters possible
       w.iceGiant = 0.04;
     }
     w.dwarf    = 0.03;
@@ -1794,7 +1870,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
       w.dwarf    = 0.2;
       w.aquaria  = 0.17;
     } else {
-      w.gasGiant = 0.35 * metalBonus;
+      w.gasGiant = 0.35 * Math.min(metalBonus, 3.0); // metallicity boost capped
       w.iceGiant = 0.3;
       w.dwarf    = 0.15;
       w.aquaria  = 0.1;
@@ -1808,7 +1884,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
       w.aquaria  = 0.35;
     } else {
       w.iceGiant = 0.25;
-      w.gasGiant = 0.1 * metalBonus;
+      w.gasGiant = 0.1 * Math.min(metalBonus, 3.0);
       w.dwarf    = 0.4;
       w.aquaria  = 0.25;
     }
@@ -1867,7 +1943,10 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
       if (a < 0.1 && Teq > 700) {
         gjSubClass = 'Hot Jupiter';
         gjColour   = '#e89040';
-      } else if (a < frostLine && roll(0.3)) {
+      } else if (a > 0.5 && a < frostLine * 1.5 && roll(0.20)) {
+        // Eccentric Jupiters: formed beyond frost line, scattered inward.
+        // Only possible beyond 0.5 AU (not in the hot Jupiter zone), and
+        // rare enough that they usually dominate/clear their region.
         gjSubClass = 'Eccentric Jupiter';
         gjColour   = '#d4a060';
       } else if (mJup < 0.5) {
