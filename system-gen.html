@@ -1024,20 +1024,25 @@ const SPECTRAL_TYPES = [
   { t:'Y', m0:0.013, m1:0.020, col:'#4a1a08', w:0, bd:true },
 ];
 
-// Stellar evolution class: randomly assigned based on spectral type and age
-// 'MS'=main sequence, 'PMS'=pre-MS T Tauri/Herbig Ae-Be, 'SD'=sub-dwarf,
-// 'SG4'=sub-giant (IV), 'G3'=giant (III), 'BG2'=bright giant (II),
-// 'SGA'=supergiant (Ia), 'SGB'=supergiant (Ib)
-// BDs always stay BD; O/B/A can become supergiants; probability weights below
+// Stellar evolution class weights per spectral type.
+// Physical constraints:
+//   Supergiants (SGA/SGB):  require M ≥ 8  M☉ → O only (B lower end borderline, excluded for safety)
+//   Bright giants (BG2):    require M ≥ 5  M☉ → O, upper-B only
+//   Giants (G3):            require M ≥ 0.8 M☉ AND age > several Gyr → A, F, G, upper-K only
+//   Sub-giants (SG4):       require M ≥ 0.8 M☉ → A, F, G, upper-K only
+//   Sub-dwarfs (SD):        metal-poor halo stars; possible across F–M, hot sdB/sdO from O/B
+//   PMS:                    all types; more common for low-mass (T Tauri) than high-mass (HAeBe)
+//   M dwarfs:               MS lifetime >> age of universe → no evolved classes except PMS/SD
+//   K dwarfs (0.45–0.8):    only upper-K can reach SG4/G3 in ~10 Gyr; kept at very low weight
 const EVOL_WEIGHTS = {
-  // [MS, PMS, SD, SG4, G3, BG2, SGA, SGB]
-  O:  [0.50, 0.05, 0.00, 0.05, 0.10, 0.12, 0.10, 0.08],
-  B:  [0.55, 0.07, 0.00, 0.08, 0.12, 0.08, 0.05, 0.05],
-  A:  [0.65, 0.10, 0.01, 0.10, 0.08, 0.04, 0.01, 0.01],
-  F:  [0.70, 0.08, 0.02, 0.10, 0.07, 0.02, 0.00, 0.01],
-  G:  [0.72, 0.06, 0.03, 0.09, 0.07, 0.02, 0.00, 0.01],
-  K:  [0.68, 0.05, 0.04, 0.10, 0.10, 0.02, 0.00, 0.01],
-  M:  [0.82, 0.10, 0.02, 0.04, 0.01, 0.00, 0.00, 0.01],
+  // [MS,   PMS,  SD,   SG4,  G3,   BG2,  SGA,  SGB]
+  O:  [0.40, 0.05, 0.00, 0.05, 0.10, 0.12, 0.15, 0.13],
+  B:  [0.55, 0.07, 0.01, 0.10, 0.14, 0.08, 0.03, 0.02],
+  A:  [0.70, 0.10, 0.01, 0.12, 0.06, 0.01, 0.00, 0.00],
+  F:  [0.76, 0.08, 0.03, 0.09, 0.04, 0.00, 0.00, 0.00],
+  G:  [0.78, 0.05, 0.04, 0.08, 0.05, 0.00, 0.00, 0.00],
+  K:  [0.82, 0.04, 0.05, 0.03, 0.01, 0.00, 0.00, 0.00], // only upper-K evolves off MS
+  M:  [0.86, 0.10, 0.04, 0.00, 0.00, 0.00, 0.00, 0.00], // M dwarfs: MS or PMS or SD only
 };
 const EVOL_KEYS = ['MS','PMS','SD','SG4','G3','BG2','SGA','SGB','WD','NS','BH'];
 // Remnant probabilities appended: [WD, NS, BH]
@@ -1057,13 +1062,10 @@ const REMNANT_PROB = {
   M:  [0.00, 0.00, 0.00],  // M → cannot become WD in current universe age
 };
 
-function pickEvolClass(spType, isCompanion=false) {
+function pickEvolClass(spType, isCompanion=false, mass=0) {
   if (!EVOL_WEIGHTS[spType]) return 'MS';
-  // Combine main evol weights with remnant probs
-  // Remnants slightly more common as companions (the other star evolved first)
   const wMain = EVOL_WEIGHTS[spType];
   const baseRem = REMNANT_PROB[spType] || [0,0,0];
-  // Apply per-remnant-type user multipliers [WD, NS, BH]
   const wRem = [
     baseRem[0] * (remnantMults.WD ?? 1) * (isCompanion ? 2.0 : 1.0),
     baseRem[1] * (remnantMults.NS ?? 1) * (isCompanion ? 2.0 : 1.0),
@@ -1072,8 +1074,20 @@ function pickEvolClass(spType, isCompanion=false) {
   const w = [...wMain, ...wRem];
   const keys = EVOL_KEYS;
   let r = rng() * w.reduce((a,b)=>a+b,0);
-  for (let i=0; i<w.length; i++) { r-=w[i]; if(r<=0) return keys[i]; }
-  return 'MS';
+  let picked = 'MS';
+  for (let i=0; i<w.length; i++) { r-=w[i]; if(r<=0) { picked = keys[i]; break; } }
+
+  // Hard mass gates — physical sanity check regardless of weight table
+  // Supergiants require ≥ 8 M☉ progenitor
+  if ((picked === 'SGA' || picked === 'SGB') && mass < 8)  picked = 'MS';
+  // Bright giants require ≥ 5 M☉
+  if (picked === 'BG2' && mass < 5)  picked = 'MS';
+  // Giants require ≥ 0.8 M☉ (lower-mass stars haven't left MS in universe's lifetime)
+  if (picked === 'G3'  && mass < 0.8) picked = 'MS';
+  // Sub-giants require ≥ 0.8 M☉
+  if (picked === 'SG4' && mass < 0.8) picked = 'MS';
+
+  return picked;
 }
 
 function pickSpectralType(massConstraint=null) {
@@ -1111,7 +1125,7 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   const subclassDecimal = roll(0.4) ? ('.' + ri(1,9)) : '';
 
   // Pick evolutionary class (BDs skip this)
-  let evolClass = sp.bd ? 'BD' : pickEvolClass(sp.t, isCompanion);
+  let evolClass = sp.bd ? 'BD' : pickEvolClass(sp.t, isCompanion, mass);
 
   // Base MS luminosity — piecewise power law calibrated to observed values
   // Sources: Pecaut & Mamajek 2013, Torres 2010, IAU 2015 nominal solar values
