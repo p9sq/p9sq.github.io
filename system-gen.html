@@ -871,11 +871,11 @@
 <div class="control-panel">
   <div class="form-row">
     <div class="field-group">
-      <label>System Name</label>
+      <label for="inp-name">System Name</label>
       <input type="text" id="inp-name" placeholder="e.g. Kepler-442" value="">
     </div>
     <div class="field-group">
-      <label>Seed</label>
+      <label for="inp-seed">Seed</label>
       <div class="seed-row">
         <input type="text" id="inp-seed" placeholder="Enter or roll a seed…" maxlength="18" pattern="[0-9]*" inputmode="numeric">
         <button class="btn-small" onclick="randomiseSeed()">🎲 Roll</button>
@@ -884,7 +884,7 @@
   </div>
   <div class="form-row">
     <div class="field-group">
-      <label>Companion Star</label>
+      <label for="inp-companion">Companion Star</label>
       <select id="inp-companion">
         <option value="random">Random</option>
         <option value="none">None</option>
@@ -893,7 +893,7 @@
       </select>
     </div>
     <div class="field-group">
-      <label>Planets</label>
+      <label for="inp-planets">Planets</label>
       <select id="inp-planets">
         <option value="random">Random</option>
         <option value="none">None</option>
@@ -1589,6 +1589,7 @@ function generateSystem(name, companionOpt, planetsOpt, forceTerrestrial, seed) 
         type: 'rocky',
         subClass: '2nd-Gen Rocky (Airless)',
         classLabel: tempClass(Teq) + ' 2nd-Gen Rocky (Airless)',
+        planetClass: 'Planet',
         mEarth: mE, rEarth: rE, rKm: rE * 6371, Teq,
         albedo: 0.1, escapeVel, esi: esiR * esiD * esiV * esiT, densityGcm3,
         a: innerA, ecc, inclination: rf(0, 5),
@@ -1664,10 +1665,13 @@ function makeEarthlikePlanet(idx, a, star) {
   const special = ['Large moon via impactor event'];
   if (roll(0.3)) special.push('Magnetic field detected');
   const densityGcm3 = 5.514 * mEarth / Math.pow(rEarth, 3);
+  // Earth-like planets always clear their orbit → Planet class
+  const planetClass = 'Planet';
   return {
     idx: idx + 1,
-    type: 'rocky', subClass: 'Terrestrial',
-    classLabel: `${tClass} Terrestrial`,
+    type: 'rocky', subClass: 'Terra',
+    classLabel: `${tClass} Terra`,
+    planetClass,
     mEarth, rEarth, rKm, Teq, albedo, escapeVel, esi, densityGcm3,
     a, ecc, inclination: incl,
     ascNode: rf(-360,360), argPeri: rf(-360,360), meanAnom: rf(-360,360),
@@ -1909,146 +1913,218 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     case 'ferria':
       mEarth = rf(0.05, 1.5);
       rEarth = Math.pow(mEarth, 0.28) * 0.8;
-      subClass = mEarth > 0.5 ? 'Super-Mercury' : 'Mercury-like';
       colour = '#b07850';
       break;
 
     case 'rocky':
       mEarth = rf(0.05, 5.0);
       rEarth = Math.pow(mEarth, 0.27);
-      if (mEarth > 2) subClass = isHabitable ? 'Super-Earth' : 'Super-Venus';
-      else if (mEarth < 0.2) subClass = 'Sub-Earth';
-      else if (isHabitable) subClass = 'Terrestrial';
-      else if (Teq > 340) subClass = 'Venus-like';
-      else subClass = 'Barren Rocky';
-      // Hycean check: near HZ, some water
-      if (mEarth >= 1 && mEarth <= 8 && isHabitable && roll(0.15)) subClass = 'Hycean';
-      colour = isHabitable ? '#5a9c5a' : (Teq > 340 ? '#c08040' : '#8a8a7a');
+      // Hycean check: near HZ, some water → treat as Aquaria subtype
+      if (mEarth >= 1 && mEarth <= 8 && isHabitable && roll(0.15)) {
+        type = 'aquaria';
+        rEarth = Math.pow(mEarth, 0.30) * rf(1.05, 1.20);
+        colour = '#40a0c8';
+      } else {
+        colour = isHabitable ? '#5a9c5a' : (Teq > 340 ? '#c08040' : '#8a8a7a');
+      }
       break;
 
     case 'carbonia':
       mEarth = rf(0.3, 3.0);
       rEarth = Math.pow(mEarth, 0.28) * 0.95;
-      subClass = 'Carbon Planet';
       colour = '#555555';
       break;
 
     case 'gasGiant': {
-      // Sub-classify gas giant
       const mJup = rf(0.1, 13.0);
       mEarth = mJup * 317.8;
-
-      // First classify so we know if it's a hot Jupiter (affects radius)
-      let gjSubClass, gjColour;
+      let gjColour;
+      // Special subtypes (stored separately; size prefix still applies for display)
       if (a < 0.1 && Teq > 700) {
-        gjSubClass = 'Hot Jupiter';
-        gjColour   = '#e89040';
+        subClass = 'hot';   // flag — rendered as "Hot Jupiter" special case below
+        gjColour = '#e89040';
       } else if (a > 0.5 && a < frostLine * 1.5 && roll(0.20)) {
-        // Eccentric Jupiters: formed beyond frost line, scattered inward.
-        // Only possible beyond 0.5 AU (not in the hot Jupiter zone), and
-        // rare enough that they usually dominate/clear their region.
-        gjSubClass = 'Eccentric Jupiter';
-        gjColour   = '#d4a060';
-      } else if (mJup < 0.5) {
-        gjSubClass = roll(0.4) ? 'Super-Puff' : 'Mini-Neptune';
-        gjColour   = '#80b8e0';
-      } else if (mJup > 5) {
-        gjSubClass = 'Super-Jupiter';
-        gjColour   = '#c06030';
+        subClass = 'eccentric'; // Eccentric Jupiter
+        gjColour = '#d4a060';
+      } else if (mJup < 0.1) {
+        subClass = 'puff'; // Super-Puff (very low density, handled in radius)
+        gjColour = '#80b8e0';
       } else {
-        gjSubClass = 'Gas Giant';
-        gjColour   = '#c8a050';
+        subClass = '';
+        gjColour = mJup > 5 ? '#c06030' : '#c8a050';
       }
-      subClass = gjSubClass;
-      colour   = gjColour;
-
-      // Radius — empirical piecewise based on Thorngren et al. (2019) + known planets:
-      // • Mini-Neptune / Super-Puff: 3–8 R_Earth (handled separately)
-      // • Cold gas giants: roughly R ≈ R_Jup × (M/M_Jup)^0.06 for 0.3–4 M_Jup,
-      //   then slightly decreasing for >4 M_Jup (degeneracy pressure)
-      // • Hot Jupiter inflation: up to ~50% radius boost from stellar irradiation
-      if (gjSubClass === 'Mini-Neptune' || gjSubClass === 'Super-Puff') {
-        rEarth = mJup < 0.1 ? rf(3, 6) : rf(4, 8);
-      } else {
-        // Base cold-giant radius (R_Earth): anchored to Jupiter (11.2) and Saturn (9.46)
+      colour = gjColour;
+      if (subClass === 'puff') {
+        rEarth = rf(5, 10); // very inflated
+      } else if (subClass === 'hot') {
         let baseR;
-        if (mJup <= 0.3)       baseR = 9.0  + (mJup / 0.3) * 1.5;  // sub-Saturn range
-        else if (mJup <= 1.0)  baseR = 10.5 + (mJup - 0.3) / 0.7 * 1.2; // Saturn→Jupiter
-        else if (mJup <= 4.0)  baseR = 11.2 + (mJup - 1.0) / 3.0 * 0.8; // Jupiter→super-J
-        else                   baseR = 12.0 - (mJup - 4.0) / 9.0 * 1.0; // degeneracy shrink
-        baseR = Math.max(baseR, 9.0);
-        // Hot Jupiter inflation: roughly +10–60% depending on irradiation
-        const inflationFactor = gjSubClass === 'Hot Jupiter' ? rf(1.10, 1.60) : 1.0;
-        rEarth = baseR * inflationFactor * rf(0.92, 1.08);
+        if (mJup <= 0.3)      baseR = 9.0  + (mJup / 0.3) * 1.5;
+        else if (mJup <= 1.0) baseR = 10.5 + (mJup - 0.3) / 0.7 * 1.2;
+        else if (mJup <= 4.0) baseR = 11.2 + (mJup - 1.0) / 3.0 * 0.8;
+        else                  baseR = 12.0 - (mJup - 4.0) / 9.0 * 1.0;
+        rEarth = Math.max(baseR, 9.0) * rf(1.10, 1.60) * rf(0.92, 1.08);
+      } else {
+        let baseR;
+        if (mJup <= 0.3)      baseR = 9.0  + (mJup / 0.3) * 1.5;
+        else if (mJup <= 1.0) baseR = 10.5 + (mJup - 0.3) / 0.7 * 1.2;
+        else if (mJup <= 4.0) baseR = 11.2 + (mJup - 1.0) / 3.0 * 0.8;
+        else                  baseR = 12.0 - (mJup - 4.0) / 9.0 * 1.0;
+        rEarth = Math.max(baseR, 9.0) * rf(0.92, 1.08);
       }
-      mass = mJup * 317.8; // store as Earth masses internally
+      mass = mEarth;
       break;
     }
 
     case 'iceGiant':
-      // Mass range: 5–55 M_Earth (Mini-Neptune through large ice giant)
-      // Uranus = 14.5 M_E, 4.0 R_E; Neptune = 17.2 M_E, 3.88 R_E
-      // Radius scales roughly as M^0.3 for ice giants (Fortney et al.)
       mEarth = rf(5, 55);
       if (mEarth < 10) {
-        // Mini-Neptune: 5–10 M_E, 2.5–3.5 R_E
         rEarth = rf(2.5, 3.5);
-        subClass = 'Mini-Neptune';
         colour = '#80b8d8';
       } else if (mEarth < 20) {
-        // Uranus-like: ~10–20 M_E, 3.5–4.2 R_E (Uranus is the lighter one)
         rEarth = rf(3.5, 4.2);
-        subClass = 'Uranus-like';
         colour = '#70c0d0';
       } else if (mEarth < 35) {
-        // Neptune-like: ~20–35 M_E, 3.7–4.5 R_E
         rEarth = rf(3.7, 4.5);
-        subClass = 'Neptune-like';
         colour = '#70c0d0';
       } else {
-        // Large ice giant: 35–55 M_E
         rEarth = rf(4.0, 5.0);
-        subClass = 'Ice Giant';
         colour = '#70c0d0';
       }
       break;
 
     case 'dwarf':
-      mEarth = rf(0.0001, 0.03); // in Earth masses (Pluto = 0.0022 M_E, 0.186 R_E)
-      // Icy/rocky dwarfs: lower density than Earth → R ∝ M^0.30 gives ~0.19 R_E for Pluto ✓
+      mEarth = rf(0.0001, 0.03);
       rEarth = Math.pow(mEarth, 0.30) * rf(0.90, 1.10);
-      if (a >= 1000)       subClass = 'Oort Cloud Object';
-      else if (veryFar)    subClass = 'Trans-Neptunian Object';
-      else if (beyondFrost) subClass = 'KBO';
-      else                  subClass = 'Dwarf Planet';
       colour = '#888880';
       break;
 
     case 'aquaria':
       mEarth = rf(0.005, 0.5);
-      // Icy ocean worlds: lower density than rocky (~1.0–1.5 g/cm³ vs 5.5 for Earth)
-      // Europa (0.008 M_E, 0.245 R_E), Ganymede (0.025 M_E, 0.413 R_E)
-      // R ≈ M^0.30 * 1.15 fits well across this range
       rEarth = Math.pow(mEarth, 0.30) * rf(1.05, 1.25);
-      subClass = mEarth > 0.1 ? 'Ocean World' : 'Icy Moon-like';
       colour = '#40a0c8';
       break;
 
     case 'chthonian':
-      // Chthonian planet: remnant core of a hot Jupiter that lost its atmosphere
-      // Core masses of gas giants are typically 10–20 M⊕; upper end ~25 M⊕
-      // (stripped from ~0.3–1 M_Jup progenitors)
       mEarth = rf(8, 25);
-      rEarth = Math.pow(mEarth, 0.27) * rf(0.60, 0.82); // denser than rocky worlds
-      subClass = 'Chthonian';
+      rEarth = Math.pow(mEarth, 0.27) * rf(0.60, 0.82);
       colour = '#aa6633';
       break;
   }
 
-  const rKm = rEarth * 6371; // mKg not needed; mass displayed in Earth/Jup/Moon units
-
-  // Orbital period (Kepler's 3rd law)
+  const rKm = rEarth * 6371;
   const period = 365.25 * Math.sqrt(Math.pow(a, 3) / star.mass);
+
+  // ── SIZE PREFIX ──────────────────────────────────────────────
+  // Gas/ice giants use Jupiter-mass bins; others use Earth-mass bins
+  function sizePrefix(mE, isGiant) {
+    if (isGiant) {
+      const mJ = mE / 317.8;
+      if (mJ < 0.05) return 'Micro';
+      if (mJ < 0.30) return 'Mini';
+      if (mJ < 0.70) return 'Sub';
+      if (mJ < 2.0)  return '';
+      if (mJ < 5.0)  return 'Super';
+      return 'Mega';
+    }
+    if (mE < 0.10) return 'Micro';
+    if (mE < 0.50) return 'Mini';
+    if (mE < 0.80) return 'Sub';
+    if (mE < 2.00) return '';
+    if (mE < 8.00) return 'Super';
+    return 'Mega';
+  }
+
+  const mActualForSize = mEarth || 0;
+  const isGiantType = (type === 'gasGiant' || type === 'iceGiant');
+  const szPfx = sizePrefix(mActualForSize, isGiantType);
+
+  // ── SUBCLASS LABEL ───────────────────────────────────────────
+  // Space Engine types: Terra, Aquaria, Ferria, Carbonia, Gas Giant, Ice Giant
+  // Custom specials: Chthonian, Super-Puff, Hot Jupiter, Eccentric Jupiter
+  let baseTypeName;
+  if (type === 'gasGiant') {
+    if (subClass === 'hot') {
+      // Hot Jupiters: always displayed as "Hot Jupiter" regardless of size
+      baseTypeName = null;
+      subClass = 'Hot Jupiter';
+      colour = '#e89040';
+    } else if (subClass === 'eccentric') {
+      baseTypeName = null;
+      subClass = 'Eccentric Jupiter';
+      colour = '#d4a060';
+    } else if (subClass === 'puff') {
+      baseTypeName = null;
+      subClass = 'Super-Puff';
+      colour = '#80b8e0';
+    } else {
+      // Normal gas giant: "(size)-Giant" or just "Gas Giant"
+      baseTypeName = 'Gas';
+    }
+  } else if (type === 'iceGiant') {
+    baseTypeName = 'Ice';
+  } else if (type === 'rocky') {
+    baseTypeName = 'Terra';
+  } else if (type === 'ferria') {
+    baseTypeName = 'Ferria';
+  } else if (type === 'aquaria') {
+    baseTypeName = 'Aquaria';
+  } else if (type === 'carbonia') {
+    baseTypeName = 'Carbonia';
+  } else if (type === 'chthonian') {
+    baseTypeName = null;
+    subClass = 'Chthonian';
+  } else if (type === 'dwarf') {
+    baseTypeName = null;
+    // dwarf subClass set below after planet class determination
+  }
+
+  // For giant types with a baseTypeName, build the size-prefixed label
+  // Format: "Gas Mini-Giant", "Ice Super-Giant", "Gas Giant", "Sub-Gas Giant" etc.
+  if (baseTypeName === 'Gas' || baseTypeName === 'Ice') {
+    if (szPfx) {
+      subClass = `${baseTypeName} ${szPfx}-Giant`;
+    } else {
+      subClass = `${baseTypeName} Giant`;
+    }
+  } else if (baseTypeName) {
+    // Rocky types: size prefix directly before type name
+    subClass = szPfx ? `${szPfx}-${baseTypeName}` : baseTypeName;
+  }
+
+  // ── PLANET CLASS (discriminant + Hygeia threshold) ───────────
+  // Hygeia mass: ~4.4×10⁻⁵ M⊕ (= 8.67×10¹⁹ kg / 5.972×10²⁴ kg)
+  // Planetary discriminant (Margot 2015 / Soter 2006 style):
+  //   Λ = (M_p / M⊕) / [ C^(3/2) × (M★/M☉)^(5/8) × (t★/1.1e5yr)^(-3/4) × (a_p/1AU)^(9/8) ]
+  // A body is a Planet if Λ ≥ 1; Dwarf Planet if mass ≥ Hygeia but Λ < 1; Asteroid otherwise.
+  // C is a dimensionless constant (Margot uses C≈1 for Solar System calibration).
+  // We use C=1. t★ in years = star.age × 1e9.
+  const HYGEIA_MEARTH = 4.4e-5;
+  const C = 1.0;
+  const tStarYr = Math.max(star.age, 1e-6) * 1e9; // star age in years
+  const discriminantThreshold = Math.pow(C, 1.5)
+    * Math.pow(star.mass, 5/8)
+    * Math.pow(tStarYr / 1.1e5, -3/4)
+    * Math.pow(Math.max(a, 0.001), 9/8);
+
+  let planetClass;
+  if (type === 'gasGiant' || type === 'iceGiant') {
+    // Giants always clear their orbits
+    planetClass = 'Planet';
+  } else if (mActualForSize < HYGEIA_MEARTH) {
+    planetClass = 'Asteroid';
+  } else if (mActualForSize >= discriminantThreshold) {
+    planetClass = 'Planet';
+  } else {
+    planetClass = 'Dwarf Planet';
+  }
+
+  // Dwarf type subClass now that planetClass is known
+  if (type === 'dwarf') {
+    if (a >= 1000)        subClass = 'Oort Cloud Object';
+    else if (veryFar)     subClass = 'Trans-Neptunian Object';
+    else if (beyondFrost) subClass = 'KBO';
+    else                  subClass = planetClass === 'Dwarf Planet' ? 'Dwarf Planet' : 'Asteroid';
+  }
 
   // Eccentricity
   let ecc;
@@ -2083,14 +2159,21 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   }
   const tClass = tempClass(Teq);
   if (isAirless) {
-    subClass = subClass + ' (Airless)';
-    classLabel = tClass + ' ' + subClass;
     colour = type === 'ferria' ? '#8a6040' : '#999988';
   }
 
   const special = generateSpecials(type, mEarth || (rEarth > 4 ? rEarth * 14 : mEarth), rEarth, a, star);
 
-  classLabel = `${tClass} ${subClass}`;
+  // classLabel format: "(temp) (Airless) (subClass)"
+  // Gas/ice giants never lose their atmospheres — airless only applies to terrestrial types.
+  // Special giant subtypes (Hot/Eccentric Jupiter, Super-Puff) skip the temperature prefix.
+  if (type === 'gasGiant' && (subClass.startsWith('Hot Jupiter') || subClass.startsWith('Eccentric Jupiter') || subClass.startsWith('Super-Puff'))) {
+    classLabel = subClass;
+  } else if (type === 'gasGiant' || type === 'iceGiant') {
+    classLabel = `${tClass} ${subClass}`;
+  } else {
+    classLabel = isAirless ? `${tClass} Airless ${subClass}` : `${tClass} ${subClass}`;
+  }
 
   // Tidal locking timescale: τ ∝ a^6 * R_planet^(-5) * M_star^(-1)
   // Calibrated so Earth-mass planet at 1 AU around G star locks in ~50 Gyr (not locked),
@@ -2203,7 +2286,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
 
   return {
     idx: idx + 1,
-    type, subClass, classLabel,
+    type, subClass, classLabel, planetClass,
     mEarth: mActual, rEarth, rKm, Teq: TeqActual,
     albedo, escapeVel, esi, densityGcm3,
     a, ecc, inclination, ascNode, argPeri, meanAnom,
@@ -2519,7 +2602,6 @@ function renderPlanetCard(p, prefix) {
   const specialHtml = p.special
     ? `<div class="special-section"><div class="sp-label">SPECIAL</div><div class="sp-val">${p.special.join(' &bull; ')}</div></div>`
     : '';
-  const typeLabel = ({gasGiant:'Gas Giant',iceGiant:'Ice Giant',dwarf:'Dwarf Planet',chthonian:'Chthonian',ferria:'Ferria',rocky:'Rocky',carbonia:'Carbonia',aquaria:'Aquaria'}[p.type]) || (p.type.charAt(0).toUpperCase()+p.type.slice(1));
   const lifeId = `life-${id}`;
   const lifeTagHtml = p.life ? (() => {
     const habStr = p.life.habitats.join('/');
@@ -2543,7 +2625,7 @@ function renderPlanetCard(p, prefix) {
     <div class="planet-details-panels">
       <div class="planet-detail-col">
         <div class="detail-col-label">Physical Properties</div>
-        <div class="pd-row"><span class="pd-key">TYPE</span><span class="pd-val">${typeLabel}</span></div>
+        <div class="pd-row"><span class="pd-key">TYPE</span><span class="pd-val" style="${p.planetClass==='Planet'?'color:var(--accent)':p.planetClass==='Dwarf Planet'?'color:var(--accent2)':'color:var(--text-muted)'}">${p.planetClass || 'N/A'}</span></div>
         <div class="pd-row"><span class="pd-key">CLASS</span><span class="pd-val">${p.classLabel}</span></div>
         <div class="pd-row"><span class="pd-key">AGE</span><span class="pd-val">${p.age < 0.01 ? (p.age * 1000).toFixed(2) + ' Myr' : p.age < 0.1 ? fmt(p.age,4) + ' Gyr' : fmt(p.age,2) + ' Gyr'}</span></div>
         <div class="pd-row"><span class="pd-key">MASS</span><span class="pd-val">${formatMass(p.mEarth)}</span></div>
