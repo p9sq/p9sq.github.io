@@ -2016,27 +2016,34 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
 
   // ── SIZE PREFIX ──────────────────────────────────────────────
   // Gas/ice giants use Jupiter-mass bins; others use Earth-mass bins
-  function sizePrefix(mE, isGiant) {
-    if (isGiant) {
+  function sizePrefix(mE, isGasGiant, isIceGiant) {
+    if (isGasGiant) {
       const mJ = mE / 317.8;
-      if (mJ < 0.05) return 'Micro';
-      if (mJ < 0.30) return 'Mini';
-      if (mJ < 0.70) return 'Sub';
+      if (mJ < 0.2)  return 'Sub';
       if (mJ < 2.0)  return '';
-      if (mJ < 5.0)  return 'Super';
+      if (mJ < 10.0) return 'Super';
       return 'Mega';
     }
-    if (mE < 0.10) return 'Micro';
-    if (mE < 0.50) return 'Mini';
-    if (mE < 0.80) return 'Sub';
-    if (mE < 2.00) return '';
-    if (mE < 8.00) return 'Super';
+    if (isIceGiant) {
+      if (mE < 4.0)   return 'Mini';
+      if (mE < 10.0)  return 'Sub';
+      if (mE < 25.0)  return '';
+      if (mE < 62.5)  return 'Super';
+      return 'Mega';
+    }
+    // Solid planets (Terra, Aquaria, Ferria, Carbonia)
+    if (mE < 0.002)  return 'Micro';
+    if (mE < 0.02)   return 'Mini';
+    if (mE < 0.2)    return 'Sub';
+    if (mE < 2.0)    return '';
+    if (mE < 10.0)   return 'Super';
     return 'Mega';
   }
 
   const mActualForSize = mEarth || 0;
-  const isGiantType = (type === 'gasGiant' || type === 'iceGiant');
-  const szPfx = sizePrefix(mActualForSize, isGiantType);
+  const isGasGiant  = type === 'gasGiant';
+  const isIceGiant  = type === 'iceGiant';
+  const szPfx = sizePrefix(mActualForSize, isGasGiant, isIceGiant);
 
   // ── SUBCLASS LABEL ───────────────────────────────────────────
   // Space Engine types: Terra, Aquaria, Ferria, Carbonia, Gas Giant, Ice Giant
@@ -2082,7 +2089,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   // Format: "Gas Mini-Giant", "Ice Super-Giant", "Gas Giant", "Sub-Gas Giant" etc.
   if (baseTypeName === 'Gas' || baseTypeName === 'Ice') {
     if (szPfx) {
-      subClass = `${baseTypeName} ${szPfx}-Giant`;
+      subClass = `${szPfx}-${baseTypeName} Giant`;
     } else {
       subClass = `${baseTypeName} Giant`;
     }
