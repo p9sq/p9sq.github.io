@@ -22,7 +22,7 @@ elif action == "play":
     print("Yay! Your pet is happy.")
 elif action == "sleep":
     energy = energy + 5
-    print("Shh... Your pet is sleeping now...")
+    print("Your pet has rested")
 else:
     print("Your pet looks confused...")
 
@@ -37,7 +37,7 @@ while is_alive == True:
         is_alive = False
         print("Goodbye!")
     elif action == "status":
-        print(f"Health {health}, Hunger: {hunger}, Energy: {energy}")
+        print(f"Health {health}/10, Hunger: {hunger}/5, Energy: {energy}/8")
     elif action == "feed":
         hunger -= 2
         if hunger <= 0:
@@ -48,6 +48,6 @@ while is_alive == True:
         print("Yay! Your pet is happy.")
     elif action == "sleep":
         energy = energy + 5
-        print("Shh... Your pet is sleeping now...")
+        print("Your pet has rested")
     else:
         print("Your pet looks confused...")
