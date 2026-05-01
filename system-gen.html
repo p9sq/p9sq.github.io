@@ -495,7 +495,7 @@
   /* Split planet detail panel */
   .planet-details-panels {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    /* column count set dynamically via inline style */
     gap: 0 1px;
     margin-top: 10px;
     background: var(--border);
@@ -504,7 +504,7 @@
     overflow: hidden;
   }
   @media (max-width: 900px) {
-    .planet-details-panels { grid-template-columns: 1fr 1fr; }
+    .planet-details-panels { grid-template-columns: 1fr 1fr !important; }
   }
   .planet-detail-col {
     background: var(--bg);
@@ -2062,10 +2062,9 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     return 'Mega';
   }
 
-  const mActualForSize = mEarth || 0;
   const isGasGiant  = type === 'gasGiant';
   const isIceGiant  = type === 'iceGiant';
-  const szPfx = sizePrefix(mActualForSize, isGasGiant, isIceGiant);
+  const szPfx = sizePrefix(mEarth || 0, isGasGiant, isIceGiant);
 
   // ── SUBCLASS LABEL ───────────────────────────────────────────
   // Space Engine types: Terra, Aquaria, Ferria, Carbonia, Gas Giant, Ice Giant
@@ -2139,9 +2138,9 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   if (type === 'gasGiant' || type === 'iceGiant') {
     // Giants always clear their orbits
     planetClass = 'Planet';
-  } else if (mActualForSize < HYGEIA_MEARTH) {
+  } else if (mEarth || 0 < HYGEIA_MEARTH) {
     planetClass = 'Asteroid';
-  } else if (mActualForSize >= discriminantThreshold) {
+  } else if (mEarth || 0 >= discriminantThreshold) {
     planetClass = 'Planet';
   } else {
     planetClass = 'Dwarf Planet';
@@ -2192,6 +2191,32 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   }
 
   const special = generateSpecials(type, mEarth || (rEarth > 4 ? rEarth * 14 : mEarth), rEarth, a, star);
+
+  // Albedo: type-dependent realistic bond albedo
+  let albedo;
+  if (type === 'gasGiant') {
+    albedo = subClass === 'Hot Jupiter' ? rf(0.03, 0.15) : rf(0.25, 0.65);
+  } else if (type === 'iceGiant') {
+    albedo = rf(0.25, 0.55);
+  } else if (type === 'rocky') {
+    if (isAirless)                                  albedo = rf(0.04, 0.15);
+    else if (tClass === 'Temperate' || tClass === 'Cool') albedo = rf(0.20, 0.45);
+    else if (tClass === 'Cold'      || tClass === 'Frigid') albedo = rf(0.40, 0.75);
+    else if (tClass === 'Hot'       || tClass === 'Torrid') albedo = rf(0.55, 0.80);
+    else                                            albedo = rf(0.10, 0.35);
+  } else if (type === 'ferria')    { albedo = rf(0.05, 0.15); }
+  else if (type === 'aquaria')     { albedo = rf(0.40, 0.70); }
+  else if (type === 'dwarf')       { albedo = rf(0.04, 0.90); }
+  else if (type === 'carbonia')    { albedo = rf(0.02, 0.10); }
+  else                             { albedo = rf(0.10, 0.40); }
+  albedo = Math.min(Math.max(albedo, 0.01), 0.99);
+
+  // Actual equilibrium temperature using computed albedo
+  const TeqActual = 278 * Math.pow(star.lum * (1 - albedo), 0.25) / Math.sqrt(a);
+
+  // mActual: safe mass value (mEarth may be undefined for gasGiant which uses `mass`)
+  const mActual   = mEarth || 0;
+  const escapeVel = mActual > 0 ? 11.186 * Math.sqrt(mActual / (rEarth * rEarth)) : 0;
 
   const atmosphere = generateAtmosphere(type, subClass, mActual, rEarth, TeqActual, tClass, isAirless, star, forceEarthlike);
   const ocean      = generateOcean(atmosphere, type, TeqActual, mActual, tClass, isAirless);
@@ -2259,46 +2284,6 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   const ascNode  = rf(-360, 360);
   const argPeri  = rf(-360, 360);
   const meanAnom = rf(-360, 360);
-
-  // Albedo: type-dependent realistic bond albedo
-  let albedo;
-  if (type === 'gasGiant') {
-    albedo = subClass === 'Hot Jupiter' ? rf(0.03, 0.15) : rf(0.25, 0.65);
-  } else if (type === 'iceGiant') {
-    albedo = rf(0.25, 0.55);
-  } else if (type === 'rocky') {
-    if (isAirless) {
-      albedo = rf(0.04, 0.15); // airless rocky world: dark bare regolith like Mercury/Moon
-    } else if (tClass === 'Temperate' || tClass === 'Cool') {
-      albedo = rf(0.20, 0.45); // partial cloud/ice cover
-    } else if (tClass === 'Cold' || tClass === 'Frigid') {
-      albedo = rf(0.40, 0.75); // ice/snow covered
-    } else if (tClass === 'Hot' || tClass === 'Torrid') {
-      albedo = rf(0.55, 0.80); // Venus-like thick clouds if not airless
-    } else {
-      albedo = rf(0.10, 0.35);
-    }
-  } else if (type === 'ferria') {
-    albedo = rf(0.05, 0.15); // dark bare rock like Mercury
-  } else if (type === 'aquaria') {
-    albedo = rf(0.40, 0.70); // icy surfaces
-  } else if (type === 'dwarf') {
-    albedo = rf(0.04, 0.90); // huge range (Eris ~0.96, Arrokoth ~0.13)
-  } else if (type === 'carbonia') {
-    albedo = rf(0.02, 0.10); // very dark carbon surfaces
-  } else {
-    albedo = rf(0.10, 0.40);
-  }
-  albedo = Math.min(Math.max(albedo, 0.01), 0.99);
-
-  // Recalc Teq with actual albedo for display (earlier used fixed 0.3)
-  const TeqActual = 278 * Math.pow(star.lum * (1 - albedo), 0.25) / Math.sqrt(a);
-
-  // Escape velocity: v_esc = sqrt(2GM/R), in km/s
-  // G = 6.674e-11, M_Earth = 5.972e24 kg, R_Earth = 6.371e6 m
-  // v_esc_Earth = 11.186 km/s
-  const mActual = mEarth || 0;
-  const escapeVel = mActual > 0 ? 11.186 * Math.sqrt(mActual / (rEarth * rEarth)) : 0;
 
   // ESI = Earth Similarity Index (Schulze-Makuch et al. 2011)
   // ESI = product of (1 - |X_i - X_ref| / (X_i + X_ref))^w_i for each param
@@ -2442,179 +2427,7 @@ function generateLife(type, subClass, tClass, Teq, mEarth, age, tidallyLocked, a
   return { chemistry, complexity, habitats };
 }
 
-// ============================================================
-//  ATMOSPHERE & OCEAN GENERATION
-// ============================================================
-function generateAtmosphere(type, subClass, mEarth, rEarth, Teq, tClass, isAirless, star, forceEarthlike) {
-  // No atmosphere for airless worlds, dwarfs, or remnant-star worlds
-  if (isAirless || type === 'dwarf') return null;
-
-  // Gas/ice giants: deep hydrogen/helium envelopes — always have "atmosphere"
-  if (type === 'gasGiant' || type === 'iceGiant') {
-    const isIce = type === 'iceGiant';
-    const mJup = mEarth / 317.8;
-    // Pressure at 1-bar level (reference level in giant planet meteorology) = 1 atm by definition
-    // We show pressure at the "surface" reference — conventionally 1 atm for giants
-    const pressure = 1.0; // reference level
-    // Scale height / lapse rate gives an effective greenhouse of hundreds of K on gas giants
-    const greenhouse = isIce ? rf(20, 80) : rf(50, 200);
-    // Density at 1-bar level: ~0.1–0.5 kg/m³ for H/He envelopes
-    const density = isIce ? rf(0.3, 1.5) : rf(0.1, 0.5);
-    let composition;
-    if (isIce) {
-      const iceComps = [
-        'H₂O, CH₄, NH₃, H₂, He',
-        'CH₄, H₂, He, H₂O',
-        'NH₃, H₂O, H₂, He',
-        'H₂, He, CH₄, H₂S',
-      ];
-      composition = pick(iceComps);
-    } else {
-      const gasComps = [
-        'H₂, He',
-        'H₂, He, CH₄',
-        'H₂, He, H₂O, NH₃',
-        'H₂, He, CO, SiO',
-        'H₂, He, TiO, VO', // hot Jupiters
-      ];
-      composition = (Teq > 800) ? 'H₂, He, TiO, VO, Na, K' : pick(gasComps);
-    }
-    return { pressure, greenhouse, density, composition };
-  }
-
-  // Chthonian: bare stripped core, no real atmosphere
-  if (type === 'chthonian') return null;
-
-  // Carbonia worlds: always thick reducing atmosphere
-  if (type === 'carbonia') {
-    const pressure = rf(1, 100);
-    const greenhouse = rf(10, 60);
-    const density = pressure * 44 / (8.314 / 1000 * Teq); // CO2-like molar mass ~44
-    return { pressure, greenhouse, density, composition: 'CO₂, CH₄, N₂, SO₂' };
-  }
-
-  // Ferria: thin or negligible atmosphere (Mercury-like)
-  if (type === 'ferria') {
-    const pressure = rf(1e-9, 0.001);
-    return { pressure, greenhouse: 0, density: pressure * 1e5 * 28 / (8314 * Teq), composition: 'Na, O₂, S (trace exosphere)' };
-  }
-
-  // Aquaria: icy/ocean worlds — thick water vapour / thin nitrogen
-  if (type === 'aquaria') {
-    const pressure = rf(0.01, 5.0);
-    const greenhouse = rf(5, 40);
-    const density = pressure * 101325 * 18 / (8314 * Teq);
-    const comps = ['H₂O, N₂', 'H₂O, CO₂, N₂', 'N₂, H₂O, CH₄'];
-    return { pressure, greenhouse, density, composition: pick(comps) };
-  }
-
-  // Rocky (Terra): most varied — depends on temperature class, mass, and star type
-  // Escape velocity sets a rough retention floor
-  const escVel = mEarth > 0 ? 11.186 * Math.sqrt(mEarth / (rEarth * rEarth)) : 0;
-
-  // Very small worlds can't retain thick atmospheres
-  if (escVel < 3.0 && !forceEarthlike) {
-    const pressure = rf(1e-6, 0.01);
-    return { pressure, greenhouse: 0, density: pressure * 101325 * 44 / (8314 * Teq), composition: 'CO₂ (thin)' };
-  }
-
-  let pressure, greenhouse, composition;
-
-  if (forceEarthlike) {
-    pressure    = rf(0.8, 1.2);
-    greenhouse  = rf(28, 38); // ~33 K for Earth
-    const density = pressure * 101325 * 29 / (8314 * Teq); // ~29 g/mol for air
-    composition = 'N₂, O₂, Ar, CO₂, H₂O';
-    return { pressure, greenhouse, density, composition };
-  }
-
-  if (tClass === 'Torrid' || Teq > 700) {
-    pressure   = rf(10, 300);
-    greenhouse = rf(100, 600);
-    composition = pick(['CO₂, SO₂, N₂', 'CO₂, N₂, H₂O', 'CO₂, SO₂, H₂S, N₂']);
-  } else if (tClass === 'Hot') {
-    pressure   = rf(1, 100);
-    greenhouse = rf(30, 200);
-    composition = pick(['CO₂, N₂, SO₂', 'CO₂, N₂, H₂O', 'N₂, CO₂, H₂O']);
-  } else if (tClass === 'Warm') {
-    pressure   = rf(0.1, 5.0);
-    greenhouse = rf(10, 60);
-    composition = pick(['N₂, CO₂, H₂O', 'N₂, O₂, CO₂', 'CO₂, N₂, Ar']);
-  } else if (tClass === 'Temperate') {
-    pressure   = rf(0.3, 3.0);
-    greenhouse = rf(20, 45);
-    composition = pick(['N₂, O₂, Ar, CO₂', 'N₂, CO₂, H₂O', 'N₂, O₂, H₂O, CO₂', 'N₂, CH₄, CO₂']);
-  } else if (tClass === 'Cool') {
-    pressure   = rf(0.01, 2.0);
-    greenhouse = rf(5, 25);
-    composition = pick(['N₂, CO₂', 'N₂, CO₂, Ar', 'CO₂, N₂, CH₄']);
-  } else { // Cold / Frigid
-    pressure   = rf(0.001, 0.5);
-    greenhouse = rf(0, 10);
-    composition = pick(['CO₂ (thin)', 'N₂, CO₂', 'N₂, CH₄ (trace)']);
-  }
-
-  // Molar mass estimate from composition: N₂/O₂ mix ≈ 29, CO₂-dominant ≈ 44
-  const molarMass = composition.startsWith('N₂, O₂') ? 29 : composition.startsWith('CO₂') ? 44 : 36;
-  const density = pressure * 101325 * molarMass / (8314 * Math.max(Teq, 50));
-
-  return { pressure, greenhouse, density, composition };
-}
-
-function generateOcean(atmo, type, Teq, mEarth, tClass, isAirless) {
-  if (!atmo || isAirless) return null;
-  if (type === 'gasGiant' || type === 'iceGiant' || type === 'dwarf' || type === 'chthonian' || type === 'ferria' || type === 'carbonia') return null;
-
-  // Surface temperature with greenhouse warming
-  const Tsurf = Teq + (atmo.greenhouse || 0);
-
-  // Determine what liquid could exist at this pressure & temperature
-  // Water: liquid at 273–647 K (pressure-dependent; at 1 atm, 273–373 K)
-  // At high pressure upper limit rises; we use simplified Tsurf-based check
-  const waterMinT = 273;
-  const waterMaxT = 373 + Math.log10(Math.max(atmo.pressure, 0.001)) * 74; // pressure shifts boiling point
-  const canHaveWater = (Tsurf >= waterMinT && Tsurf <= waterMaxT && atmo.pressure >= 0.006); // triple point ~0.006 atm
-
-  // Methane: liquid at ~91–112 K at 1.5 atm (Titan-like)
-  const canHaveMethane = (Tsurf >= 90 && Tsurf <= 120 && atmo.pressure >= 0.5 && atmo.composition.includes('CH₄'));
-
-  // CO₂ liquid: only at > 5.1 atm and 216–304 K
-  const canHaveCO2 = (Tsurf >= 216 && Tsurf <= 304 && atmo.pressure >= 5.1 && atmo.composition.includes('CO₂'));
-
-  // Sulphuric acid: liquid at 283–610 K (Venus-like clouds/surface)
-  const canHaveH2SO4 = (Tsurf >= 283 && Tsurf <= 610 && atmo.pressure >= 10 && atmo.composition.includes('SO₂'));
-
-  if (!canHaveWater && !canHaveMethane && !canHaveCO2 && !canHaveH2SO4) return null;
-
-  // Pick dominant liquid
-  let composition;
-  if (canHaveWater)  composition = roll(0.85) ? 'H₂O (liquid water)' : 'H₂O, NaCl (brine)';
-  else if (canHaveMethane) composition = 'CH₄, C₂H₆ (liquid methane/ethane)';
-  else if (canHaveCO2) composition = 'CO₂ (supercritical/liquid)';
-  else composition = 'H₂SO₄ (sulphuric acid)';
-
-  // Sea level: 0 = bone dry, 1 = global ocean; driven by type and temp class
-  let seaLevel;
-  if (type === 'aquaria') {
-    seaLevel = rf(0.5, 1.0);
-  } else if (canHaveMethane || canHaveCO2 || canHaveH2SO4) {
-    seaLevel = rf(0.05, 0.5);
-  } else if (tClass === 'Temperate' || tClass === 'Cool') {
-    seaLevel = rf(0.1, 0.8);
-  } else if (tClass === 'Warm') {
-    seaLevel = rf(0.05, 0.5);
-  } else {
-    seaLevel = rf(0.0, 0.2);
-  }
-  seaLevel = Math.min(1, seaLevel);
-
-  // Max depth (km): scales with sea level and planet mass
-  // Earth's average ocean depth ~3.8 km; larger worlds can have deeper oceans
-  const depthScale = Math.pow(Math.max(mEarth, 0.1), 0.4);
-  const maxDepthKm = seaLevel > 0 ? rf(0.5, 12) * seaLevel * depthScale : 0;
-
-  return { composition, maxDepthKm, seaLevel };
-}
+function generateSpecials(type, mEarth, rEarth, a, star) {
   const parts = [];
 
   // Rings
@@ -2658,6 +2471,7 @@ function generateOcean(atmo, type, Teq, mEarth, tClass, isAirless) {
 
   return parts.length ? parts : null;
 }
+
 
 // ============================================================
 //  ATMOSPHERE & OCEAN GENERATION
@@ -3042,7 +2856,7 @@ function renderPlanetCard(p, prefix) {
     <span class="planet-expand-icon">▼</span>
   </div>
   <div class="planet-details">
-    <div class="planet-details-panels">
+    <div class="planet-details-panels" style="grid-template-columns: repeat(${2 + (p.atmosphere ? 1 : 0) + (p.ocean ? 1 : 0)}, 1fr)">
       <div class="planet-detail-col">
         <div class="detail-col-label">Physical Properties</div>
         <div class="pd-row"><span class="pd-key">TYPE</span><span class="pd-val" style="${p.planetClass==='Planet'?'color:var(--accent)':p.planetClass==='Dwarf Planet'?'color:var(--accent2)':'color:var(--text-muted)'}">${p.planetClass || 'N/A'}</span></div>
