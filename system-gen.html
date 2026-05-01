@@ -977,7 +977,10 @@ function fmt(n, d=2) { return (+n).toFixed(d); }
 let currentUnits = 'metric';
 
 // Star type frequency multipliers (applied to base weights in SPECTRAL_TYPES)
-const DEFAULT_STAR_MULTS = { O:1, B:1, A:1, F:1, G:1, K:1, M:1 };
+// Default multipliers counteract the realistic base weights so all types appear roughly equally.
+// FLAT_MULTS are the inverse of the realistic frequencies, giving a flat distribution by default.
+// Realistic mode (checkbox) removes these multipliers so the true galaxy ratios apply.
+const DEFAULT_STAR_MULTS = { O:7650, B:765, A:127.5, F:25.5, G:10.07, K:6.32, M:1.0 };
 let starMults = { ...DEFAULT_STAR_MULTS };
 const DEFAULT_LIFE_MULT = 1;
 let lifeMult = DEFAULT_LIFE_MULT;
@@ -995,24 +998,21 @@ let realisticFreqEnabled = false;
 
 function setRealisticFreq(enabled) {
   realisticFreqEnabled = enabled;
-  const mults = enabled ? REALISTIC_MULTS : FLAT_MULTS;
-  // Normalize so sliders still show meaningful values — set all to 1× visually
-  // but internally the base SPECTRAL_TYPES weights handle the distribution
-  Object.assign(starMults, mults);
-  // Update slider displays
+  if (enabled) {
+    // Realistic mode: use all-1× so base SPECTRAL_TYPES weights apply (true galaxy ratios)
+    Object.assign(starMults, REALISTIC_MULTS);
+  } else {
+    // Flat mode: apply inverse-frequency multipliers so all types appear equally often
+    Object.assign(starMults, FLAT_MULTS);
+  }
+  // Sliders always show 1.00× in either mode — they're a relative multiplier on top
   ['O','B','A','F','G','K','M'].forEach(t => {
     const sl = document.getElementById('sl-' + t);
     const sv = document.getElementById('sv-' + t);
     if (sl && sv) {
-      // Show 1.00× when realistic (base weights handle it), otherwise show the flat override
-      const displayVal = enabled ? 1.0 : mults[t];
-      sl.value = Math.min(sl.max, displayVal > parseFloat(sl.max) ? parseFloat(sl.max) : displayVal);
-      sv.textContent = (enabled ? '1.00' : fmt(displayVal > 999 ? 999 : displayVal, 2)) + '×';
+      sl.value = 1;
+      sv.textContent = '1.00×';
     }
-  });
-  // Disable/enable sliders while realistic mode is on (base weights already handle distribution)
-  ['O','B','A','F','G','K','M'].forEach(t => {
-    const sl = document.getElementById('sl-' + t);
     if (sl) sl.disabled = enabled;
   });
 }
@@ -1021,15 +1021,23 @@ function updateSliderVal(sliderId, valId) {
   const v = parseFloat(document.getElementById(sliderId).value);
   document.getElementById(valId).textContent = v.toFixed(2) + '×';
   const key = sliderId.replace('sl-', '');
-  if (key === 'life') lifeMult = v;
-  else if (key === 'WD' || key === 'NS' || key === 'BH') remnantMults[key] = v;
-  else starMults[key] = v;
+  if (key === 'life') {
+    lifeMult = v;
+  } else if (key === 'WD' || key === 'NS' || key === 'BH') {
+    remnantMults[key] = v;
+  } else {
+    // Scale on top of the base mode multiplier (flat or realistic)
+    const baseMult = realisticFreqEnabled ? (REALISTIC_MULTS[key] || 1) : (FLAT_MULTS[key] || 1);
+    starMults[key] = baseMult * v;
+  }
 }
 
 function resetSettings() {
   Object.assign(starMults, DEFAULT_STAR_MULTS);
   lifeMult = DEFAULT_LIFE_MULT;
   Object.assign(remnantMults, DEFAULT_REMNANT_MULTS);
+  // Sliders display 1× for all types when in default (flat) mode — the internal
+  // multipliers are handled transparently; the slider range 0–3 is a relative scale.
   ['O','B','A','F','G','K','M'].forEach(t => {
     document.getElementById('sl-' + t).value = 1;
     document.getElementById('sv-' + t).textContent = '1.00×';
@@ -1085,31 +1093,32 @@ const SPECTRAL_TYPES = [
 //   PMS:                    all types; more common for low-mass (T Tauri) than high-mass (HAeBe)
 //   M dwarfs:               MS lifetime >> age of universe → no evolved classes except PMS/SD
 //   K dwarfs (0.45–0.8):    only upper-K can reach SG4/G3 in ~10 Gyr; kept at very low weight
+// EVOL_WEIGHTS: probability of each evolutionary class for a given spectral type.
+// These are tuned for visual variety in the generator (not strictly realistic ratios).
+// Remnants (WD/NS/BH) are appended from REMNANT_PROB after multiplication by remnantMults.
 const EVOL_WEIGHTS = {
   // [MS,   PMS,  SD,   SG4,  G3,   BG2,  SGA,  SGB]
-  O:  [0.40, 0.05, 0.00, 0.05, 0.10, 0.12, 0.15, 0.13],
-  B:  [0.55, 0.07, 0.01, 0.10, 0.14, 0.08, 0.03, 0.02],
-  A:  [0.70, 0.10, 0.01, 0.12, 0.06, 0.01, 0.00, 0.00],
-  F:  [0.76, 0.08, 0.03, 0.09, 0.04, 0.00, 0.00, 0.00],
-  G:  [0.78, 0.05, 0.04, 0.08, 0.05, 0.00, 0.00, 0.00],
-  K:  [0.82, 0.04, 0.05, 0.03, 0.01, 0.00, 0.00, 0.00], // only upper-K evolves off MS
-  M:  [0.86, 0.10, 0.04, 0.00, 0.00, 0.00, 0.00, 0.00], // M dwarfs: MS or PMS or SD only
+  O:  [0.30, 0.05, 0.00, 0.05, 0.10, 0.14, 0.20, 0.16], // O: many evolved/remnant outcomes
+  B:  [0.42, 0.08, 0.02, 0.12, 0.16, 0.10, 0.05, 0.05], // B: significant evolved fraction
+  A:  [0.55, 0.12, 0.02, 0.16, 0.10, 0.03, 0.00, 0.00], // A: sub-giants and giants common
+  F:  [0.60, 0.10, 0.05, 0.14, 0.08, 0.01, 0.00, 0.00], // F: sub-giants and sub-dwarfs
+  G:  [0.62, 0.07, 0.06, 0.12, 0.10, 0.01, 0.00, 0.00], // G: giants and sub-giants visible
+  K:  [0.68, 0.06, 0.08, 0.08, 0.05, 0.01, 0.00, 0.00], // K: some evolved, many sub-dwarfs
+  M:  [0.76, 0.14, 0.08, 0.00, 0.00, 0.00, 0.00, 0.00], // M: MS / PMS / SD only (physically)
 };
 const EVOL_KEYS = ['MS','PMS','SD','SG4','G3','BG2','SGA','SGB','WD','NS','BH'];
 // Remnant probabilities appended: [WD, NS, BH]
 // WD: end state of low/intermediate mass stars; NS/BH from high-mass
 // These are very rare as primaries but more common as companions (formed from an evolved binary partner)
 const REMNANT_PROB = {
-  // [WD, NS, BH]
-  // WD progenitors realistically: A, F, G (most common), upper-K (rare, ~0.8 M☉ border)
-  // M dwarfs cannot become WDs within the age of the universe — excluded entirely
-  // NS/BH: high-mass O/B stars only
-  O:  [0.00, 0.10, 0.08],  // O → almost always NS or BH
-  B:  [0.02, 0.06, 0.02],  // lower-mass B → WD possible; massive B → NS
-  A:  [0.04, 0.00, 0.00],  // A → WD (common endpoint)
-  F:  [0.03, 0.00, 0.00],  // F → WD
-  G:  [0.02, 0.00, 0.00],  // G → WD (Sun will become one)
-  K:  [0.005,0.00, 0.00],  // K → WD only for upper-K (~0.8 M☉); very slow evolution
+  // [WD, NS, BH] — boosted relative to pure realism so remnants appear in the generator.
+  // Physical constraints still respected: M→no WD, NS/BH only from O/B.
+  O:  [0.00, 0.20, 0.16],  // O → NS or BH (very high rate)
+  B:  [0.06, 0.12, 0.04],  // B → WD or NS
+  A:  [0.10, 0.00, 0.00],  // A → WD (boosted for visibility)
+  F:  [0.08, 0.00, 0.00],  // F → WD
+  G:  [0.06, 0.00, 0.00],  // G → WD (Sun will eventually)
+  K:  [0.02, 0.00, 0.00],  // K → WD only for upper-K
   M:  [0.00, 0.00, 0.00],  // M → cannot become WD in current universe age
 };
 
