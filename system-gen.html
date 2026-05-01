@@ -495,13 +495,16 @@
   /* Split planet detail panel */
   .planet-details-panels {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 0 1px;
     margin-top: 10px;
     background: var(--border);
     border: 1px solid var(--border);
     border-radius: 3px;
     overflow: hidden;
+  }
+  @media (max-width: 900px) {
+    .planet-details-panels { grid-template-columns: 1fr 1fr; }
   }
   .planet-detail-col {
     background: var(--bg);
@@ -518,6 +521,8 @@
     border-bottom: 1px solid var(--border);
   }
   .detail-col-label.orbital { color: var(--accent2); }
+  .detail-col-label.atmo    { color: #88ddff; }
+  .detail-col-label.ocean   { color: #44bbee; }
   .pd-row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 5px; }
   .pd-row:last-child { margin-bottom: 0; }
   .pd-key {
@@ -1681,6 +1686,8 @@ function makeEarthlikePlanet(idx, a, star) {
   const densityGcm3 = 5.514 * mEarth / Math.pow(rEarth, 3);
   // Earth-like planets always clear their orbit → Planet class
   const planetClass = 'Planet';
+  const atmosphere = generateAtmosphere('rocky', 'Terra', mEarth, rEarth, Teq, tClass, false, star, true);
+  const ocean      = generateOcean(atmosphere, 'rocky', Teq, mEarth, tClass, false);
   return {
     idx: idx + 1,
     type: 'rocky', subClass: 'Terra',
@@ -1692,6 +1699,7 @@ function makeEarthlikePlanet(idx, a, star) {
     period, colour: '#5a9c5a', special, tClass,
     rotationHours, tidallyLocked,
     age: star.age,
+    atmosphere, ocean,
     life: { chemistry: 'organic', complexity: 'multicellular', habitats: ['marine', 'terrestrial'] }
   };
 }
@@ -2185,6 +2193,9 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
 
   const special = generateSpecials(type, mEarth || (rEarth > 4 ? rEarth * 14 : mEarth), rEarth, a, star);
 
+  const atmosphere = generateAtmosphere(type, subClass, mActual, rEarth, TeqActual, tClass, isAirless, star, forceEarthlike);
+  const ocean      = generateOcean(atmosphere, type, TeqActual, mActual, tClass, isAirless);
+
   // classLabel format: "(temp) (Airless) (subClass)"
   // Gas/ice giants never lose their atmospheres — airless only applies to terrestrial types.
   // Special giant subtypes (Hot/Eccentric Jupiter, Super-Puff) skip the temperature prefix.
@@ -2314,6 +2325,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     period, colour, special, tClass,
     rotationHours, tidallyLocked,
     age: star.age,
+    atmosphere, ocean,
     life: generateLife(type, subClass, tClass, TeqActual, mActual, star.age, tidallyLocked, a, star, forceEarthlike, isAirless)
   };
 }
@@ -2430,7 +2442,179 @@ function generateLife(type, subClass, tClass, Teq, mEarth, age, tidallyLocked, a
   return { chemistry, complexity, habitats };
 }
 
-function generateSpecials(type, mEarth, rEarth, a, star) {
+// ============================================================
+//  ATMOSPHERE & OCEAN GENERATION
+// ============================================================
+function generateAtmosphere(type, subClass, mEarth, rEarth, Teq, tClass, isAirless, star, forceEarthlike) {
+  // No atmosphere for airless worlds, dwarfs, or remnant-star worlds
+  if (isAirless || type === 'dwarf') return null;
+
+  // Gas/ice giants: deep hydrogen/helium envelopes — always have "atmosphere"
+  if (type === 'gasGiant' || type === 'iceGiant') {
+    const isIce = type === 'iceGiant';
+    const mJup = mEarth / 317.8;
+    // Pressure at 1-bar level (reference level in giant planet meteorology) = 1 atm by definition
+    // We show pressure at the "surface" reference — conventionally 1 atm for giants
+    const pressure = 1.0; // reference level
+    // Scale height / lapse rate gives an effective greenhouse of hundreds of K on gas giants
+    const greenhouse = isIce ? rf(20, 80) : rf(50, 200);
+    // Density at 1-bar level: ~0.1–0.5 kg/m³ for H/He envelopes
+    const density = isIce ? rf(0.3, 1.5) : rf(0.1, 0.5);
+    let composition;
+    if (isIce) {
+      const iceComps = [
+        'H₂O, CH₄, NH₃, H₂, He',
+        'CH₄, H₂, He, H₂O',
+        'NH₃, H₂O, H₂, He',
+        'H₂, He, CH₄, H₂S',
+      ];
+      composition = pick(iceComps);
+    } else {
+      const gasComps = [
+        'H₂, He',
+        'H₂, He, CH₄',
+        'H₂, He, H₂O, NH₃',
+        'H₂, He, CO, SiO',
+        'H₂, He, TiO, VO', // hot Jupiters
+      ];
+      composition = (Teq > 800) ? 'H₂, He, TiO, VO, Na, K' : pick(gasComps);
+    }
+    return { pressure, greenhouse, density, composition };
+  }
+
+  // Chthonian: bare stripped core, no real atmosphere
+  if (type === 'chthonian') return null;
+
+  // Carbonia worlds: always thick reducing atmosphere
+  if (type === 'carbonia') {
+    const pressure = rf(1, 100);
+    const greenhouse = rf(10, 60);
+    const density = pressure * 44 / (8.314 / 1000 * Teq); // CO2-like molar mass ~44
+    return { pressure, greenhouse, density, composition: 'CO₂, CH₄, N₂, SO₂' };
+  }
+
+  // Ferria: thin or negligible atmosphere (Mercury-like)
+  if (type === 'ferria') {
+    const pressure = rf(1e-9, 0.001);
+    return { pressure, greenhouse: 0, density: pressure * 1e5 * 28 / (8314 * Teq), composition: 'Na, O₂, S (trace exosphere)' };
+  }
+
+  // Aquaria: icy/ocean worlds — thick water vapour / thin nitrogen
+  if (type === 'aquaria') {
+    const pressure = rf(0.01, 5.0);
+    const greenhouse = rf(5, 40);
+    const density = pressure * 101325 * 18 / (8314 * Teq);
+    const comps = ['H₂O, N₂', 'H₂O, CO₂, N₂', 'N₂, H₂O, CH₄'];
+    return { pressure, greenhouse, density, composition: pick(comps) };
+  }
+
+  // Rocky (Terra): most varied — depends on temperature class, mass, and star type
+  // Escape velocity sets a rough retention floor
+  const escVel = mEarth > 0 ? 11.186 * Math.sqrt(mEarth / (rEarth * rEarth)) : 0;
+
+  // Very small worlds can't retain thick atmospheres
+  if (escVel < 3.0 && !forceEarthlike) {
+    const pressure = rf(1e-6, 0.01);
+    return { pressure, greenhouse: 0, density: pressure * 101325 * 44 / (8314 * Teq), composition: 'CO₂ (thin)' };
+  }
+
+  let pressure, greenhouse, composition;
+
+  if (forceEarthlike) {
+    pressure    = rf(0.8, 1.2);
+    greenhouse  = rf(28, 38); // ~33 K for Earth
+    const density = pressure * 101325 * 29 / (8314 * Teq); // ~29 g/mol for air
+    composition = 'N₂, O₂, Ar, CO₂, H₂O';
+    return { pressure, greenhouse, density, composition };
+  }
+
+  if (tClass === 'Torrid' || Teq > 700) {
+    pressure   = rf(10, 300);
+    greenhouse = rf(100, 600);
+    composition = pick(['CO₂, SO₂, N₂', 'CO₂, N₂, H₂O', 'CO₂, SO₂, H₂S, N₂']);
+  } else if (tClass === 'Hot') {
+    pressure   = rf(1, 100);
+    greenhouse = rf(30, 200);
+    composition = pick(['CO₂, N₂, SO₂', 'CO₂, N₂, H₂O', 'N₂, CO₂, H₂O']);
+  } else if (tClass === 'Warm') {
+    pressure   = rf(0.1, 5.0);
+    greenhouse = rf(10, 60);
+    composition = pick(['N₂, CO₂, H₂O', 'N₂, O₂, CO₂', 'CO₂, N₂, Ar']);
+  } else if (tClass === 'Temperate') {
+    pressure   = rf(0.3, 3.0);
+    greenhouse = rf(20, 45);
+    composition = pick(['N₂, O₂, Ar, CO₂', 'N₂, CO₂, H₂O', 'N₂, O₂, H₂O, CO₂', 'N₂, CH₄, CO₂']);
+  } else if (tClass === 'Cool') {
+    pressure   = rf(0.01, 2.0);
+    greenhouse = rf(5, 25);
+    composition = pick(['N₂, CO₂', 'N₂, CO₂, Ar', 'CO₂, N₂, CH₄']);
+  } else { // Cold / Frigid
+    pressure   = rf(0.001, 0.5);
+    greenhouse = rf(0, 10);
+    composition = pick(['CO₂ (thin)', 'N₂, CO₂', 'N₂, CH₄ (trace)']);
+  }
+
+  // Molar mass estimate from composition: N₂/O₂ mix ≈ 29, CO₂-dominant ≈ 44
+  const molarMass = composition.startsWith('N₂, O₂') ? 29 : composition.startsWith('CO₂') ? 44 : 36;
+  const density = pressure * 101325 * molarMass / (8314 * Math.max(Teq, 50));
+
+  return { pressure, greenhouse, density, composition };
+}
+
+function generateOcean(atmo, type, Teq, mEarth, tClass, isAirless) {
+  if (!atmo || isAirless) return null;
+  if (type === 'gasGiant' || type === 'iceGiant' || type === 'dwarf' || type === 'chthonian' || type === 'ferria' || type === 'carbonia') return null;
+
+  // Surface temperature with greenhouse warming
+  const Tsurf = Teq + (atmo.greenhouse || 0);
+
+  // Determine what liquid could exist at this pressure & temperature
+  // Water: liquid at 273–647 K (pressure-dependent; at 1 atm, 273–373 K)
+  // At high pressure upper limit rises; we use simplified Tsurf-based check
+  const waterMinT = 273;
+  const waterMaxT = 373 + Math.log10(Math.max(atmo.pressure, 0.001)) * 74; // pressure shifts boiling point
+  const canHaveWater = (Tsurf >= waterMinT && Tsurf <= waterMaxT && atmo.pressure >= 0.006); // triple point ~0.006 atm
+
+  // Methane: liquid at ~91–112 K at 1.5 atm (Titan-like)
+  const canHaveMethane = (Tsurf >= 90 && Tsurf <= 120 && atmo.pressure >= 0.5 && atmo.composition.includes('CH₄'));
+
+  // CO₂ liquid: only at > 5.1 atm and 216–304 K
+  const canHaveCO2 = (Tsurf >= 216 && Tsurf <= 304 && atmo.pressure >= 5.1 && atmo.composition.includes('CO₂'));
+
+  // Sulphuric acid: liquid at 283–610 K (Venus-like clouds/surface)
+  const canHaveH2SO4 = (Tsurf >= 283 && Tsurf <= 610 && atmo.pressure >= 10 && atmo.composition.includes('SO₂'));
+
+  if (!canHaveWater && !canHaveMethane && !canHaveCO2 && !canHaveH2SO4) return null;
+
+  // Pick dominant liquid
+  let composition;
+  if (canHaveWater)  composition = roll(0.85) ? 'H₂O (liquid water)' : 'H₂O, NaCl (brine)';
+  else if (canHaveMethane) composition = 'CH₄, C₂H₆ (liquid methane/ethane)';
+  else if (canHaveCO2) composition = 'CO₂ (supercritical/liquid)';
+  else composition = 'H₂SO₄ (sulphuric acid)';
+
+  // Sea level: 0 = bone dry, 1 = global ocean; driven by type and temp class
+  let seaLevel;
+  if (type === 'aquaria') {
+    seaLevel = rf(0.5, 1.0);
+  } else if (canHaveMethane || canHaveCO2 || canHaveH2SO4) {
+    seaLevel = rf(0.05, 0.5);
+  } else if (tClass === 'Temperate' || tClass === 'Cool') {
+    seaLevel = rf(0.1, 0.8);
+  } else if (tClass === 'Warm') {
+    seaLevel = rf(0.05, 0.5);
+  } else {
+    seaLevel = rf(0.0, 0.2);
+  }
+  seaLevel = Math.min(1, seaLevel);
+
+  // Max depth (km): scales with sea level and planet mass
+  // Earth's average ocean depth ~3.8 km; larger worlds can have deeper oceans
+  const depthScale = Math.pow(Math.max(mEarth, 0.1), 0.4);
+  const maxDepthKm = seaLevel > 0 ? rf(0.5, 12) * seaLevel * depthScale : 0;
+
+  return { composition, maxDepthKm, seaLevel };
+}
   const parts = [];
 
   // Rings
@@ -2476,8 +2660,223 @@ function generateSpecials(type, mEarth, rEarth, a, star) {
 }
 
 // ============================================================
-//  BELT GENERATION
+//  ATMOSPHERE & OCEAN GENERATION
 // ============================================================
+function generateAtmosphere(type, subClass, mEarth, rEarth, Teq, tClass, isAirless, forceEarthlike, star, a) {
+  // No atmosphere for airless worlds, dwarfs, asteroids, Oort objects
+  if (isAirless) return null;
+  if (type === 'dwarf') return null;
+  if (type === 'chthonian') return null; // stripped bare
+
+  const escVel = mEarth > 0 ? 11.186 * Math.sqrt(mEarth / Math.pow(Math.max(rEarth, 0.05), 2)) : 0;
+
+  // ── Gas / Ice Giants: always thick H₂/He atmosphere ─────────
+  if (type === 'gasGiant') {
+    const mJup = mEarth / 317.8;
+    const pressure = mJup > 1 ? rf(1e5, 1e7) : rf(1e4, 1e6); // bar at 1-bar reference level
+    const density  = pressure * 28.97 / (8314 * Math.max(Teq, 100)) * 1000; // rough ideal gas kg/m³ at ref level
+    const comp = mJup > 5
+      ? [['H₂', rf(80,90)], ['He', rf(8,15)], ['CH₄', rf(0.1,1)], ['NH₃', rf(0.01,0.5)]]
+      : [['H₂', rf(75,88)], ['He', rf(10,20)], ['CH₄', rf(0.1,2)], ['NH₃', rf(0.05,1)], ['H₂O', rf(0.01,0.5)]];
+    normaliseComp(comp);
+    return { pressure: fmt(pressure,0)+' bar', greenhouse: null, densityKgm3: fmt(density,1), composition: comp, isGiant: true };
+  }
+  if (type === 'iceGiant') {
+    const pressure = rf(500, 5000);
+    const density  = pressure * 28.97 / (8314 * Math.max(Teq, 50)) * 1000;
+    const comp = [['H₂', rf(55,75)], ['He', rf(15,25)], ['CH₄', rf(3,8)], ['NH₃', rf(0.5,3)], ['H₂O', rf(0.1,2)]];
+    normaliseComp(comp);
+    return { pressure: fmt(pressure,0)+' bar', greenhouse: null, densityKgm3: fmt(density,1), composition: comp, isGiant: true };
+  }
+
+  // ── Terrestrial types ────────────────────────────────────────
+  // Base surface pressure driven by mass (more massive = thicker atmosphere retained)
+  // Calibrated: Earth = 1 atm at 1 M⊕, Venus ~93 atm at 0.815 M⊕ (CO₂ runaway)
+  // Very low-mass worlds lose atmosphere; very high-mass worlds accumulate thick envelopes
+  let basePressure;
+  if (mEarth < 0.05)       basePressure = rf(0.0001, 0.005);   // trace
+  else if (mEarth < 0.2)   basePressure = rf(0.005, 0.1);
+  else if (mEarth < 0.5)   basePressure = rf(0.05, 0.5);
+  else if (mEarth < 1.0)   basePressure = rf(0.2, 1.5);
+  else if (mEarth < 2.0)   basePressure = rf(0.5, 5.0);
+  else if (mEarth < 5.0)   basePressure = rf(1.0, 20.0);
+  else                      basePressure = rf(5.0, 100.0);
+
+  // Hot worlds lose atmosphere; runaway greenhouse can inflate it (Venus-like)
+  let pressure = basePressure;
+  if (Teq > 700)       pressure *= rf(0.001, 0.05);  // baked off
+  else if (Teq > 400)  pressure *= rf(0.1, 0.6);     // partially stripped
+  else if (Teq > 340 && type !== 'aquaria') pressure *= rf(0.5, 3.0); // Venus-like runaway possible
+  else if (Teq < 100)  pressure *= rf(0.1, 0.8);     // cold trap, freezes out
+
+  // Ferria worlds have thin atmospheres (low volatile inventory)
+  if (type === 'ferria') pressure *= rf(0.01, 0.2);
+  // Carbonia worlds: thick CO/CO₂ reducing atmospheres
+  if (type === 'carbonia') pressure *= rf(1.0, 8.0);
+  // Aquaria worlds with subsurface oceans: thin ice-covered surface atmosphere
+  if (type === 'aquaria' && Teq < 200) pressure = rf(0.001, 0.1);
+
+  pressure = Math.max(pressure, 1e-6);
+
+  // Greenhouse warming: ΔT from greenhouse gases
+  // CO₂-heavy: up to +500 K (Venus = +462 K at 93 atm pure CO₂)
+  // Earth-like (N₂/O₂ + trace CO₂): ~+33 K
+  let greenhouse = 0;
+  if (pressure > 0.01) {
+    if (type === 'carbonia') {
+      greenhouse = Math.min(pressure * rf(3, 8), 600);
+    } else if (Teq > 340 && mEarth > 0.5) {
+      // Runaway greenhouse (Venus-like)
+      greenhouse = Math.min(pressure * rf(4, 12), 550);
+    } else if (forceEarthlike || (tClass === 'Temperate' && type === 'rocky')) {
+      greenhouse = rf(20, 40); // Earth-like
+    } else {
+      greenhouse = Math.min(pressure * rf(0.5, 4), 300);
+    }
+  }
+
+  // Atmospheric density: ρ = P*M_mol / (R*T) — use surface temp = Teq + greenhouse
+  const Tsurf = Math.max(Teq + greenhouse, 10);
+  // Mean molar mass depends on composition; approximate first, then refine
+  let meanMolar = 28; // N₂ default
+  if (type === 'carbonia') meanMolar = 34; // CO₂/CO heavy
+  else if (Teq > 400 && type !== 'aquaria') meanMolar = 44; // CO₂ dominated
+  else if (mEarth > 3 && Teq < 200) meanMolar = 20; // H₂/He heavy on cold giants
+  const densityAtmo = (pressure * 101325 * meanMolar) / (8314 * Tsurf); // kg/m³
+
+  // ── Atmospheric composition ──────────────────────────────────
+  let comp = []; // [[gas, percent], ...]
+  if (forceEarthlike) {
+    comp = [['N₂', 78.1], ['O₂', 20.9], ['Ar', 0.93], ['CO₂', 0.04], ['H₂O', 0.5]];
+  } else if (type === 'carbonia') {
+    const co2 = rf(50, 85); const co = rf(5, 20); const ch4 = rf(2, 15);
+    comp = [['CO₂', co2], ['CO', co], ['CH₄', ch4], ['N₂', 100-co2-co-ch4]];
+    normaliseComp(comp);
+  } else if (type === 'aquaria') {
+    if (Teq < 150) {
+      comp = [['N₂', rf(70,90)], ['CH₄', rf(3,15)], ['Ar', rf(1,5)], ['CO₂', rf(0.1,2)]];
+    } else {
+      comp = [['H₂O', rf(50,90)], ['N₂', rf(5,35)], ['CO₂', rf(0.5,5)], ['O₂', rf(0.1,2)]];
+    }
+    normaliseComp(comp);
+  } else if (Teq > 500) {
+    // Hot/Torrid rocky: baked CO₂/SO₂ atmosphere
+    const co2 = rf(60, 95); const so2 = rf(0.5, 10);
+    comp = [['CO₂', co2], ['SO₂', so2], ['N₂', Math.max(0, 100-co2-so2-2)], ['CO', rf(0.1,2)]];
+    normaliseComp(comp);
+  } else if (Teq > 340) {
+    // Warm-hot: Venus-like
+    const co2 = rf(85, 98);
+    comp = [['CO₂', co2], ['N₂', rf(1, 100-co2-1)], ['SO₂', rf(0.01, 0.5)], ['H₂O', rf(0.001, 0.1)]];
+    normaliseComp(comp);
+  } else if (tClass === 'Temperate' || tClass === 'Cool' || tClass === 'Warm') {
+    // Potentially habitable range: variable N₂/O₂/CO₂
+    const hasOxygen = (type === 'rocky' && mEarth > 0.3 && roll(0.35)); // photosynthesis possible
+    if (hasOxygen) {
+      const o2 = rf(10, 35); const n2 = rf(55, 80);
+      comp = [['N₂', n2], ['O₂', o2], ['Ar', rf(0.5,2)], ['CO₂', rf(0.01,1)], ['H₂O', rf(0.1,3)]];
+    } else {
+      const n2 = rf(60, 90); const co2 = rf(1, 20);
+      comp = [['N₂', n2], ['CO₂', co2], ['H₂O', rf(0.1,5)], ['Ar', rf(0.1,2)], ['CH₄', rf(0.001,0.5)]];
+    }
+    normaliseComp(comp);
+  } else {
+    // Cold/Frigid: thin N₂ or CO₂ ice-trap atmosphere
+    const n2 = rf(50, 85); const co2 = rf(5, 30);
+    comp = [['N₂', n2], ['CO₂', co2], ['Ar', rf(0.1,3)], ['CH₄', rf(0.01,1)]];
+    normaliseComp(comp);
+  }
+
+  return {
+    pressure,   // in atm
+    greenhouse: Math.round(greenhouse),
+    densityKgm3: densityAtmo,
+    composition: comp,
+    Tsurf,      // used by ocean generator
+    isGiant: false
+  };
+}
+
+function normaliseComp(comp) {
+  const total = comp.reduce((s, c) => s + c[1], 0);
+  if (total <= 0) return;
+  comp.forEach(c => { c[1] = c[1] / total * 100; });
+  // Round to 2 dp, ensure sum = 100 by adjusting largest
+  let rsum = 0;
+  comp.forEach(c => { c[1] = Math.round(c[1] * 100) / 100; rsum += c[1]; });
+  const diff = Math.round((100 - rsum) * 100) / 100;
+  if (comp.length > 0) comp[0][1] = Math.round((comp[0][1] + diff) * 100) / 100;
+  comp.sort((a, b) => b[1] - a[1]);
+}
+
+function generateOcean(type, atmo, Teq, mEarth, tClass) {
+  if (!atmo || atmo.isGiant) return null;
+  const Tsurf = atmo.Tsurf;
+  const pressure = atmo.pressure; // atm
+
+  // Determine if any liquid is stable at the surface
+  // Water: liquid between 273–647 K (critical point), needs P ≥ 0.006 atm (triple point)
+  const waterLiquid = Tsurf >= 273 && Tsurf <= 370 && pressure >= 0.006;
+  // Supercritical water ocean (very hot, very high pressure)
+  const superCritWater = Tsurf > 370 && Tsurf < 647 && pressure > 218;
+  // Methane ocean (Titan-like): 90–115 K, any reasonable pressure
+  const methaneLiquid = Tsurf >= 90 && Tsurf <= 115 && pressure >= 0.0015;
+  // Ethane ocean: similar range to methane
+  const ethaneLiquid  = Tsurf >= 89 && Tsurf <= 120 && pressure >= 0.001;
+  // Sulphuric acid (Venus-like clouds, not surface oceans — skip)
+  // Liquid CO₂: very narrow range, supercritical above 31°C/73 atm — too exotic, skip
+  // Liquid nitrogen: 63–77 K, Pluto-like — too cold for most generated worlds
+  const nitrogenLiquid = Tsurf >= 63 && Tsurf <= 77 && pressure >= 0.12;
+  // Liquid ammonia: −78 to −33°C = 195–240 K, needs ≥ 0.06 atm
+  const ammoniaLiquid = Tsurf >= 195 && Tsurf <= 240 && pressure >= 0.06;
+
+  // Aquaria worlds always have a subsurface or surface ocean if not too hot/cold
+  const forceAquaria = type === 'aquaria' && Tsurf < 400 && pressure > 0.001;
+
+  if (!waterLiquid && !superCritWater && !methaneLiquid && !ethaneLiquid
+      && !nitrogenLiquid && !ammoniaLiquid && !forceAquaria) return null;
+
+  let oceanComp, maxDepthKm, seaLevel;
+
+  if (forceAquaria || waterLiquid || superCritWater) {
+    if (superCritWater) {
+      oceanComp  = 'Supercritical H₂O';
+      maxDepthKm = rf(5, 50);
+      seaLevel   = rf(0.3, 0.9);
+    } else if (type === 'aquaria') {
+      oceanComp  = 'H₂O (subsurface/global)';
+      maxDepthKm = rf(30, 200);
+      seaLevel   = rf(0.7, 1.0);
+    } else if (tClass === 'Temperate') {
+      // Earth-like partial ocean
+      oceanComp  = 'H₂O (saline)';
+      maxDepthKm = rf(1, 11);
+      seaLevel   = rf(0.1, 0.75);
+    } else {
+      oceanComp  = 'H₂O';
+      maxDepthKm = rf(0.5, 30);
+      seaLevel   = rf(0.05, 0.9);
+    }
+  } else if (methaneLiquid || ethaneLiquid) {
+    oceanComp  = methaneLiquid && ethaneLiquid ? 'CH₄/C₂H₆ mix' : (methaneLiquid ? 'Liquid CH₄' : 'Liquid C₂H₆');
+    maxDepthKm = rf(0.1, 3);
+    seaLevel   = rf(0.05, 0.5);
+  } else if (ammoniaLiquid) {
+    oceanComp  = 'NH₃/H₂O mix';
+    maxDepthKm = rf(0.5, 20);
+    seaLevel   = rf(0.1, 0.6);
+  } else {
+    oceanComp  = 'Liquid N₂';
+    maxDepthKm = rf(0.01, 0.5);
+    seaLevel   = rf(0.01, 0.3);
+  }
+
+  return {
+    composition: oceanComp,
+    maxDepthKm:  maxDepthKm,
+    seaLevel:    seaLevel
+  };
+}
 // Returns array of belt objects: { name, minAU, maxAU, type }
 // type: 'asteroid' | 'kuiper' | 'oort'
 // minAU: circumbinary minimum stable orbit (3× binary separation); null for single stars
@@ -2668,6 +3067,21 @@ function renderPlanetCard(p, prefix) {
         <div class="pd-row"><span class="pd-key">ARG. PERICENTER (ω)</span><span class="pd-val">${fmt(p.argPeri,2)}°</span></div>
         <div class="pd-row"><span class="pd-key">MEAN ANOMALY (M)</span><span class="pd-val">${fmt(p.meanAnom,2)}°</span></div>
       </div>
+      ${p.atmosphere ? `
+      <div class="planet-detail-col">
+        <div class="detail-col-label" style="color:var(--accent3)">Atmosphere</div>
+        <div class="pd-row"><span class="pd-key">PRESSURE</span><span class="pd-val">${p.atmosphere.pressure < 0.001 ? p.atmosphere.pressure.toExponential(2) + ' atm' : fmt(p.atmosphere.pressure, 4) + ' atm'}</span></div>
+        <div class="pd-row"><span class="pd-key">GREENHOUSE</span><span class="pd-val">${fmt(p.atmosphere.greenhouse, 1)} K</span></div>
+        <div class="pd-row"><span class="pd-key">DENSITY</span><span class="pd-val">${p.atmosphere.density < 0.001 ? p.atmosphere.density.toExponential(2) : fmt(p.atmosphere.density, 3)} kg/m³</span></div>
+        <div class="pd-row"><span class="pd-key">COMPOSITION</span><span class="pd-val" style="font-size:9px;line-height:1.4">${p.atmosphere.composition}</span></div>
+      </div>` : ''}
+      ${p.ocean ? `
+      <div class="planet-detail-col">
+        <div class="detail-col-label" style="color:#60b8e8">Ocean</div>
+        <div class="pd-row"><span class="pd-key">COMPOSITION</span><span class="pd-val" style="font-size:9px;line-height:1.4">${p.ocean.composition}</span></div>
+        <div class="pd-row"><span class="pd-key">MAX DEPTH</span><span class="pd-val">${fmt(p.ocean.maxDepthKm, 1)} km</span></div>
+        <div class="pd-row"><span class="pd-key">SEA LEVEL</span><span class="pd-val">${fmt(p.ocean.seaLevel, 2)} <span style="color:var(--text-muted);font-size:9px">(${p.ocean.seaLevel < 0.05 ? 'Trace' : p.ocean.seaLevel < 0.2 ? 'Shallow seas' : p.ocean.seaLevel < 0.5 ? 'Continental' : p.ocean.seaLevel < 0.8 ? 'Archipelago' : 'Ocean world'})</span></span></div>
+      </div>` : ''}
     </div>
     ${specialHtml}
   </div>

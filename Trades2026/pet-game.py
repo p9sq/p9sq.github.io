@@ -13,13 +13,15 @@ print("Energy:", energy)
 action = input("Do you want to 'feed' or 'play' with your pet? Or do you want to put it to 'sleep'? ").lower().strip()
 
 if action == "feed":
-    hunger = hunger - 2
+    hunger = hunger + 2
     if hunger <= 0:
         print("Your pet is full!")
     print("Munch munch! Hunger is now lower.")
 elif action == "play":
     health = health + 2
-    print("Yay! Your pet is happy.")
+    hunger -= 2
+    energy -=2
+    print("Yay! Your pet is happy! After all of that fun, your pet is now tired and hungry")
 elif action == "sleep":
     energy = energy + 5
     print("Your pet has rested")
@@ -37,7 +39,7 @@ while is_alive == True:
         is_alive = False
         print("Goodbye!")
     elif action == "status":
-        print(f"Health {health}/10, Hunger: {hunger}/5, Energy: {energy}/8")
+        print(f"{pet_name}'s statistics:\nHealth {health}/10\nHunger: {hunger}/5\nEnergy: {energy}/8")
     elif action == "feed":
         hunger -= 2
         if hunger <= 0:
@@ -45,7 +47,9 @@ while is_alive == True:
         print("Munch munch! Hunger is now lower.")
     elif action == "play":
         health = health + 2
-        print("Yay! Your pet is happy.")
+        hunger -= 2
+        energy -=2
+        print("Yay! Your pet is happy! After all of that fun, your pet is now tired and hungry")
     elif action == "sleep":
         energy = energy + 5
         print("Your pet has rested")
