@@ -283,7 +283,7 @@
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 6px;
-    overflow: hidden;
+    overflow: visible;
   }
 
   /* Close binary: two stars stacked at top */
@@ -291,6 +291,8 @@
     display: flex;
     gap: 0;
     border-bottom: 1px solid var(--border);
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
   }
   .close-binary-header .star-header-half {
     flex: 1;
@@ -307,6 +309,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    border-radius: 6px 6px 0 0;
   }
   .star-icon {
     width: 48px; height: 48px;
@@ -525,6 +528,7 @@
   .detail-col-label.ocean   { color: #44bbee; }
   .pd-row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 5px; }
   .pd-row:last-child { margin-bottom: 0; }
+  .pd-row-composition { align-items: flex-start; }
   .pd-key {
     font-family: 'Share Tech Mono', monospace;
     font-size: 10px;
@@ -846,6 +850,13 @@
     </div>
 
     <div class="modal-section-title">Star Type Frequency</div>
+    <div class="modal-row" style="margin-bottom:10px">
+      <span class="modal-label" style="font-size:11px;line-height:1.4">Realistic frequency<br><span style="color:var(--text-muted);font-size:10px">Match observed galaxy ratios<br>(M dwarfs most common, etc.)</span></span>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="chk-realistic-freq" onchange="setRealisticFreq(this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:var(--accent)">
+        <span class="modal-label">Enabled</span>
+      </label>
+    </div>
     <div class="slider-row"><span class="slider-label">O</span><div class="slider-wrap"><input type="range" id="sl-O" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-O','sv-O')"></div><span class="slider-val" id="sv-O">1.00×</span></div>
     <div class="slider-row"><span class="slider-label">B</span><div class="slider-wrap"><input type="range" id="sl-B" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-B','sv-B')"></div><span class="slider-val" id="sv-B">1.00×</span></div>
     <div class="slider-row"><span class="slider-label">A</span><div class="slider-wrap"><input type="range" id="sl-A" min="0" max="3" step="0.05" value="1" oninput="updateSliderVal('sl-A','sv-A')"></div><span class="slider-val" id="sv-A">1.00×</span></div>
@@ -973,6 +984,39 @@ let lifeMult = DEFAULT_LIFE_MULT;
 const DEFAULT_REMNANT_MULTS = { WD:1, NS:1, BH:1 };
 let remnantMults = { ...DEFAULT_REMNANT_MULTS };
 
+// Observed galaxy frequency ratios (Kroupa IMF / Henry 2006 solar neighbourhood):
+// M: ~76%, K: ~12%, G: ~7.6%, F: ~3%, A: ~0.6%, B: ~0.1%, O: ~0.00001%
+// These are relative to the base weights in SPECTRAL_TYPES which already encode realistic ratios.
+// "Realistic" mode forces the sliders to match these; "disabled" lets sliders be free.
+const REALISTIC_MULTS = { O:1.0, B:1.0, A:1.0, F:1.0, G:1.0, K:1.0, M:1.0 };
+// When realistic freq is OFF, all types are equally weighted (flat distribution)
+const FLAT_MULTS = { O:7650, B:765, A:127.5, F:25.5, G:10.07, K:6.32, M:1.0 };
+let realisticFreqEnabled = false;
+
+function setRealisticFreq(enabled) {
+  realisticFreqEnabled = enabled;
+  const mults = enabled ? REALISTIC_MULTS : FLAT_MULTS;
+  // Normalize so sliders still show meaningful values — set all to 1× visually
+  // but internally the base SPECTRAL_TYPES weights handle the distribution
+  Object.assign(starMults, mults);
+  // Update slider displays
+  ['O','B','A','F','G','K','M'].forEach(t => {
+    const sl = document.getElementById('sl-' + t);
+    const sv = document.getElementById('sv-' + t);
+    if (sl && sv) {
+      // Show 1.00× when realistic (base weights handle it), otherwise show the flat override
+      const displayVal = enabled ? 1.0 : mults[t];
+      sl.value = Math.min(sl.max, displayVal > parseFloat(sl.max) ? parseFloat(sl.max) : displayVal);
+      sv.textContent = (enabled ? '1.00' : fmt(displayVal > 999 ? 999 : displayVal, 2)) + '×';
+    }
+  });
+  // Disable/enable sliders while realistic mode is on (base weights already handle distribution)
+  ['O','B','A','F','G','K','M'].forEach(t => {
+    const sl = document.getElementById('sl-' + t);
+    if (sl) sl.disabled = enabled;
+  });
+}
+
 function updateSliderVal(sliderId, valId) {
   const v = parseFloat(document.getElementById(sliderId).value);
   document.getElementById(valId).textContent = v.toFixed(2) + '×';
@@ -996,6 +1040,8 @@ function resetSettings() {
     document.getElementById('sl-' + t).value = 1;
     document.getElementById('sv-' + t).textContent = '1.00×';
   });
+  const chk = document.getElementById('chk-realistic-freq');
+  if (chk) { chk.checked = false; setRealisticFreq(false); }
 }
 
 function openSettings() { document.getElementById('settings-modal').classList.add('open'); }
@@ -1215,17 +1261,12 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       lum = rf(10000, 100000);
       break;
     case 'WD':
-      // White dwarf: Earth-sized (~0.008–0.02 R☉), mass 0.5–1.4 M☉
-      // Luminosity absolute: 0.0001–0.05 L_Sun (not relative to progenitor lumMS,
-      // which would overestimate brightness for high-mass progenitors like A stars)
       radiusMult = rf(0.008, 0.020);
-      lum = rf(0.0001, 0.10); // absolute L_Sun range for WDs; age-dependence via temp formula
+      lum = rf(0.0001, 0.01); // WDs are dimmer than NS; range 0.0001–0.01 L_Sun
       break;
     case 'NS':
-      // Neutron star: ~10 km radius (~0.000014 R☉), 1.1–2.3 M☉
-      // Very hot but tiny → actual luminosity ~1e-5 to ~1e-3 L_Sun (Özel & Freire 2016)
       radiusMult = 0.000014;
-      lum = rf(1e-5, 1e-3); // absolute L_Sun
+      lum = rf(0.01, 0.1); // NS: hotter surface, higher luminosity than old WDs
       break;
     case 'BH':
       // Stellar-mass black hole: 3–20 M☉, no real photosphere
@@ -1278,6 +1319,15 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       radiusMult = 1.0;
       lum = lumMS;
     }
+  } else if (evolClass === 'WD') {
+    // WD age = progenitor MS lifetime + time since becoming WD (cooling time)
+    // tMain for typical WD progenitor (1–8 M☉): 0.05–10 Gyr
+    // Add 0.1–8 Gyr of cooling time; total capped at universe age (~13.8 Gyr)
+    age = Math.min(tMain + rf(0.1, 8.0), 13.8);
+  } else if (evolClass === 'NS' || evolClass === 'BH') {
+    // NS/BH progenitors are massive stars (M > 8 M☉), MS lifetime ~0.003–0.05 Gyr
+    // Add post-SN age: 0.01–several Gyr; total rarely exceeds 5 Gyr for isolated NS
+    age = Math.min(tMain + rf(0.01, 5.0), 13.8);
   } else if (evolClass === 'PMS') {
     age = rf(0.000001, 0.010); // 1 kyr – 10 Myr in Gyr
   } else if (evolClass === 'SGA' || evolClass === 'SGB' || evolClass === 'BG2') {
@@ -1405,22 +1455,22 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
     rotationHours = Math.max(5, baseRotHours);
   }
 
-  // Protoplanetary disk (PMS only)
-  // Disk destroyed faster by high-luminosity/UV; low-mass PMS (T Tauri) keep disks 1–10 Myr
-  // High-mass (Herbig Ae-Be) lose disk in ~0.1–3 Myr (UV/radiation pressure)
+  // Protoplanetary disk (PMS only) — always present if star is young enough,
+  // regardless of whether planets have formed yet.
+  // Disk lifetime varies strongly with stellar mass/luminosity:
+  //   O stars: UV photoevaporation destroys disk in 0.05–0.3 Myr
+  //   B stars: 0.1–1 Myr
+  //   A (Herbig Ae/Be): 0.5–3 Myr
+  //   F/G/K/M (T Tauri): 1–10 Myr
   let protoplanDisk = null;
   if (evolClass === 'PMS') {
-    // Disk lifetime check: massive stars blow away disks quickly
     const diskLifeMyr = sp.t === 'O' ? rf(0.05, 0.3)
                       : sp.t === 'B' ? rf(0.1, 1.0)
-                      : sp.t === 'A' ? rf(0.5, 3.0)  // Herbig Ae-Be
-                      : rf(1.0, 10.0);                 // T Tauri (F/G/K/M)
+                      : sp.t === 'A' ? rf(0.5, 3.0)
+                      : rf(1.0, 10.0); // T Tauri (F/G/K/M)
     const ageMyr = age * 1000;
     if (ageMyr < diskLifeMyr) {
-      // Disk inner edge: dust sublimation radius ∝ sqrt(L), ~0.05–0.3 AU typically
       const diskInner = Math.max(0.03, 0.07 * Math.sqrt(lum));
-      // Disk outer edge: scales with stellar mass; typically 50–500 AU for T Tauri
-      // Herbig Ae-Be can be 200–1000 AU; very massive stars truncated by radiation
       const diskOuterBase = sp.t === 'O' ? rf(10, 80)
                           : sp.t === 'B' ? rf(20, 150)
                           : sp.t === 'A' ? rf(50, 400)
@@ -1482,21 +1532,47 @@ function generateSystem(name, companionOpt, planetsOpt, forceTerrestrial, seed) 
       companion.rotationHours = Math.max(5, cBaseRot);
     }
 
+    // For close PMS binaries, the circumbinary disk is shared — use the larger/combined disk
+    // (This block runs after separation is set below)
+
     if (companionType === 'close') {
-      separation = rf(0.05, 0.5);
+      separation = rf(0.02, 0.25); // reduced upper limit for realistic close binaries
       // Close binary eccentricity: circularised by tides, moderately low
-      // Tighter orbits → lower eccentricity; sample from Beta(2,5) scaled to 0–0.45
-      stellarEcc = Math.pow(rng(), 2) * (separation < 0.2 ? 0.15 : 0.40);
+      stellarEcc = Math.pow(rng(), 2) * (separation < 0.1 ? 0.10 : 0.30);
       // Inclination relative to sky plane: near-coplanar with any disc, small scatter
-      stellarIncl = rf(0, 15) * (roll(0.15) ? rf(1,6) : 1); // rare high-incl systems
+      stellarIncl = rf(0, 15) * (roll(0.15) ? rf(1,6) : 1);
 
       // Tidal locking for close binary
-      const lockThresh = (primary.age > 5) ? 0.30 : 0.15;
+      const lockThresh = (primary.age > 5) ? 0.15 : 0.08;
       if (separation < lockThresh) {
         primary.tidallyLocked   = true;
         primary.rotationHours   = separation * 365.25 * 24 * Math.sqrt(Math.pow(separation, 3) / (primary.mass + companion.mass));
         companion.tidallyLocked = true;
         companion.rotationHours = primary.rotationHours;
+      }
+
+      // Share protoplanetary disk for close PMS binaries
+      if (primary.evolClass === 'PMS' && companion.evolClass === 'PMS') {
+        const disk1 = primary.protoplanDisk;
+        const disk2 = companion.protoplanDisk;
+        if (disk1 || disk2) {
+          const sharedInner = Math.max(
+            (disk1 ? disk1.inner : 0),
+            (disk2 ? disk2.inner : 0),
+            separation * 2.0
+          );
+          const sharedOuter = Math.max(
+            disk1 ? disk1.outer : 0,
+            disk2 ? disk2.outer : 0
+          );
+          const sharedLife = Math.max(
+            disk1 ? disk1.lifeMyr : 0,
+            disk2 ? disk2.lifeMyr : 0
+          );
+          const sharedDisk = { inner: sharedInner, outer: sharedOuter, lifeMyr: sharedLife, shared: true };
+          primary.protoplanDisk   = sharedDisk;
+          companion.protoplanDisk = sharedDisk;
+        }
       }
     } else {
       separation = rf(100, 5000);
@@ -1606,9 +1682,10 @@ function generateSystem(name, companionOpt, planetsOpt, forceTerrestrial, seed) 
       pplanets.push({
         idx: i + 1,
         type: 'rocky',
-        subClass: '2nd-Gen Rocky (Airless)',
-        classLabel: tempClass(Teq) + ' 2nd-Gen Rocky (Airless)',
+        subClass: 'Terra (Airless)',
+        classLabel: tempClass(Teq) + ' Terra (Airless) (2nd Generation)',
         planetClass: 'Planet',
+        isSecondGen: true,
         mEarth: mE, rEarth: rE, rKm: rE * 6371, Teq,
         albedo: 0.1, escapeVel, esi: esiR * esiD * esiV * esiT, densityGcm3,
         a: innerA, ecc, inclination: rf(0, 5),
@@ -1682,7 +1759,7 @@ function makeEarthlikePlanet(idx, a, star) {
   const tidallyLocked = (period <= lockDays);
   const rotationHours = tidallyLocked ? period * 24 : rf(18, 30) * Math.pow(star.age / 4.6, 0.15);
   const special = ['Large moon via impactor event'];
-  if (roll(0.3)) special.push('Magnetic field detected');
+  if (roll(0.3)) special.push('Magnetic field');
   const densityGcm3 = 5.514 * mEarth / Math.pow(rEarth, 3);
   // Earth-like planets always clear their orbit → Planet class
   const planetClass = 'Planet';
@@ -1773,15 +1850,24 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
   const eccJupiters = planets.filter(p => p.subClass && p.subClass.includes('Eccentric Jupiter'));
   if (eccJupiters.length > 0) {
     for (const ej of eccJupiters) {
-      const clearInner = ej.a * 0.40; // clear from 40% to 200% of its orbit
-      const clearOuter = ej.a * 2.00;
-      // Remove all non-giant planets in the clearing zone
+      const ejApo  = ej.a * (1 + ej.ecc); // apoapsis
+      const ejPeri = ej.a * (1 - ej.ecc); // periapsis
       for (let i = planets.length - 1; i >= 0; i--) {
         const p = planets[i];
         if (p === ej) continue;
-        if (p.a >= clearInner && p.a <= clearOuter) {
-          // Keep other gas giants (they can be in resonance), remove smaller bodies
-          if (p.type !== 'gasGiant') planets.splice(i, 1);
+        const pApo  = p.a * (1 + p.ecc);
+        const pPeri = p.a * (1 - p.ecc);
+        // Orbits cross if their peri/apo ranges overlap
+        const orbitsCross = pApo >= ejPeri && pPeri <= ejApo;
+        if (orbitsCross && p.type !== 'gasGiant') {
+          // 60% chance of ejection, 40% chance of perturbed orbit
+          if (roll(0.6)) {
+            planets.splice(i, 1);
+          } else {
+            p.ecc = Math.min(0.85, p.ecc + rf(0.15, 0.45));
+            if (!p.special) p.special = [];
+            p.special.unshift('Perturbed by Eccentric Jupiter');
+          }
         }
       }
     }
@@ -1789,43 +1875,35 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
   }
 
   // ── Captured rogue planet (rare) ──
-  // ~5% chance per system; can be on eccentric orbit or stable circular one
-  if (roll(0.05) && aList.length > 0) {
-    // Pick a random orbital slot not already occupied, preferably outer system
+  // ~5% chance; also possible around remnant stars (WD/NS/BH)
+  const isRemnantStar = star.isRemnant;
+  const rogueChance = isRemnantStar ? 0.08 : 0.05; // slightly higher for remnants (old captures)
+  if (roll(rogueChance)) {
     const existingAUs = planets.map(p => p.a);
-    // Place it at a random position, often in the outer half of the system
-    const outerSlots = aList.filter(a => a > (aList[aList.length-1] * 0.5));
-    const slotPool = outerSlots.length ? outerSlots : aList;
+    const outerSlots = aList.length > 0 ? aList.filter(a => a > (aList[aList.length-1] * 0.5)) : [];
+    const slotPool = outerSlots.length ? outerSlots : (aList.length > 0 ? aList : [rf(1, 20)]);
     let rogueA = pick(slotPool) * rf(0.8, 2.5);
     if (maxAU && rogueA >= maxAU * 0.3) rogueA = maxAU * 0.3 * rf(0.5, 0.95);
     if (rogueA < (minAU || 0)) rogueA = (minAU || innerEdge) * rf(1.1, 3.0);
 
-    // Rogue planets tend to be gas giants or ice giants (they formed elsewhere),
-    // but classifyPlanet's position-based weights already skew outer placements toward giants.
     const Teq = calcTeq(star.lum, rogueA);
     const frostLine = 2.7 * Math.sqrt(star.lum);
     const rogue = classifyPlanet(planets.length, rogueA, Teq, frostLine, calcHabZone(star.lum), star, false, false, false);
-    // If classifyPlanet returned a rocky/dwarf (possible for outer placement), upgrade to ice giant
-    // since captured rogues are almost always gas or ice giants
-    if (rogue && (rogue.type === 'dwarf' || rogue.type === 'aquaria' || rogue.type === 'ferria')) {
-      // Re-run as ice giant
-      const rogueIce = classifyPlanet(planets.length, rogueA, Teq, frostLine, calcHabZone(star.lum), star, false, false, false);
-      // Accept it even if still rocky — position may just be inner system
-    }
+
+    // Rogue planets can be gas giants, ice giants, or rocky worlds (formed elsewhere)
+    // classifyPlanet already handles this based on position; no forced upgrade needed
+
     if (rogue) {
-      // Override with rogue-specific orbital properties
-      const isStable = roll(0.4); // 40% chance it settled into a stable circular orbit
+      const isStable = roll(0.4);
       rogue.ecc = isStable ? rf(0.01, 0.08) : rf(0.25, 0.75);
-      rogue.inclination = isStable ? rf(0, 10) : rf(15, 90); // high inclination if eccentric
+      rogue.inclination = isStable ? rf(0, 10) : rf(15, 90);
       rogue.isRogueCaptured = true;
       rogue.rogueStable = isStable;
       if (!rogue.special) rogue.special = [];
       rogue.special.unshift(isStable
         ? 'Captured rogue planet (stable circular orbit)'
         : 'Captured rogue planet (eccentric/inclined orbit)');
-      // High-mass rogue on eccentric orbit may have destabilised inner system
       if (!isStable && rogue.mEarth > 50) {
-        // Remove a random inner planet to represent destabilisation
         const innerPlanets = planets.filter(p => p.a < rogueA);
         if (innerPlanets.length > 1) {
           const victim = innerPlanets[Math.floor(rng() * innerPlanets.length)];
@@ -2135,12 +2213,12 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     * Math.pow(Math.max(a, 0.001), 9/8);
 
   let planetClass;
+  const mForClass = mEarth || 0;
   if (type === 'gasGiant' || type === 'iceGiant') {
-    // Giants always clear their orbits
     planetClass = 'Planet';
-  } else if (mEarth || 0 < HYGEIA_MEARTH) {
+  } else if (mForClass < HYGEIA_MEARTH) {
     planetClass = 'Asteroid';
-  } else if (mEarth || 0 >= discriminantThreshold) {
+  } else if (mForClass >= discriminantThreshold) {
     planetClass = 'Planet';
   } else {
     planetClass = 'Dwarf Planet';
@@ -2219,7 +2297,14 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   const escapeVel = mActual > 0 ? 11.186 * Math.sqrt(mActual / (rEarth * rEarth)) : 0;
 
   const atmosphere = generateAtmosphere(type, subClass, mActual, rEarth, TeqActual, tClass, isAirless, star, forceEarthlike);
-  const ocean      = generateOcean(atmosphere, type, TeqActual, mActual, tClass, isAirless);
+  let ocean = generateOcean(atmosphere, type, TeqActual, mActual, tClass, isAirless);
+
+  const life = generateLife(type, subClass, tClass, TeqActual, mActual, star.age, tidallyLocked, a, star, forceEarthlike, isAirless);
+
+  // If life has marine habitat but no ocean was generated, force a basic water ocean
+  if (life && life.habitats && life.habitats.includes('marine') && !ocean && !isAirless) {
+    ocean = { composition: 'H₂O (saline)', maxDepthKm: rf(1, 8), seaLevel: rf(0.1, 0.6) };
+  }
 
   // classLabel format: "(temp) (Airless) (subClass)"
   // Gas/ice giants never lose their atmospheres — airless only applies to terrestrial types.
@@ -2311,7 +2396,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     rotationHours, tidallyLocked,
     age: star.age,
     atmosphere, ocean,
-    life: generateLife(type, subClass, tClass, TeqActual, mActual, star.age, tidallyLocked, a, star, forceEarthlike, isAirless)
+    life
   };
 }
 
@@ -2466,7 +2551,7 @@ function generateSpecials(type, mEarth, rEarth, a, star) {
     else if (roll(0.08)) parts.push('Tenuous atmosphere');
   }
   if (type === 'rocky' && mEarth > 0.5 && mEarth < 5 && roll(0.15)) {
-    parts.push('Magnetic field detected');
+    parts.push('Magnetic field');
   }
 
   return parts.length ? parts : null;
@@ -2839,9 +2924,7 @@ function renderPlanetCard(p, prefix) {
   const lifeId = `life-${id}`;
   const lifeTagHtml = p.life ? (() => {
     const habStr = p.life.habitats.join('/');
-    const desc = `${p.life.chemistry} ${p.life.complexity} ${habStr}`;
-    // Popup content encoded as data attributes; rendered into a fixed portal on hover
-    const popHtml = `<div class='life-popup-row'><span class='lp-key'>Chemistry</span><span class='lp-val'>${p.life.chemistry}</span></div><div class='life-popup-row'><span class='lp-key'>Complexity</span><span class='lp-val'>${p.life.complexity}</span></div><div class='life-popup-row'><span class='lp-key'>Habitat</span><span class='lp-val'>${habStr}</span></div><div class='life-popup-row' style='margin-top:5px;padding-top:5px;border-top:1px solid #1a2f55'><span class='lp-val' style='font-size:11px;color:#7a9acc'>${desc}</span></div>`;
+    const popHtml = `<div class='life-popup-row'><span class='lp-key'>Chemistry</span><span class='lp-val'>${p.life.chemistry}</span></div><div class='life-popup-row'><span class='lp-key'>Complexity</span><span class='lp-val'>${p.life.complexity}</span></div><div class='life-popup-row'><span class='lp-key'>Habitat</span><span class='lp-val'>${habStr}</span></div>`;
     return `<span class="life-tag" onmouseenter="showLifePopup(event,this)" onmouseleave="hideLifePopup()" data-life-html="${encodeURIComponent(popHtml)}">✦ LIFE</span>`;
   })() : '';
 
@@ -2874,6 +2957,8 @@ function renderPlanetCard(p, prefix) {
       <div class="planet-detail-col">
         <div class="detail-col-label orbital">Orbital Properties</div>
         <div class="pd-row"><span class="pd-key">SEMI-MAJOR AXIS</span><span class="pd-val">${fmt(p.a,4)} AU</span></div>
+        <div class="pd-row"><span class="pd-key">PERIAPSIS</span><span class="pd-val">${fmt(p.a*(1-p.ecc),4)} AU</span></div>
+        <div class="pd-row"><span class="pd-key">APOAPSIS</span><span class="pd-val">${fmt(p.a*(1+p.ecc),4)} AU</span></div>
         <div class="pd-row"><span class="pd-key">PERIOD</span><span class="pd-val">${formatPeriod(p.period)}</span></div>
         <div class="pd-row"><span class="pd-key">ECCENTRICITY</span><span class="pd-val">${fmt(p.ecc,4)}</span></div>
         <div class="pd-row"><span class="pd-key">INCLINATION</span><span class="pd-val">${fmt(p.inclination,2)}°</span></div>
@@ -2884,10 +2969,28 @@ function renderPlanetCard(p, prefix) {
       ${p.atmosphere ? `
       <div class="planet-detail-col">
         <div class="detail-col-label" style="color:var(--accent3)">Atmosphere</div>
-        <div class="pd-row"><span class="pd-key">PRESSURE</span><span class="pd-val">${p.atmosphere.pressure < 0.001 ? p.atmosphere.pressure.toExponential(2) + ' atm' : fmt(p.atmosphere.pressure, 4) + ' atm'}</span></div>
-        <div class="pd-row"><span class="pd-key">GREENHOUSE</span><span class="pd-val">${fmt(p.atmosphere.greenhouse, 1)} K</span></div>
-        <div class="pd-row"><span class="pd-key">DENSITY</span><span class="pd-val">${p.atmosphere.density < 0.001 ? p.atmosphere.density.toExponential(2) : fmt(p.atmosphere.density, 3)} kg/m³</span></div>
-        <div class="pd-row"><span class="pd-key">COMPOSITION</span><span class="pd-val" style="font-size:9px;line-height:1.4">${p.atmosphere.composition}</span></div>
+        <div class="pd-row"><span class="pd-key">PRESSURE</span><span class="pd-val">${(() => {
+          const atm = p.atmosphere;
+          if (typeof atm.pressure === 'string') return atm.pressure; // giants: pre-formatted "N bar"
+          const pr = atm.pressure;
+          if (pr < 1e-4) return pr.toExponential(2) + ' atm';
+          if (pr < 0.001) return fmt(pr, 6) + ' atm';
+          return fmt(pr, 4) + ' atm';
+        })()}</span></div>
+        <div class="pd-row"><span class="pd-key">GREENHOUSE</span><span class="pd-val">${p.atmosphere.greenhouse !== null && p.atmosphere.greenhouse !== undefined ? fmt(p.atmosphere.greenhouse, 1) + ' K' : 'N/A'}</span></div>
+        <div class="pd-row"><span class="pd-key">DENSITY</span><span class="pd-val">${(() => {
+          const d = p.atmosphere.densityKgm3;
+          if (d === undefined || d === null || isNaN(d)) return 'N/A';
+          if (typeof d === 'string') return d + ' kg/m³'; // giants: pre-formatted
+          if (d < 0.001) return d.toExponential(2) + ' kg/m³';
+          return fmt(d, 3) + ' kg/m³';
+        })()}</span></div>
+        <div class="pd-row pd-row-composition"><span class="pd-key">COMPOSITION</span><span class="pd-val" style="text-align:left">${(() => {
+          const c = p.atmosphere.composition;
+          if (!c) return 'N/A';
+          if (typeof c === 'string') return c;
+          return c.map(([gas, pct]) => `${gas}: ${fmt(pct, 2)}%`).join('<br>');
+        })()}</span></div>
       </div>` : ''}
       ${p.ocean ? `
       <div class="planet-detail-col">
@@ -2911,7 +3014,7 @@ function renderStarStats(star) {
 <div class="star-stats">
   <div class="stat-cell"><span class="sv">${star.age < 0.01 ? (star.age*1000).toFixed(2)+' Myr' : star.age < 0.1 ? fmt(star.age,4)+' Gyr' : fmt(star.age,2)+' Gyr'}</span><span class="sk">Age</span></div>
   <div class="stat-cell"><span class="sv">${fmt(star.mass,3)}</span><span class="sk">Mass (M☉)</span></div>
-  <div class="stat-cell"><span class="sv">${fmt(star.lum,4)}</span><span class="sk">Lum (L☉)</span></div>
+  <div class="stat-cell"><span class="sv">${star.lum < 0.0001 ? star.lum.toExponential(2) : fmt(star.lum,4)}</span><span class="sk">Lum (L☉)</span></div>
   <div class="stat-cell"><span class="sv">${fmt(star.radius,3)}</span><span class="sk">Radius (R☉)</span></div>
   <div class="stat-cell"><span class="sv">${fmt(star.FeH,2)}</span><span class="sk">Met [Fe/H]</span></div>
   <div class="stat-cell"><span class="sv">${Math.round(star.temp).toLocaleString()}</span><span class="sk">Temp (K)</span></div>
