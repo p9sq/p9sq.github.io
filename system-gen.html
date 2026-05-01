@@ -2296,6 +2296,15 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   const mActual   = mEarth || 0;
   const escapeVel = mActual > 0 ? 11.186 * Math.sqrt(mActual / (rEarth * rEarth)) : 0;
 
+  // Tidal locking: τ_lock (Gyr) = 0.025 * (a/0.1)^6 / (M_star * R_planet^5)
+  // Planet is locked if star.age > τ_lock.
+  const rEarthClamped = Math.max(rEarth, 0.05);
+  const tau_lock_Gyr  = 0.025
+    * Math.pow(a / 0.1, 6)
+    * (1.0 / Math.max(star.mass, 0.08))
+    * (1.0 / Math.pow(rEarthClamped, 5));
+  const tidallyLocked = star.age > tau_lock_Gyr;
+
   const atmosphere = generateAtmosphere(type, subClass, mActual, rEarth, TeqActual, tClass, isAirless, star, forceEarthlike);
   let ocean = generateOcean(atmosphere, type, TeqActual, mActual, tClass, isAirless);
 
@@ -2317,18 +2326,6 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     classLabel = isAirless ? `${tClass} Airless ${subClass}` : `${tClass} ${subClass}`;
   }
 
-  // Tidal locking timescale: τ ∝ a^6 * R_planet^(-5) * M_star^(-1)
-  // Calibrated so Earth-mass planet at 1 AU around G star locks in ~50 Gyr (not locked),
-  // at 0.1 AU locks in ~50 Myr (locked for any system older than that).
-  // Using: τ_lock (Gyr) = 0.025 * (a/0.1)^6 * (1/star.mass) * (1/Math.pow(rEarth,5))
-  // Planet is locked if star.age > τ_lock.
-  // We clamp rEarth to avoid division issues for tiny dwarfs.
-  const rEarthClamped = Math.max(rEarth, 0.05);
-  const tau_lock_Gyr  = 0.025
-    * Math.pow(a / 0.1, 6)
-    * (1.0 / Math.max(star.mass, 0.08))
-    * (1.0 / Math.pow(rEarthClamped, 5));
-  const tidallyLocked = star.age > tau_lock_Gyr;
 
   let rotationHours;
   if (tidallyLocked) {
