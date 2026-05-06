@@ -1,4 +1,18 @@
 // Terraformed worlds page
+// 1 parsec = 3.26156 light-years
+const PC_TO_LY = 3.26156;
+
+function pcToLy(pc) {
+  if (pc == null) return null;
+  return Math.round(pc * PC_TO_LY * 100) / 100;
+}
+
+function fmtDist(pc) {
+  if (pc == null) return '—';
+  if (pc === 0) return '< 0.01 ly';
+  const ly = pcToLy(pc);
+  return ly.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ly';
+}
 
 function spectralColor(sc) {
   if (!sc) return '#7a92b8';
@@ -59,7 +73,7 @@ function openModal(name, world) {
       <div class="modal-field"><div class="modal-field-label">System</div><div class="modal-field-val">${world.systemName}</div></div>
       <div class="modal-field"><div class="modal-field-label">Parent Star</div><div class="modal-field-val">${world.parentStar}</div></div>
       <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(world.spectralClass)}">${world.spectralClass}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Distance from Phebe (ly)</div><div class="modal-field-val">${world.distToSun === 0 ? '< 0.01' : world.distToSun?.toLocaleString()}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Distance from Phebe</div><div class="modal-field-val">${fmtDist(world.distToSun)}</div></div>
     </div>
     <div class="modal-section-title">BIOSPHERE DATA</div>
     <div class="modal-grid">
@@ -88,23 +102,41 @@ function populateOriginFilter() {
   }
 }
 
+function applySort(entries, sortVal) {
+  const sorted = [...entries];
+  switch (sortVal) {
+    case 'dist-asc':   sorted.sort((a, b) => (a[1].distToSun ?? Infinity) - (b[1].distToSun ?? Infinity)); break;
+    case 'dist-desc':  sorted.sort((a, b) => (b[1].distToSun ?? -Infinity) - (a[1].distToSun ?? -Infinity)); break;
+    case 'radius-asc': sorted.sort((a, b) => (a[1].radius ?? Infinity) - (b[1].radius ?? Infinity)); break;
+    case 'radius-desc':sorted.sort((a, b) => (b[1].radius ?? -Infinity) - (a[1].radius ?? -Infinity)); break;
+    case 'mass-asc':   sorted.sort((a, b) => (a[1].mass ?? Infinity) - (b[1].mass ?? Infinity)); break;
+    case 'mass-desc':  sorted.sort((a, b) => (b[1].mass ?? -Infinity) - (a[1].mass ?? -Infinity)); break;
+    case 'alpha-asc':  sorted.sort((a, b) => a[0].localeCompare(b[0])); break;
+    case 'alpha-desc': sorted.sort((a, b) => b[0].localeCompare(a[0])); break;
+  }
+  return sorted;
+}
+
 function filterAndRender() {
-  const query = document.getElementById('searchBox').value.toLowerCase();
-  const typeFilter = document.getElementById('filterType').value;
+  const query        = document.getElementById('searchBox').value.toLowerCase();
+  const typeFilter   = document.getElementById('filterType').value;
   const originFilter = document.getElementById('filterOrigin').value;
+  const sortVal      = document.getElementById('sortSelect').value;
 
   const grid = document.getElementById('terraformedGrid');
   grid.innerHTML = '';
 
   let entries = Object.entries(TERRAFORMED_WORLDS);
   entries = entries.filter(([name, world]) => {
-    const matchText = !query || name.toLowerCase().includes(query)
+    const matchText   = !query || name.toLowerCase().includes(query)
       || (world.systemName || '').toLowerCase().includes(query)
       || (world.life?.biome || '').toLowerCase().includes(query);
-    const matchType = !typeFilter || world.type === typeFilter;
+    const matchType   = !typeFilter   || world.type === typeFilter;
     const matchOrigin = !originFilter || world.life?.origin === originFilter;
     return matchText && matchType && matchOrigin;
   });
+
+  entries = applySort(entries, sortVal);
 
   document.getElementById('resultsCount').textContent = `${entries.length} world${entries.length !== 1 ? 's' : ''}`;
 
@@ -125,6 +157,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchBox').addEventListener('input', filterAndRender);
   document.getElementById('filterType').addEventListener('change', filterAndRender);
   document.getElementById('filterOrigin').addEventListener('change', filterAndRender);
+  document.getElementById('sortSelect').addEventListener('change', filterAndRender);
 
   document.getElementById('modalClose').addEventListener('click', () => {
     document.getElementById('modal').classList.remove('open');

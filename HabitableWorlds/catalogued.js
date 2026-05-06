@@ -1,10 +1,27 @@
 // Catalogued systems page
+// 1 parsec = 3.26156 light-years
+const PC_TO_LY = 3.26156;
+
+function pcToLy(pc) {
+  if (pc == null) return null;
+  return Math.round(pc * PC_TO_LY * 100) / 100;
+}
+
+function fmtDist(pc) {
+  if (pc == null) return '—';
+  const ly = pcToLy(pc);
+  return ly.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ly';
+}
 
 function spectralColor(sc) {
   if (!sc) return '#7a92b8';
   const c = sc[0].toUpperCase();
   const map = { O:'#b0d4ff', B:'#cce0ff', A:'#e8f0ff', F:'#fffde0', G:'#ffe87a', K:'#ffaa44', M:'#ff6633', L:'#cc3300', T:'#661100', Y:'#330000', P:'#a070ff', D:'#88aacc' };
   return map[c] || '#7a92b8';
+}
+
+function isRogue(sys) {
+  return sys.spectralClass && sys.spectralClass[0].toUpperCase() === 'P';
 }
 
 function renderTable(data) {
@@ -20,6 +37,11 @@ function renderTable(data) {
   document.getElementById('resultsCount').textContent = `${data.length} system${data.length !== 1 ? 's' : ''}`;
 
   for (const [name, sys] of data) {
+    const rogue = isRogue(sys);
+    const moonCell = rogue
+      ? (sys.moonCount ? `${sys.moonCount.major} maj / ${sys.moonCount.dwarf} dwf` : '—')
+      : '<span style="color:var(--text-dimmer);font-size:0.65rem">N/A</span>';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${sys.thumbnail ? `<img class="td-thumb" src="${sys.thumbnail}" alt="${name}" onerror="this.style.display='none'">` : `<div class="td-thumb-placeholder">⬡</div>`}</td>
@@ -27,9 +49,9 @@ function renderTable(data) {
       <td class="td-name">${name}</td>
       <td>${sys.systemType || '—'}</td>
       <td style="color:${spectralColor(sys.spectralClass)};font-family:var(--font-mono)">${sys.spectralClass || '—'}</td>
-      <td>${sys.distToSun != null ? sys.distToSun.toLocaleString() : '—'}</td>
+      <td>${fmtDist(sys.distToSun)}</td>
       <td>${sys.planetCount ? `${sys.planetCount.major} maj / ${sys.planetCount.dwarf} dwf` : '—'}</td>
-      <td>${sys.moonCount ? `${sys.moonCount.major} maj / ${sys.moonCount.dwarf} dwf` : '—'}</td>
+      <td>${moonCell}</td>
       <td style="font-size:0.65rem">${sys.discDate ? sys.discDate.split(' ')[0] : '—'}</td>
       <td style="color:var(--accent-bright)">${sys.pioneer || '—'}</td>
       <td>${sys.life?.exists
@@ -44,6 +66,12 @@ function renderTable(data) {
 function openModal(name, sys) {
   const modal = document.getElementById('modal');
   const content = document.getElementById('modalContent');
+  const rogue = isRogue(sys);
+
+  const moonFields = rogue ? `
+    <div class="modal-field"><div class="modal-field-label">Major Moons</div><div class="modal-field-val">${sys.moonCount?.major ?? '—'}</div></div>
+    <div class="modal-field"><div class="modal-field-label">Dwarf Moons</div><div class="modal-field-val">${sys.moonCount?.dwarf ?? '—'}</div></div>
+  ` : '';
 
   content.innerHTML = `
     ${sys.thumbnail ? `<img class="modal-thumb" src="${sys.thumbnail}" alt="${name}" onerror="this.remove()">` : ''}
@@ -53,12 +81,11 @@ function openModal(name, sys) {
     <div class="modal-grid">
       <div class="modal-field"><div class="modal-field-label">System Type</div><div class="modal-field-val">${sys.systemType || '—'}</div></div>
       <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(sys.spectralClass)}">${sys.spectralClass || '—'}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Distance from Phebe (ly)</div><div class="modal-field-val">${sys.distToSun != null ? sys.distToSun.toLocaleString() : '—'}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Distance from Phebe</div><div class="modal-field-val">${fmtDist(sys.distToSun)}</div></div>
       <div class="modal-field"><div class="modal-field-label">Parent Sun</div><div class="modal-field-val">${sys.parentSun || '—'}</div></div>
       <div class="modal-field"><div class="modal-field-label">Major Planets</div><div class="modal-field-val">${sys.planetCount?.major ?? '—'}</div></div>
       <div class="modal-field"><div class="modal-field-label">Dwarf Planets</div><div class="modal-field-val">${sys.planetCount?.dwarf ?? '—'}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Major Moons</div><div class="modal-field-val">${sys.moonCount?.major ?? '—'}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Dwarf Moons</div><div class="modal-field-val">${sys.moonCount?.dwarf ?? '—'}</div></div>
+      ${moonFields}
     </div>
     <div class="modal-section-title">DISCOVERY</div>
     <div class="modal-grid">
@@ -79,10 +106,22 @@ function openModal(name, sys) {
   modal.classList.add('open');
 }
 
+function applySort(entries, sortVal) {
+  const sorted = [...entries];
+  switch (sortVal) {
+    case 'dist-asc':   sorted.sort((a, b) => (a[1].distToSun ?? Infinity) - (b[1].distToSun ?? Infinity)); break;
+    case 'dist-desc':  sorted.sort((a, b) => (b[1].distToSun ?? -Infinity) - (a[1].distToSun ?? -Infinity)); break;
+    case 'alpha-asc':  sorted.sort((a, b) => a[0].localeCompare(b[0])); break;
+    case 'alpha-desc': sorted.sort((a, b) => b[0].localeCompare(a[0])); break;
+  }
+  return sorted;
+}
+
 function filterAndRender() {
-  const query = document.getElementById('searchBox').value.toLowerCase();
+  const query      = document.getElementById('searchBox').value.toLowerCase();
   const typeFilter = document.getElementById('filterType').value;
   const lifeFilter = document.getElementById('filterLife').value;
+  const sortVal    = document.getElementById('sortSelect').value;
 
   let entries = Object.entries(CATALOGUED_SYSTEMS);
 
@@ -96,6 +135,7 @@ function filterAndRender() {
     return matchText && matchType && matchLife;
   });
 
+  entries = applySort(entries, sortVal);
   renderTable(entries);
 }
 
@@ -105,6 +145,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchBox').addEventListener('input', filterAndRender);
   document.getElementById('filterType').addEventListener('change', filterAndRender);
   document.getElementById('filterLife').addEventListener('change', filterAndRender);
+  document.getElementById('sortSelect').addEventListener('change', filterAndRender);
 
   document.getElementById('modalClose').addEventListener('click', () => {
     document.getElementById('modal').classList.remove('open');

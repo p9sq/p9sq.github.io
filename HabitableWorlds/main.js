@@ -10,14 +10,14 @@ function animateCount(el, target, duration = 1800) {
   requestAnimationFrame(step);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener("DOMContentLoaded", () => {
   const nSystems = Object.keys(CATALOGUED_SYSTEMS).length;
   const nCandidates = Object.keys(PROMISING_WORLDS).length;
   const nTerraformed = Object.keys(TERRAFORMED_WORLDS).length;
 
   setTimeout(() => {
-    animateCount(document.getElementById('num-systems'), nSystems);
-    animateCount(document.getElementById('num-candidates'), nCandidates);
-    animateCount(document.getElementById('num-terraformed'), nTerraformed);
+    animateCount(document.getElementById("num-systems"), nSystems);
+    animateCount(document.getElementById("num-candidates"), nCandidates);
+    animateCount(document.getElementById("num-terraformed"), nTerraformed);
   }, 900);
 });
