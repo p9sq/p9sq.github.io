@@ -1,77 +1,101 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Catalogued Systems | Exoplanet Corporation</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Catalogued Systems — Planetary Archive</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="page-inner">
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Lexend:wght@300&display=swap"
-      rel="stylesheet"
-    />
+  <div class="bg-grid"></div>
+  <div class="bg-vignette"></div>
+  <canvas id="starfield"></canvas>
 
-    <script
-      src="https://kit.fontawesome.com/d403d0de2b.js"
-      crossorigin="anonymous"
-      defer
-    ></script>
-    <script src="script/global.js" defer></script>
-
-    <link rel="stylesheet" href="style/main.css" />
-  </head>
-  <body>
-    <nav>
-      <div class="nav-left">
-        <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
-
-        <div class="dropdown-menu" id="dropdownMenu">
-          <div class="dropdown-item" id="themeButton">
-            <i class="fa-solid fa-palette"></i> Theme
-          </div>
-        </div>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-icon">⬡</span>
+      <div>
+        <div class="nav-logo-main">PLANETARY ARCHIVE</div>
+        <div class="nav-logo-sub">Exoplanet Corporation · TIRA</div>
       </div>
-
-      <div class="nav-center">
-        <a href="index.html">Home</a>
-        <a href="catalogued.html">Catalogued Systems</a>
-        <a href="plans.html">Plans</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
-      </div>
-    </nav>
-
-    <h1>Catalogued Systems</h1>
-
-    <div class="container" id="systemContainer"></div>
-
-    <script src="script/catalogued.js" defer></script>
-    <div class="theme-overlay" id="themeOverlay">
-      <div class="theme-panel">
-        <h2>Select Theme</h2>
-        <br />
-
-        <button class="btn theme-option" data-theme="dark">
-          <i class="fa-solid fa-moon"></i> Dark (Default)
-        </button>
-
-        <button class="btn theme-option" data-theme="light">
-          <i class="fa-solid fa-sun"></i> Light
-        </button>
-
-        <button class="btn theme-option" data-theme="nebula">
-          <i class="fa-solid fa-star"></i> Nebula
-        </button>
-
-        <button class="btn theme-option" data-theme="midnight">
-          <i class="fa-solid fa-circle"></i> Midnight Blue
-        </button>
-
-        <br /><br />
-
-        <button id="closeTheme" class="btn">
-          <i class="fa-solid fa-xmark"></i> Close
-        </button>
-      </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="catalogued.html" class="active">Catalogued Systems</a></li>
+      <li><a href="promising.html">Terrania 2.0 Candidates</a></li>
+      <li><a href="terraformed.html">Terraformed Worlds</a></li>
+    </ul>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span>ARCHIVE LIVE</span>
     </div>
-  </body>
+  </nav>
+
+  <div class="page-hero">
+    <div class="page-hero-eyebrow">ARCHIVE · SECTION 01</div>
+    <h1 class="page-hero-title">Catalogued Systems</h1>
+    <p class="page-hero-desc">All surveyed planetary systems registered in the Exoplanet Corporation database. Data includes discovery metadata, system architecture, stellar classification, and confirmed life status.</p>
+  </div>
+
+  <div class="catalogue-controls">
+    <input type="text" class="search-box" id="searchBox" placeholder="Search systems, designations, pioneers…" />
+    <div class="filter-row">
+      <select class="filter-select" id="filterType">
+        <option value="">All System Types</option>
+        <option value="Single">Single</option>
+        <option value="Binary">Binary</option>
+        <option value="Trinary">Trinary</option>
+        <option value="Quaternary">Quaternary</option>
+      </select>
+      <select class="filter-select" id="filterLife">
+        <option value="">All Life Status</option>
+        <option value="true">Life Confirmed</option>
+        <option value="false">No Life</option>
+      </select>
+      <div class="results-count" id="resultsCount">— systems</div>
+    </div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="data-table" id="catalogueTable">
+      <thead>
+        <tr>
+          <th></th>
+          <th>DESIGNATION</th>
+          <th>NAME</th>
+          <th>TYPE</th>
+          <th>SPECTRAL</th>
+          <th>DIST (ly)</th>
+          <th>PLANETS</th>
+          <th>MOONS</th>
+          <th>DISC. DATE</th>
+          <th>PIONEER</th>
+          <th>LIFE</th>
+        </tr>
+      </thead>
+      <tbody id="catalogueBody">
+      </tbody>
+    </table>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box" id="modalBox">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
+    <div class="footer-info">Exoplanet Corporation · A TIRA Subsidiary</div>
+    <div class="footer-copy">© 3000 Terranian Standard · Exoplanet Corporation</div>
+  </footer>
+
+  <script src="starfield.js"></script>
+  <script src="data.js"></script>
+  <script src="catalogued.js"></script>
+</body>
 </html>

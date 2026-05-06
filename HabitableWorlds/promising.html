@@ -1,89 +1,79 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Promising Worlds | Exoplanet Corporation</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terrania 2.0 Candidates — Planetary Archive</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="page-inner">
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Lexend:wght@300&display=swap"
-      rel="stylesheet"
-    />
+  <div class="bg-grid"></div>
+  <div class="bg-vignette"></div>
+  <canvas id="starfield"></canvas>
 
-    <script
-      src="https://kit.fontawesome.com/d403d0de2b.js"
-      crossorigin="anonymous"
-      defer
-    ></script>
-    <script src="script/global.js" defer></script>
-
-    <link rel="stylesheet" href="style/main.css" />
-  </head>
-  <body>
-    <nav>
-      <div class="nav-left">
-        <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
-
-        <div class="dropdown-menu" id="dropdownMenu">
-          <div class="dropdown-item" id="themeButton">
-            <i class="fa-solid fa-palette"></i> Theme
-          </div>
-        </div>
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-icon">⬡</span>
+      <div>
+        <div class="nav-logo-main">PLANETARY ARCHIVE</div>
+        <div class="nav-logo-sub">Exoplanet Corporation · TIRA</div>
       </div>
-
-      <div class="nav-center">
-        <a href="index.html">Home</a>
-        <a href="catalogued.html">Catalogued Systems</a>
-      </div>
-    </nav>
-
-    <h1>Promising Worlds</h1>
-
-    <div class="sort-controls">
-      <label for="sortBy">Sort By:</label>
-      <select id="sortBy">
-        <option value="distToSun">Distance</option>
-        <option value="mass">Mass</option>
-        <option value="radius">Radius</option>
-      </select>
-
-      <label for="sortOrder">Order:</label>
-      <select id="sortOrder">
-        <option value="asc">Ascending</option>
-        <option value="desc">Descending</option>
-      </select>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="catalogued.html">Catalogued Systems</a></li>
+      <li><a href="promising.html" class="active">Terrania 2.0 Candidates</a></li>
+      <li><a href="terraformed.html">Terraformed Worlds</a></li>
+    </ul>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span>ARCHIVE LIVE</span>
     </div>
+  </nav>
 
-    <div class="container" id="worldContainer"></div>
+  <div class="page-hero page-hero--green">
+    <div class="page-hero-eyebrow">ARCHIVE · SECTION 02</div>
+    <h1 class="page-hero-title">Terrania 2.0 Candidates</h1>
+    <p class="page-hero-desc">Worlds shortlisted by the Exoplanet Corporation's habitability scoring models as viable candidates for future Terranian colonisation. All entries have undergone remote spectroscopic and gravitational-lensing assessment.</p>
+  </div>
 
-    <script src="script/promising.js" defer></script>
-    <div class="theme-overlay" id="themeOverlay">
-      <div class="theme-panel">
-        <h2>Select Theme</h2>
-        <br />
-
-        <button class="btn theme-option" data-theme="dark">
-          <i class="fa-solid fa-moon"></i> Dark (Default)
-        </button>
-
-        <button class="btn theme-option" data-theme="light">
-          <i class="fa-solid fa-sun"></i> Light
-        </button>
-
-        <button class="btn theme-option" data-theme="nebula">
-          <i class="fa-solid fa-star"></i> Nebula
-        </button>
-
-        <button class="btn theme-option" data-theme="midnight">
-          <i class="fa-solid fa-circle"></i> Midnight Blue
-        </button>
-
-        <br /><br />
-
-        <button id="closeTheme" class="btn">
-          <i class="fa-solid fa-xmark"></i> Close
-        </button>
-      </div>
+  <div class="catalogue-controls">
+    <input type="text" class="search-box" id="searchBox" placeholder="Search candidates, systems, life types…" />
+    <div class="filter-row">
+      <select class="filter-select" id="filterType">
+        <option value="">All Object Types</option>
+        <option value="Planet">Planet</option>
+        <option value="Moon">Moon</option>
+      </select>
+      <select class="filter-select" id="filterLife">
+        <option value="">All Life Status</option>
+        <option value="true">Life Confirmed</option>
+        <option value="false">No Life Detected</option>
+      </select>
+      <div class="results-count" id="resultsCount">— candidates</div>
     </div>
-  </body>
+  </div>
+
+  <div class="cards-grid" id="promisingGrid"></div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box" id="modalBox">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
+    <div class="footer-info">Exoplanet Corporation · A TIRA Subsidiary</div>
+    <div class="footer-copy">© 3000 Terranian Standard · Exoplanet Corporation</div>
+  </footer>
+
+  <script src="starfield.js"></script>
+  <script src="data.js"></script>
+  <script src="promising.js"></script>
+</body>
 </html>

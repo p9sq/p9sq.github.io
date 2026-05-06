@@ -1,196 +1,136 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Exoplanet Corporation — advancing humanity beyond the Hexan System through responsible exploration, planetary analysis, and interstellar expansion under TIRA authority."
-    />
-    <title>Exoplanet Corporation</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planetary Archive — Exoplanet Corporation</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="page-index">
 
-    <link
-      href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap"
-      rel="stylesheet"
-    />
+  <!-- BACKGROUND GRID -->
+  <div class="bg-grid"></div>
+  <div class="bg-vignette"></div>
+  <canvas id="starfield"></canvas>
 
-    <script
-      src="https://kit.fontawesome.com/d403d0de2b.js"
-      crossorigin="anonymous"
-      defer
-    ></script>
-    <script src="script/global.js" defer></script>
-
-    <link rel="stylesheet" href="style/main.css" />
-  </head>
-
-  <body>
-    <nav>
-      <div class="nav-left">
-        <i class="fa-solid fa-bars hamburger" id="hamburger"></i>
-
-        <div class="dropdown-menu" id="dropdownMenu">
-          <div class="dropdown-item" id="themeButton">
-            <i class="fa-solid fa-palette"></i> Theme
-          </div>
-        </div>
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-icon">⬡</span>
+      <div>
+        <div class="nav-logo-main">PLANETARY ARCHIVE</div>
+        <div class="nav-logo-sub">Exoplanet Corporation · TIRA</div>
       </div>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="catalogued.html">Catalogued Systems</a></li>
+      <li><a href="promising.html">Terrania 2.0 Candidates</a></li>
+      <li><a href="terraformed.html">Terraformed Worlds</a></li>
+    </ul>
+    <div class="nav-status">
+      <span class="status-dot"></span>
+      <span>ARCHIVE LIVE</span>
+    </div>
+  </nav>
 
-      <div class="nav-center">
-        <a href="index.html">Home</a>
-        <a href="planetaryarchive.html">Planetary Archive</a>
-        <a href="plans.html">Plans</a>
-        <a href="#">About</a>
-        <a href="#">Contact</a>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">Exoplanet Corporation · Terranian Interplanetary Research Authority</div>
+    <h1 class="hero-title">
+      <span class="hero-title-line1">PLANETARY</span>
+      <span class="hero-title-line2">ARCHIVE</span>
+    </h1>
+    <p class="hero-subtitle">
+      The definitive catalogue of known planetary systems, habitability candidates,<br>
+      and colonised worlds beyond the Phebe System.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat" id="stat-systems">
+        <div class="hero-stat-num" data-target="0" id="num-systems">0</div>
+        <div class="hero-stat-label">Catalogued Systems</div>
       </div>
-    </nav>
-
-    <!-- HERO SECTION -->
-    <section class="hero">
-      <h1>Expanding Humanity Beyond the Hexan System</h1>
-      <!-- <p>
-        Exoplanet Corporation pioneers the discovery, analysis, and preparation
-        of habitable worlds — building the foundation for permanent interstellar
-        civilisation.
-      </p> -->
-    </section>
-
-    <div class="main">
-      <div class="container-wide">
-        <!-- MISSION -->
-        <section>
-          <h2><i class="fa-solid fa-rocket"></i> Corporate Mission</h2>
-          <p>
-            Exoplanet Corporation is a Terranian aerospace and planetary
-            sciences enterprise dedicated to long-range expansion strategy.
-            Through deep-space observation networks, autonomous probe fleets,
-            and advanced planetary modelling systems, we identify and classify
-            exoplanets capable of sustaining Terranian ecosystems.
-          </p>
-          <br />
-          <p>
-            Our mission is not exploratory curiosity alone — it is strategic
-            continuity. We operate with the long-term objective of establishing
-            stable, self-sufficient settlements beyond our home system.
-          </p>
-        </section>
-
-        <br /><br />
-
-        <!-- GOVERNANCE -->
-        <section>
-          <h2>
-            <i class="fa-solid fa-scale-balanced"></i> Regulatory Oversight
-          </h2>
-          <p>
-            All initiatives are conducted under the supervision of the Terranian
-            Interplanetary Research Authority (TIRA), the governing scientific
-            and ethical body responsible for extraterrestrial operations. TIRA
-            establishes planetary protection standards, biosignature evaluation
-            protocols, and environmental impact safeguards for all candidate
-            systems.
-          </p>
-          <br />
-          <p>
-            This partnership ensures that expansion is guided by science,
-            sustainability, and responsibility — securing humanity’s future
-            without compromising emerging ecosystems.
-          </p>
-        </section>
-
-        <br /><br />
-
-        <!-- OPERATIONS -->
-        <section>
-          <h2><i class="fa-solid fa-satellite-dish"></i> Current Operations</h2>
-          <p>
-            Our interstellar survey programs continue to catalogue promising
-            systems across nearby stellar regions. Each discovery is integrated
-            into the Planetary Archive — a centralised database containing
-            atmospheric models, gravitational metrics, hydrosphere projections,
-            and long-term terraforming feasibility analyses.
-          </p>
-          <br />
-          <p>
-            These evaluations form the technical backbone of future deployment
-            missions, ensuring that every expansion initiative is supported by
-            decades of research and predictive modelling.
-          </p>
-        </section>
-
-        <br /><br />
-
-        <!-- FUTURE ROADMAP -->
-        <section>
-          <h2><i class="fa-solid fa-globe"></i> Strategic Roadmap</h2>
-          <p>
-            The next phase of Exoplanet Corporation’s development transitions
-            from observation to implementation. Planned initiatives include
-            prototype atmospheric stabilisation arrays, permanent research
-            outposts in high-probability systems, and the development of
-            long-duration interstellar transit platforms.
-          </p>
-          <br />
-          <p>
-            These projects represent the foundation of humanity’s first
-            multi-system presence.
-          </p>
-          <br />
-          <p>
-            <a href="plans.html" class="btn">
-              <i class="fa-solid fa-arrow-right"></i> Read the Full Strategic
-              Plans
-            </a>
-          </p>
-        </section>
-
-        <br /><br />
-
-        <!-- FINAL CTA -->
-        <section>
-          <h2><i class="fa-solid fa-compass"></i> The Next Frontier</h2>
-          <p>
-            The expansion of Terranian civilisation is not speculative — it is
-            inevitable. Exoplanet Corporation is committed to ensuring that when
-            humanity steps beyond the Hexan System, it does so prepared,
-            informed, and united.
-          </p>
-          <br />
-          <a href="planetaryarchive.html" class="btn">
-            <i class="fa-solid fa-earth-americas"></i> Begin Exploration
-          </a>
-        </section>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat" id="stat-candidates">
+        <div class="hero-stat-num" data-target="0" id="num-candidates">0</div>
+        <div class="hero-stat-label">T-2.0 Candidates</div>
+      </div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat" id="stat-terraformed">
+        <div class="hero-stat-num" data-target="0" id="num-terraformed">0</div>
+        <div class="hero-stat-label">Terraformed Worlds</div>
       </div>
     </div>
+    <div class="hero-cta">
+      <a href="catalogued.html" class="btn btn-primary">Browse Catalogue</a>
+      <a href="promising.html" class="btn btn-ghost">Terrania 2.0 Mission</a>
+    </div>
+  </section>
 
-    <!-- THEME OVERLAY -->
-    <div class="theme-overlay" id="themeOverlay">
-      <div class="theme-panel">
-        <h2>Select Theme</h2>
-        <br />
-
-        <button class="btn theme-option" data-theme="dark">
-          <i class="fa-solid fa-moon"></i> Dark (Default)
-        </button>
-
-        <button class="btn theme-option" data-theme="light">
-          <i class="fa-solid fa-sun"></i> Light
-        </button>
-
-        <button class="btn theme-option" data-theme="nebula">
-          <i class="fa-solid fa-star"></i> Nebula
-        </button>
-
-        <button class="btn theme-option" data-theme="midnight">
-          <i class="fa-solid fa-circle"></i> Midnight Blue
-        </button>
-
-        <br /><br />
-
-        <button id="closeTheme" class="btn">
-          <i class="fa-solid fa-xmark"></i> Close
-        </button>
+  <!-- SECTION: ABOUT TIRA & EXOCORP -->
+  <section class="about-section">
+    <div class="about-grid">
+      <div class="about-card">
+        <div class="about-card-icon">◈</div>
+        <div class="about-card-label">ABOUT TIRA</div>
+        <h2 class="about-card-title">Terranian Interplanetary Research Authority</h2>
+        <p>TIRA is Terrania's foremost scientific institution, charged with the exploration and study of the cosmos beyond the Phebe System. Its public mandate spans deep-space telescope networks, advanced propulsion research, long-baseline observatories, and crewed exploration programmes. Founded in the early centuries of the Terranian space age, TIRA has remained at the forefront of interstellar discovery for over a millennium.</p>
+      </div>
+      <div class="about-card about-card-highlight">
+        <div class="about-card-icon">◆</div>
+        <div class="about-card-label">ABOUT EXOPLANET CORPORATION</div>
+        <h2 class="about-card-title">Exoplanet Corporation</h2>
+        <p>A semi-independent subsidiary of TIRA, the Exoplanet Corporation operates gravitational-lensing observatories stationed hundreds of AU from the Phebe System's barycentre, achieving kilometre-scale resolution of distant planetary systems. Its singular mission: locate a second Terrania — a world capable of supporting Terranian civilisation — before crewed interstellar travel matures into widespread practice.</p>
+        <p>The Planetary Archive is the Exoplanet Corporation's public-facing catalogue of all known exoplanetary systems and colonisation candidates.</p>
+      </div>
+      <div class="about-card">
+        <div class="about-card-icon">◉</div>
+        <div class="about-card-label">THE TERRANIA 2.0 MISSION</div>
+        <h2 class="about-card-title">Finding a Second Home</h2>
+        <p>With interstellar travel approaching feasibility, the search for a world that can serve as a second cradle for Terranian life has never been more urgent. The Terrania 2.0 programme catalogues promising planetary candidates by habitability index, atmospheric composition, and biosignature potential — ranking the most viable destinations for future colonisation efforts.</p>
       </div>
     </div>
-  </body>
+  </section>
+
+  <!-- SECTION: QUICK LINKS -->
+  <section class="quicklinks-section">
+    <div class="ql-label">ARCHIVE SECTIONS</div>
+    <div class="quicklinks-grid">
+      <a href="catalogued.html" class="ql-card">
+        <div class="ql-card-num">01</div>
+        <div class="ql-card-title">Catalogued Systems</div>
+        <div class="ql-card-desc">Full listing of all surveyed planetary systems in the Exoplanet Corporation's database, including discovery metadata, system architecture, and life status.</div>
+        <div class="ql-card-arrow">→</div>
+      </a>
+      <a href="promising.html" class="ql-card">
+        <div class="ql-card-num">02</div>
+        <div class="ql-card-title">Terrania 2.0 Candidates</div>
+        <div class="ql-card-desc">Shortlisted worlds assessed for habitability, atmospheric suitability, and potential to host or support Terranian life, ranked by the Exoplanet Corporation's scoring models.</div>
+        <div class="ql-card-arrow">→</div>
+      </a>
+      <a href="terraformed.html" class="ql-card">
+        <div class="ql-card-num">03</div>
+        <div class="ql-card-title">Terraformed Worlds</div>
+        <div class="ql-card-desc">A record of planets and moons that have undergone full or partial terraforming operations, with current biosphere and life-origin data.</div>
+        <div class="ql-card-arrow">→</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
+    <div class="footer-info">
+      Exoplanet Corporation · A TIRA Subsidiary<br>
+      All data is subject to classification review. Certain systems are omitted by directive of the Terranian government.
+    </div>
+    <div class="footer-copy">© 3000 Terranian Standard · Exoplanet Corporation</div>
+  </footer>
+
+  <script src="starfield.js"></script>
+  <script src="data.js"></script>
+  <script src="main.js"></script>
+</body>
 </html>
