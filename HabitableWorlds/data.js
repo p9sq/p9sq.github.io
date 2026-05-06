@@ -847,7 +847,7 @@ const PROMISING_WORLDS = {
     radius: 4211.0477318598105,
     mass: 0.21577915,
     moonCount: 0,
-    thumbnail: "img/terraformed/diego.png",
+    thumbnail: "img/promising/diego.png",
     life: {
       exists: false,
       type: "",
