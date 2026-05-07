@@ -602,10 +602,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/gj667cf.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "Gliese 667 C c",
+      exists: "pending",
     },
   },
   "Wolf 1069 b": {
