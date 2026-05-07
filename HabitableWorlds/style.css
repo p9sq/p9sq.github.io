@@ -821,3 +821,10 @@ body {
   .hero-stat-num { font-size: 1.4rem; }
   .page-hero-title { font-size: 1.5rem; }
 }
+
+/* ── NAV LOGO — PORTRAIT MOBILE ── */
+@media (max-width: 480px) {
+  .nav-logo-sub { display: none; }
+  .nav-logo-main { font-size: 0.58rem; letter-spacing: 0.08em; }
+  .nav-logo-icon { font-size: 1.2rem; }
+}
