@@ -28,6 +28,18 @@ function calculateDensity(radiusKm, massEarths) {
   return density.toFixed(3);
 }
 
+function lifeBadge(exists) {
+  if (exists === true)      return `<span class="badge badge-life">● LIFE</span>`;
+  if (exists === 'pending') return `<span class="badge badge-pending">◌ PENDING</span>`;
+  return '';
+}
+
+function lifeStatusText(exists) {
+  if (exists === true)      return '<span style="color:var(--green)">CONFIRMED</span>';
+  if (exists === 'pending') return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
+  return '<span style="color:#f87171">ABSENT</span>';
+}
+
 function getDensity(world) {
   if (world.radius != null && world.mass != null) {
     return parseFloat(calculateDensity(world.radius, world.mass));
@@ -59,7 +71,7 @@ function makeCard(name, world) {
       </div>
       <div class="planet-card-badges">
         <span class="badge" style="background:var(--orange-dim);color:var(--orange);border:1px solid rgba(249,115,22,0.25)">🌱 TERRAFORMED</span>
-        ${world.life?.exists ? `<span class="badge badge-life">● LIFE</span>` : ''}
+        ${lifeBadge(world.life?.exists)}
       </div>
     </div>
   `;
@@ -95,8 +107,8 @@ function openModal(name, world) {
     </div>
     <div class="modal-section-title">BIOSPHERE DATA</div>
     <div class="modal-grid">
-      <div class="modal-field"><div class="modal-field-label">Life Status</div><div class="modal-field-val">${world.life?.exists ? '<span style="color:var(--green)">CONFIRMED</span>' : '<span style="color:#f87171">ABSENT</span>'}</div></div>
-      ${world.life?.exists ? `
+      <div class="modal-field"><div class="modal-field-label">Life Status</div><div class="modal-field-val">${lifeStatusText(world.life?.exists)}</div></div>
+      ${world.life?.exists === true ? `
         <div class="modal-field"><div class="modal-field-label">Life Type</div><div class="modal-field-val">${world.life.type || '—'}</div></div>
         <div class="modal-field"><div class="modal-field-label">Biome</div><div class="modal-field-val">${world.life.biome || '—'}</div></div>
         <div class="modal-field"><div class="modal-field-label">Life Origin</div><div class="modal-field-val" style="color:var(--orange)">${world.life.origin || '—'}</div></div>

@@ -426,10 +426,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/proximab.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Proxima Centauri b",
+      exists: "pending",
     },
   },
   "Ross 128 b": {
@@ -445,10 +442,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/ross128b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Ross 128 b",
+      exists: "pending",
     },
   },
   "GJ 1061 b": {
@@ -464,10 +458,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/gj1061b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "GJ 1061 b",
+      exists: "pending",
     },
   },
   "GJ 1061 c": {
@@ -483,10 +474,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/gj1061c.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "GJ 1061 b",
+      exists: "pending",
     },
   },
   "Luyten b": {
@@ -502,10 +490,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/luytenb.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Luyten b",
+      exists: "pending",
     },
   },
   "Teegarden b": {
@@ -521,10 +506,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/teegardenb.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "Teegarden c",
+      exists: "pending",
     },
   },
   "Teegarden c": {
@@ -540,10 +522,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/teegardenc.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Teegarden c",
+      exists: "pending",
     },
   },
   "Wolf 1061 d": {
@@ -559,10 +538,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/wolf1061d.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Wolf 1061 d",
+      exists: "pending",
     },
   },
   "GJ 1002 b": {
@@ -578,10 +554,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/gj1002b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "GJ 1002 b",
+      exists: "pending",
     },
   },
   "GJ 1002 c": {
@@ -597,10 +570,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/gj1002c.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "GJ 1002 b",
+      exists: "pending",
     },
   },
   "Gliese 667 C c": {
@@ -616,10 +586,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/gj667cc.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Gliese 667 C c",
+      exists: "pending",
     },
   },
   "Gliese 667 C f": {
@@ -627,7 +594,7 @@ const PROMISING_WORLDS = {
     systemType: "Triple",
     parentStar: "Gliese 667 C",
     spectralClass: "M1.5V",
-    distToSun: 4.73,
+    distToSun: 15.42,
     type: "Planet",
     sma: 0.156,
     radius: 8489.5,
@@ -654,10 +621,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/wolf1069b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Wolf 1069 b",
+      exists: "pending",
     },
   },
   "Gliese 12 b": {
@@ -673,10 +637,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/gj12b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Gliese 12 b",
+      exists: "pending",
     },
   },
   "TRAPPIST-1 d": {
@@ -692,10 +653,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/trappist1d.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "TRAPPIST-1 e",
+      exists: "pending",
     },
   },
   "TRAPPIST-1 e": {
@@ -711,10 +669,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/trappist1e.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "TRAPPIST-1 e",
+      exists: "pending",
     },
   },
   "TRAPPIST-1 f": {
@@ -730,10 +685,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/trappist1f.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "TRAPPIST-1 e",
+      exists: "pending",
     },
   },
   "TRAPPIST-1 g": {
@@ -749,10 +701,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/trappist1g.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "TRAPPIST-1 e",
+      exists: "pending",
     },
   },
   Najma: {
@@ -770,10 +719,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/najma.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Najma",
+      exists: "pending",
     },
   },
   "LHS 1140 b": {
@@ -789,10 +735,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/lhs1140b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "LHS 1140 b",
+      exists: "pending",
     },
   },
   "TOI-1452 b": {
@@ -808,10 +751,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/toi1452b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "TOI-1452 b",
+      exists: "pending",
     },
   },
   "TOI-700 e": {
@@ -827,10 +767,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/toi700e.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "TOI-700 d",
+      exists: "pending",
     },
   },
   "TOI-700 d": {
@@ -846,10 +783,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/toi700d.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "TOI-700 d",
+      exists: "pending",
     },
   },
   "LP 890-9 c": {
@@ -865,10 +799,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/lp8909c.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "LP 890-9 c",
+      exists: "pending",
     },
   },
   "TOI-715 b": {
@@ -884,10 +815,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/toi715b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "TOI-715 b",
+      exists: "pending",
     },
   },
   "Kepler-1649 c": {
@@ -903,10 +831,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/kepler1649c.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Kepler-1649 c",
+      exists: "pending",
     },
   },
   "Kepler-186 f": {
@@ -922,10 +847,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/kepler186f.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Kepler-186 f",
+      exists: "pending",
     },
   },
   "Kepler-296 A e": {
@@ -941,10 +863,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/kepler296ae.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Kepler-296 A e",
+      exists: "pending",
     },
   },
   "Kepler-1652 b": {
@@ -960,10 +879,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/kepler1652b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Kepler-1652 b",
+      exists: "pending",
     },
   },
   Celis: {
@@ -979,10 +895,7 @@ const PROMISING_WORLDS = {
     moonCount: 9,
     thumbnail: "img/promising/celis.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Celis",
+      exists: "pending",
     },
   },
   Diego: {
@@ -1000,10 +913,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/diego.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Diego",
+      exists: "pending",
     },
   },
   "Nexus Legendary": {
@@ -1019,10 +929,7 @@ const PROMISING_WORLDS = {
     moonCount: 77,
     thumbnail: "img/promising/nexuslegendary.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Nexus Legendary",
+      exists: "pending",
     },
   },
   "KOI-4878.01": {
@@ -1038,10 +945,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/koi4878.01.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "KOI-4878.01",
+      exists: "pending",
     },
   },
   "Kepler-62 e": {
@@ -1057,10 +961,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/kepler62e.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Kepler-62 e",
+      exists: "pending",
     },
   },
   "Kepler-62 f": {
@@ -1076,10 +977,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/kepler62f.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "Kepler-62 e",
+      exists: "pending",
     },
   },
   "Kepler-442 b": {
@@ -1095,10 +993,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/kepler442b.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Kepler-442 b",
+      exists: "pending",
     },
   },
   Pyron: {
@@ -1114,10 +1009,7 @@ const PROMISING_WORLDS = {
     moonCount: 8,
     thumbnail: "img/promising/pyron.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Pyron",
+      exists: "pending",
     },
   },
   Orval: {
@@ -1133,10 +1025,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/orval.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Orval",
+      exists: "pending",
     },
   },
   Satyr: {
@@ -1152,10 +1041,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/satyr.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Satyr",
+      exists: "pending",
     },
   },
   Drakara: {
@@ -1171,10 +1057,7 @@ const PROMISING_WORLDS = {
     moonCount: 6,
     thumbnail: "img/promising/drakara.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Drakara",
+      exists: "pending",
     },
   },
   Altan: {
@@ -1190,10 +1073,7 @@ const PROMISING_WORLDS = {
     moonCount: 1,
     thumbnail: "img/promising/altan.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "Drakara",
+      exists: "pending",
     },
   },
   Vague: {
@@ -1209,10 +1089,7 @@ const PROMISING_WORLDS = {
     moonCount: 2,
     thumbnail: "img/promising/vague.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Vague",
+      exists: "pending",
     },
   },
   Verdant: {
@@ -1228,10 +1105,7 @@ const PROMISING_WORLDS = {
     moonCount: 0,
     thumbnail: "img/promising/verdant.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Abiogenesis)",
-      biome: "Marine, Terrestrial",
-      origin: "Vague",
+      exists: "pending",
     },
   },
 };
@@ -1253,10 +1127,7 @@ const TERRAFORMED_WORLDS = {
     moonCount: 0,
     thumbnail: "img/terraformed/pholion.png",
     life: {
-      exists: true,
-      type: "Organic Multicellular (Panspermia)",
-      biome: "Marine, Terrestrial",
-      origin: "Nexus Legendary",
+      exists: "pending",
     },
   },
 };

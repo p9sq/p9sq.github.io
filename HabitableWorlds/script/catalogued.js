@@ -24,6 +24,18 @@ function isRogue(sys) {
   return sys.spectralClass && sys.spectralClass[0].toUpperCase() === 'P';
 }
 
+function lifeBadge(exists) {
+  if (exists === true)      return `<span class="badge badge-life">● CONFIRMED</span>`;
+  if (exists === 'pending') return `<span class="badge badge-pending">◌ PENDING</span>`;
+  return `<span class="badge badge-nolife">✕ NONE</span>`;
+}
+
+function lifeStatusText(exists) {
+  if (exists === true)      return '<span style="color:var(--green)">CONFIRMED</span>';
+  if (exists === 'pending') return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
+  return '<span style="color:#f87171">NOT DETECTED</span>';
+}
+
 function renderTable(data) {
   const tbody = document.getElementById('catalogueBody');
   tbody.innerHTML = '';
@@ -54,9 +66,7 @@ function renderTable(data) {
       <td>${moonCell}</td>
       <td style="font-size:0.65rem">${sys.discDate ? sys.discDate.split(' ')[0] : '—'}</td>
       <td style="color:var(--accent-bright)">${sys.pioneer || '—'}</td>
-      <td>${sys.life?.exists
-        ? `<span class="badge badge-life">● CONFIRMED</span>`
-        : `<span class="badge badge-nolife">✕ NONE</span>`}</td>
+      <td>${lifeBadge(sys.life?.exists)}</td>
     `;
     tr.addEventListener('click', () => openModal(name, sys));
     tbody.appendChild(tr);
@@ -95,8 +105,8 @@ function openModal(name, sys) {
     </div>
     <div class="modal-section-title">LIFE STATUS</div>
     <div class="modal-grid">
-      <div class="modal-field"><div class="modal-field-label">Life Exists</div><div class="modal-field-val">${sys.life?.exists ? '<span style="color:var(--green)">CONFIRMED</span>' : '<span style="color:#f87171">NOT DETECTED</span>'}</div></div>
-      ${sys.life?.exists ? `
+      <div class="modal-field"><div class="modal-field-label">Life Exists</div><div class="modal-field-val">${lifeStatusText(sys.life?.exists)}</div></div>
+      ${sys.life?.exists === true ? `
         <div class="modal-field"><div class="modal-field-label">Objects with Life</div><div class="modal-field-val">${sys.life.objectsWithLife}</div></div>
         <div class="modal-field" style="grid-column:1/-1"><div class="modal-field-label">Life Types</div><div class="modal-field-val">${sys.life.types || '—'}</div></div>
       ` : ''}
