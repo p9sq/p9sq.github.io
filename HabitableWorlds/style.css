@@ -823,8 +823,16 @@ body {
 }
 
 /* ── NAV LOGO — PORTRAIT MOBILE ── */
+.nav-logo-short { display: none; }
+
 @media (max-width: 480px) {
   .nav-logo-sub { display: none; }
   .nav-logo-main { font-size: 0.58rem; letter-spacing: 0.08em; }
   .nav-logo-icon { font-size: 1.2rem; }
+}
+
+@media (max-width: 400px) {
+  .nav-logo-full { display: none; }
+  .nav-logo-short { display: inline; }
+  .nav-logo-main { font-size: 0.62rem; letter-spacing: 0.1em; }
 }
