@@ -28,6 +28,7 @@
       <li><a href="promising.html" class="active">Terrania 2.0 Candidates</a></li>
       <li><a href="terraformed.html">Terraformed Worlds</a></li>
     </ul>
+    <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
     <div class="nav-status">
       <span class="status-dot"></span>
       <span>ARCHIVE LIVE</span>
@@ -52,6 +53,7 @@
         <option value="">All Life Status</option>
         <option value="true">Life Confirmed</option>
         <option value="false">No Life Detected</option>
+        <option value="pending">Pending Review</option>
       </select>
       <select class="filter-select" id="sortSelect">
         <option value="dist-asc" selected>Distance: Closest First</option>
@@ -87,5 +89,19 @@
   <script src="script/starfield.js"></script>
   <script src="script/data.js"></script>
   <script src="script/promising.js"></script>
+  <script>
+    const btn = document.getElementById("navHamburger");
+    const links = document.querySelector(".nav-links");
+    btn.addEventListener("click", function() {
+      btn.classList.toggle("open");
+      links.classList.toggle("open");
+    });
+    links.querySelectorAll("a").forEach(function(a) {
+      a.addEventListener("click", function() {
+        btn.classList.remove("open");
+        links.classList.remove("open");
+      });
+    });
+  </script>
 </body>
 </html>
