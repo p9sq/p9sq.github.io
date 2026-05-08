@@ -1,7 +1,5 @@
 // ============================================================
 //  PLANETARY ARCHIVE — DATA FILE
-//  Replace these example entries with your real JSON data,
-//  or load from external JSON files via fetch().
 // ============================================================
 
 // ── CATALOGUED SYSTEMS ──────────────────────────────────────
