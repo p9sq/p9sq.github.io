@@ -820,6 +820,8 @@ body {
   .filter-select { flex: 1 1 100%; }
   .hero-stat-num { font-size: 1.4rem; }
   .page-hero-title { font-size: 1.5rem; }
+  .hero-title-line1 { font-size: clamp(1.8rem, 8vw, 3rem); }
+  .hero-title-line2 { font-size: clamp(2.6rem, 11.5vw, 4.5rem); }
 }
 
 /* ── NAV LOGO — PORTRAIT MOBILE ── */
