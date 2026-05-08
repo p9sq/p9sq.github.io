@@ -1,8 +1,8 @@
 // Starfield background animation
-(function () {
-  const canvas = document.getElementById("starfield");
+(function() {
+  const canvas = document.getElementById('starfield');
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
 
   let stars = [];
   let W, H;
@@ -22,7 +22,7 @@
         r: Math.random() * 1.2 + 0.2,
         alpha: Math.random() * 0.7 + 0.1,
         speed: Math.random() * 0.015 + 0.003,
-        phase: Math.random() * Math.PI * 2,
+        phase: Math.random() * Math.PI * 2
       });
     }
   }
@@ -44,8 +44,5 @@
   resize();
   initStars();
   draw();
-  window.addEventListener("resize", () => {
-    resize();
-    initStars();
-  });
+  window.addEventListener('resize', () => { resize(); initStars(); });
 })();
