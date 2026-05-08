@@ -1,16 +1,20 @@
-# About
+# About the Vulcean Continuity
 
 The Vulcean Continuity is a world building project I started in early 2025. This project takes place on a fictional planet (Terrania) in a fictional star system (Phebe System. I know it's spelt "Phoebe" but in my story its spelt without the "o") that's located 21.9 light years away from Earth in the constellation of Serpens Caput. This is also my first ever world building project, meaning that I may not be the best at this kind of thing 😅 (The main reason I started this project was because I had a story which I had created back in 2022 or so, and as of early 2025, I got into astronomy, and then when I found out about world building, I had decided to create the Vulcean Continuity)
 
-# Namesake
+### Namesake
 
 The Vulcean Continuity is named after the hypothetical planet Vulcan that was thought to exit between the Sun and Mercury (which is actually exists canonnically in my lore, aswell as Planet X), which has been disproven (in real life) by general relativity.
 
-# ⚠️ DISCLAIMER ⚠️
+# About Habitable Worlds
+
+Habitable Worlds is a public website catalogue which aims to let the public (Terranian inhabitants) know about potential candidate Terrania 2.0 analogues that have been discovered. Habitable Worlds was also developed by TIRA (Terranian Interplanetary Research Authority, which is my NASA analogue of my world building project) and Exoplanet Corporation which is a sub-company lead by a group of TIRA members.
+
+### ⚠️ DISCLAIMER ⚠️
 
 The description below was written by AI because I cannot for the life of me cannot write "plausible sounding" descriptions for my lore. Oh and also, the entirety of the Habitable Worlds website was also vibe coded. Sorry.
 
-# Lore
+# Lore (Vulcean Continuity)
 
 The Vulcean Continuity takes place in the year 3000 (Terranian years) and the year 2,445 (Earth years). Earth's technology has advanced significantly, particularly in exoplanet science — but apparently not quite enough to detect the planets of the Phebe System.
 
