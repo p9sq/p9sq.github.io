@@ -838,3 +838,11 @@ body {
   .nav-logo-short { display: inline; }
   .nav-logo-main { font-size: 0.62rem; letter-spacing: 0.1em; }
 }
+
+/* ── MODAL ALT NAME ── */
+.modal-altname {
+  font-size: 0.6em;
+  font-weight: 400;
+  color: var(--text-dimmer);
+  letter-spacing: 0.04em;
+}

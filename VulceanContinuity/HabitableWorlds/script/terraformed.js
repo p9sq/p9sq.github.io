@@ -67,8 +67,8 @@ function makeCard(name, world) {
       ? `<img class="planet-card-img" src="${world.thumbnail}" alt="${name}" onerror="this.style.display='none'">`
       : `<div class="planet-card-img-placeholder">🌱</div>`}
     <div class="planet-card-body">
-      <div class="planet-card-name">${name}</div>
-      <div class="planet-card-system">${world.systemName} · ${world.parentStar}</div>
+      <div class="planet-card-name">${name}${world.type === 'Moon' && world.altName ? ` <span style="color:var(--text-dimmer);font-size:0.75em;font-weight:400">/ ${world.altName}</span>` : ''}</div>
+      <div class="planet-card-system">${world.systemName} · ${world.parentStar}${world.type === 'Moon' && world.parent ? ' · Moon of ' + world.parent : ''}</div>
       <div class="planet-card-meta">
         <div class="planet-card-row"><span class="planet-card-row-label">Type</span><span class="planet-card-row-val">${world.type || '—'}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Mass</span><span class="planet-card-row-val">${mass != null ? mass + ' M⊕' : '—'}</span></div>
@@ -102,8 +102,8 @@ function openModal(name, world) {
 
   content.innerHTML = `
     ${world.thumbnail ? `<img class="modal-thumb" src="${world.thumbnail}" alt="${name}" onerror="this.remove()">` : ''}
-    <div class="modal-title">${name}</div>
-    <div class="modal-sub">${world.type} · ${world.systemName} · <span style="color:var(--orange)">TERRAFORMED</span></div>
+    <div class="modal-title">${name}${world.type === 'Moon' && world.altName ? `<span class="modal-altname"> / ${world.altName}</span>` : ''}</div>
+    <div class="modal-sub">${world.type}${world.type === 'Moon' && world.parent ? ` of ${world.parent}` : ''} · ${world.systemName} · <span style="color:var(--orange)">TERRAFORMED</span></div>
 
     <div class="modal-section-title">PHYSICAL DATA</div>
     <div class="modal-grid">
@@ -126,6 +126,7 @@ function openModal(name, world) {
     <div class="modal-grid">
       <div class="modal-field"><div class="modal-field-label">System</div><div class="modal-field-val">${world.systemName}</div></div>
       <div class="modal-field"><div class="modal-field-label">Parent Star</div><div class="modal-field-val">${world.parentStar}</div></div>
+      ${world.type === 'Moon' && world.parent ? `<div class="modal-field"><div class="modal-field-label">Parent Planet</div><div class="modal-field-val">${world.parent}</div></div>` : ''}
       <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(world.spectralClass)}">${world.spectralClass || '—'}</div></div>
       <div class="modal-field"><div class="modal-field-label">Distance from Phebe</div><div class="modal-field-val">${fmtDist(world.distToSun)}</div></div>
     </div>

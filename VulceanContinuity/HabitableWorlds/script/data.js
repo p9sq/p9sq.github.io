@@ -1376,7 +1376,7 @@ const TERRAFORMED_WORLDS = {
   Pholion: {
     altName: "Boreas I",
     systemName: "Nexus System",
-    systemType: "Octuple",
+    systemType: "Quadruple",
     parentStar: "Nexus B",
     spectralClass: "K3V",
     distToSun: 301.58,
@@ -1384,14 +1384,14 @@ const TERRAFORMED_WORLDS = {
     parent: "Boreas",
     moonCount: 0,
     thumbnail: "img/terraformed/pholion.png",
-    orbit: {
-      sma: 0.008000000029412,
-      period: 1,
-      eccentricity: 0,
-    },
     physical: {
-      radius: 5830.252705016458,
+      radius: 5822.41,
       mass: 0.74,
+    },
+    orbit: {
+      sma: 0.0080000000360968,
+      period: 0.00875195357,
+      eccentricity: 0.03,
     },
     life: {
       exists: "pending",
