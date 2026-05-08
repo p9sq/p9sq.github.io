@@ -1,0 +1,19 @@
+# About
+
+The Vulcean Continuity is a world building project I started in early 2025. This project takes place on a fictional planet in a fictional star system that's located in the constellation of Serpens Caput.
+
+# Namesake
+
+The Vulcean Continuity is named after the hypothetical planet Vulcan that was thought to exit between the Sun and Mercury (which is actually exists canonnically in my lore, aswell as Planet X), which has been disproven (in real life) by general relativity.
+
+# Lore
+
+The Vulcean Continuity takes place in the year 3000 (Terranian years) and the year 2,445 (Earth years). Earth's technology has advanced significantly, particularly in exoplanet science — but apparently not quite enough to detect the planets of the Phebe System.
+
+The Phebe System, home to the main civilisation of this story, is located roughly 21.9 light-years from the Sun in the constellation of Serpens Caput. It consists of two stars: a G7.5-class yellow dwarf named Phebe and a K4-class orange dwarf named Amaros. Both stars orbit their shared barycenter every 10.86 Earth days at an extremely close separation, and all of their planets, asteroids, and comets orbit both stars simultaneously in a P-type orbital configuration.
+
+From Earth, Phebe and Amaros are catalogued as a detached eclipsing binary exhibiting ellipsoidal variation — a system that defies clean classification under standard variable star schemes. Both stars remain well within their Roche lobes with no mass transfer occurring between them, making the system's photometric complexity a product of pure geometry and tidal interaction rather than any exotic evolutionary process. This combination of variability sources creates one of the most complex light curves of any nearby star system, making it effectively impossible for human astronomers to distinguish a genuine planetary transit signal from the system's own intrinsic noise. Radial velocity searches have fared no better — the two stars impose enormous, imperfectly periodic Doppler shifts on each other that bury any planetary signature, and stellar activity jitter from tidally induced starspots adds yet another layer of confusion. There are tentative, heavily debated claims of a possible Jupiter-mass planet lurking at several AU from the binary centre based on residual radial velocity trends, but no detection has survived peer review. The Phebe System remains, as of 2445, the most stubbornly uncharacterised nearby star system in human astronomical catalogues — a source of ongoing frustration to the exoplanet science community, and a system that refuses to give up its secrets.
+
+The intelligent species inhabiting Terrania — the Phebe System's habitable world, residing comfortably within the binary's habitable zone where liquid water can exist on its surface — call themselves Terranians. They are well aware of humanity's existence and have been quietly monitoring the Solar System for some time, taking considerable comfort in the knowledge that Earth's astronomers have so far been unable to pierce the photometric complexity of their home system.
+
+Terranian scientists have also been conducting research on Auron, another planet in the Phebe System, from dedicated orbiting stations. Auron is a mini-Neptune — a class of world that sits between rocky super-Earths and full ice giants —, and it has drawn significant scientific interest due to the detection of hints of dimethyl sulfide and dimethyl disulfide in its atmosphere by powerful space telescopes in orbit around Terrania. On Terrania, these molecules are produced almost exclusively by biological processes, making their potential presence in Auron's atmosphere one of the most tantalising and debated findings in contemporary Terranian science. Whether these signals represent genuine biosignatures or exotic abiotic chemistry remains an open and actively investigated question.
