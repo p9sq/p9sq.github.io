@@ -1,10 +1,14 @@
 # About
 
-The Vulcean Continuity is a world building project I started in early 2025. This project takes place on a fictional planet in a fictional star system that's located in the constellation of Serpens Caput.
+The Vulcean Continuity is a world building project I started in early 2025. This project takes place on a fictional planet (Terrania) in a fictional star system (Phebe System. I know it's spelt "Phoebe" but in my story its spelt without the "o") that's located 21.9 light years away from Earth in the constellation of Serpens Caput. This is also my first ever world building project, meaning that I may not be the best at this kind of thing 😅 (The main reason I started this project was because I had a story which I had created back in 2022 or so, and as of early 2025, I got into astronomy, and then when I found out about world building, I had decided to create the Vulcean Continuity)
 
 # Namesake
 
 The Vulcean Continuity is named after the hypothetical planet Vulcan that was thought to exit between the Sun and Mercury (which is actually exists canonnically in my lore, aswell as Planet X), which has been disproven (in real life) by general relativity.
+
+# ⚠️ DISCLAIMER ⚠️
+
+The description below was written by AI because I cannot for the life of me cannot write "plausible sounding" descriptions for my lore. Oh and also, the entirety of the Habitable Worlds website was also vibe coded. Sorry.
 
 # Lore
 
