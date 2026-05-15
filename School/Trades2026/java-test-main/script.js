@@ -2,7 +2,6 @@
 const themeButton = document.getElementById("themeButton");
 const shapeButton = document.getElementById("shapeButton");
 const playBox = document.getElementById("playBox");
-const secret = document.getElementById("secret");
 let clicks = 0;
 let multiplier = 1;
 let gla = false;
