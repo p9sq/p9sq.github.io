@@ -73,20 +73,6 @@ themeButton.addEventListener("click", () => {
   }, 700);
 });
 
-secret.addEventListener("click", () => {
-  let newMultiplier = prompt("How much cps do you want?");
-  while (
-    isNaN(newMultiplier) ||
-    newMultiplier === null ||
-    newMultiplier === ""
-  ) {
-    alert("That's not a number");
-    newMultiplier = prompt("How much cps do you want?");
-  }
-
-  multiplier = Number(newMultiplier);
-});
-
 shapeButton.addEventListener("click", () => {
   isCircle = !isCircle;
   playBox.classList.toggle("circle");
@@ -94,22 +80,25 @@ shapeButton.addEventListener("click", () => {
   playBox.textContent = isCircle ? "Circle" : "Rounded Box";
   playBox.classList.add("active");
 
-  shapeBtn = document.getElementById("shapeButton");
-  clicks += multiplier;
-  shapeBtn.innerText = `Change Shape (+${clicks.toLocaleString()} clicks)`;
+  setTimeout(() => {
+    playBox.classList.remove("active");
+    playBox.textContent = "Click Me";
+  }, 700);
+});
 
-  if (shapeBtn.innerText === "Change Shape (+∞ clicks)" && gla === false) {
+playBox.addEventListener("click", () => {
+  playBox.classList.toggle("active");
+  clicks += multiplier;
+  playBox.innerText = `+${clicks.toLocaleString()} clicks`;
+
+  if (playBox.innerText === "+∞ clicks" && gla === false) {
     setTimeout(() => {
       alert("Godlike ascension....");
       gla = true;
     }, 200);
   }
 
-  if (
-    shapeBtn.innerText === "Change Shape (+∞ clicks)" &&
-    gla === true &&
-    real === false
-  ) {
+  if (playBox.innerText === "+∞ clicks" && gla === true && real === false) {
     alert(
       "You have all of the clicks in the world... Therefore, you have no more reason to click anymore...",
     );
@@ -117,7 +106,7 @@ shapeButton.addEventListener("click", () => {
   }
 
   if (
-    shapeBtn.innerText === "Change Shape (+∞ clicks)" &&
+    playBox.innerText === "+∞ clicks" &&
     gla === true &&
     real === true &&
     butyoustillclicked === false
@@ -131,16 +120,19 @@ shapeButton.addEventListener("click", () => {
   }, 500);
 });
 
-playBox.addEventListener("click", () => {
-  playBox.classList.toggle("active");
-  playBox.textContent = "Nice!";
-});
-
 playBox.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" || event.key === " ") {
-    event.preventDefault();
-    playBox.classList.toggle("active");
-    playBox.textContent = "Keyboard!";
+  if (event.key === "~") {
+    let newMultiplier = prompt("How much cps do you want?");
+    while (
+      isNaN(newMultiplier) ||
+      newMultiplier === null ||
+      newMultiplier === ""
+    ) {
+      alert("That's not a number");
+      newMultiplier = prompt("How much cps do you want?");
+    }
+
+    multiplier = Number(newMultiplier);
   }
 });
 
