@@ -1,0 +1,107 @@
+<!-- index.html -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Playground for Students</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page-bg" aria-hidden="true"></div>
+
+    <header class="site-header reveal">
+      <div class="brand">
+        <p class="eyebrow">Student Experiment Lab</p>
+        <h1>Edit the CSS or JavaScript and see what changes</h1>
+      </div>
+
+      <nav class="top-nav" aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#playground">Playground</a>
+        <a href="#ideas">Edit Ideas</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero reveal" id="about">
+        <div class="hero-copy">
+          <p class="intro">
+            This simple website is built for students who are learning how
+            <strong>CSS changes appearance</strong> and how
+            <strong>JavaScript changes behavior</strong>.
+          </p>
+          <p>
+            Try changing colors, fonts, spacing, animations, button effects, or
+            the interactive box below.
+          </p>
+          <div class="hero-actions">
+            <button id="themeButton" class="primary-btn">Change Theme</button>
+            <button id="shapeButton" class="ghost-btn">Change Shape</button>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div
+            class="play-box"
+            id="playBox"
+            tabindex="0"
+            aria-label="Interactive demo box"
+          >
+            Click Me
+          </div>
+          <p class="hint" id="secret">
+            Tip: Edit the CSS for this box or change its behavior in JavaScript.
+          </p>
+        </div>
+      </section>
+
+      <section class="info-grid" id="playground">
+        <article class="reveal">
+          <p class="section-label">CSS Demo</p>
+          <h2>Style controls the look</h2>
+          <p>
+            Open <code>styles.css</code> and experiment with the colors, border
+            radius, shadows, font sizes, gradients, and hover effects.
+          </p>
+        </article>
+
+        <article class="reveal">
+          <p class="section-label">JavaScript Demo</p>
+          <h2>Scripts control interaction</h2>
+          <p>
+            Open <code>script.js</code> and change what happens when buttons are
+            clicked. You can make the box spin, grow, move, change text, or
+            react to keyboard input.
+          </p>
+        </article>
+      </section>
+
+      <section class="ideas reveal" id="ideas">
+        <p class="section-label">Suggestions</p>
+        <h2>Possible edits for students</h2>
+        <ul>
+          <li>Change the background colors in <code>:root</code>.</li>
+          <li>Make the box square, circle, or rounded rectangle.</li>
+          <li>Increase or reduce animation speed.</li>
+          <li>Change button text when clicked.</li>
+          <li>Add a new theme in JavaScript.</li>
+          <li>Make the box bounce, rotate, or follow the mouse.</li>
+          <li>Change fonts or spacing for a totally different mood.</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site-footer reveal">
+      <p>Built as a beginner-friendly front-end editing example.</p>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
