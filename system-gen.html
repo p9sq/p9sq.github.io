@@ -1243,9 +1243,8 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       G3: tMain * 0.95, BG2: tMain * 0.95,
       SGA: tMain * 0.98, SGB: tMain * 0.98
     }[evolClass] ?? 12;
-    // If the system is in PMS age territory (<10 Myr) and this companion was assigned
-    // MS, force it to PMS — stars in a young system are all pre-main-sequence
-    if (forcedAge < 0.010 && evolClass === 'MS' && !sp.bd) {
+    // If the system is in PMS age territory (<10 Myr), force all non-remnant companions to PMS
+    if (forcedAge < 0.010 && !['WD','NS','BH','BD'].includes(evolClass)) {
       evolClass = 'PMS';
       radiusMult = rf(1.5, 4.0);
       lum = lumMS * rf(0.5, 3.0);
@@ -2655,71 +2654,82 @@ function normaliseComp(comp) {
 
 function generateOcean(type, atmo, Teq, mEarth, tClass) {
   if (!atmo || atmo.isGiant) return null;
-  const Tsurf = atmo.Tsurf;
+  const Tsurf   = atmo.Tsurf;
   const pressure = atmo.pressure; // atm
 
-  // Determine if any liquid is stable at the surface
-  // Water: liquid between 273–647 K (critical point), needs P ≥ 0.006 atm (triple point)
-  const waterLiquid = Tsurf >= 273 && Tsurf <= 370 && pressure >= 0.006;
-  // Supercritical water ocean (very hot, very high pressure)
-  const superCritWater = Tsurf > 370 && Tsurf < 647 && pressure > 218;
-  // Methane ocean (Titan-like): 90–115 K, any reasonable pressure
-  const methaneLiquid = Tsurf >= 90 && Tsurf <= 115 && pressure >= 0.0015;
-  // Ethane ocean: similar range to methane
-  const ethaneLiquid  = Tsurf >= 89 && Tsurf <= 120 && pressure >= 0.001;
-  // Sulphuric acid (Venus-like clouds, not surface oceans — skip)
-  // Liquid CO₂: very narrow range, supercritical above 31°C/73 atm — too exotic, skip
-  // Liquid nitrogen: 63–77 K, Pluto-like — too cold for most generated worlds
-  const nitrogenLiquid = Tsurf >= 63 && Tsurf <= 77 && pressure >= 0.12;
-  // Liquid ammonia: −78 to −33°C = 195–240 K, needs ≥ 0.06 atm
-  const ammoniaLiquid = Tsurf >= 195 && Tsurf <= 240 && pressure >= 0.06;
+  // Liquid stability windows
+  const waterLiquid     = Tsurf >= 273 && Tsurf <= 373 + Math.log10(Math.max(pressure,0.001))*25 && pressure >= 0.006;
+  const superCritWater  = Tsurf > 373 && Tsurf < 647 && pressure > 218;
+  const methaneLiquid   = Tsurf >= 90  && Tsurf <= 115 && pressure >= 0.0015;
+  const ethaneLiquid    = Tsurf >= 89  && Tsurf <= 120 && pressure >= 0.001;
+  const nitrogenLiquid  = Tsurf >= 63  && Tsurf <= 77  && pressure >= 0.12;
+  const ammoniaLiquid   = Tsurf >= 195 && Tsurf <= 240 && pressure >= 0.06;
+  // SO₂ ocean: liquid 197–263 K at ~0.017 atm vapour pressure; present on volcanic worlds
+  const so2Liquid = Tsurf >= 197 && Tsurf <= 263 && pressure >= 0.01 &&
+    atmo.composition && Array.isArray(atmo.composition) &&
+    atmo.composition.some(([g, p]) => (g.includes('SO₂') || g.includes('SO2')) && p > 0.5);
+  // H₂SO₄ ocean: Venus-like, surface >700 K but sub-cloud level ~300–400 K; require SO₂ + very high P
+  const h2so4Liquid = Tsurf >= 280 && Tsurf <= 430 && pressure >= 30 &&
+    atmo.composition && Array.isArray(atmo.composition) &&
+    atmo.composition.some(([g]) => g.includes('SO₂') || g.includes('H₂SO₄'));
+  const anyCandidateLiquid = waterLiquid || superCritWater || methaneLiquid || ethaneLiquid
+    || nitrogenLiquid || ammoniaLiquid || so2Liquid || h2so4Liquid;
+  if (!anyCandidateLiquid) return null;
+  if (!roll(0.45)) return null;
 
-  // Aquaria worlds always have a subsurface or surface ocean if not too hot/cold
-  const forceAquaria = type === 'aquaria' && Tsurf < 400 && pressure > 0.001;
+  let comp, maxDepthKm, seaLevel;
 
-  if (!waterLiquid && !superCritWater && !methaneLiquid && !ethaneLiquid
-      && !nitrogenLiquid && !ammoniaLiquid && !forceAquaria) return null;
-
-  let oceanComp, maxDepthKm, seaLevel;
-
-  if (forceAquaria || waterLiquid || superCritWater) {
+  if (waterLiquid || superCritWater) {
     if (superCritWater) {
-      oceanComp  = 'Supercritical H₂O';
+      comp       = [['H₂O', rf(90,99)], ['NaCl', rf(0.1,3)], ['CO₂', rf(0.1,2)]];
       maxDepthKm = rf(5, 50);
       seaLevel   = rf(0.3, 0.9);
-    } else if (type === 'aquaria') {
-      oceanComp  = 'H₂O (subsurface/global)';
-      maxDepthKm = rf(30, 200);
-      seaLevel   = rf(0.7, 1.0);
     } else if (tClass === 'Temperate') {
-      // Earth-like partial ocean
-      oceanComp  = 'H₂O (saline)';
+      const hasSalt = roll(0.6);
+      if (hasSalt) {
+        comp = [['H₂O', rf(95,99)], ['NaCl', rf(0.1,3)], ['MgSO₄', rf(0.01,0.5)], ['CaCO₃', rf(0.001,0.05)]];
+      } else {
+        comp = [['H₂O', rf(97,99.9)], ['CO₂', rf(0.01,0.5)], ['O₂', rf(0.001,0.1)]];
+      }
       maxDepthKm = rf(1, 11);
       seaLevel   = rf(0.1, 0.75);
     } else {
-      oceanComp  = 'H₂O';
+      comp       = [['H₂O', rf(90,99)], ['CO₂', rf(0.1,2)], ['NaCl', rf(0.1,2)]];
       maxDepthKm = rf(0.5, 30);
       seaLevel   = rf(0.05, 0.9);
     }
+  } else if (so2Liquid) {
+    comp       = [['SO₂', rf(85,98)], ['H₂SO₄', rf(0.5,5)], ['H₂O', rf(0.1,3)]];
+    maxDepthKm = rf(0.1, 5);
+    seaLevel   = rf(0.05, 0.4);
+  } else if (h2so4Liquid) {
+    comp       = [['H₂SO₄', rf(75,95)], ['SO₂', rf(1,10)], ['H₂O', rf(1,10)]];
+    maxDepthKm = rf(0.1, 2);
+    seaLevel   = rf(0.02, 0.3);
   } else if (methaneLiquid || ethaneLiquid) {
-    oceanComp  = methaneLiquid && ethaneLiquid ? 'CH₄/C₂H₆ mix' : (methaneLiquid ? 'Liquid CH₄' : 'Liquid C₂H₆');
+    if (methaneLiquid && ethaneLiquid) {
+      comp = [['CH₄', rf(40,70)], ['C₂H₆', rf(20,50)], ['C₃H₈', rf(0.1,5)], ['N₂', rf(0.1,3)]];
+    } else if (methaneLiquid) {
+      comp = [['CH₄', rf(80,95)], ['C₂H₆', rf(1,10)], ['N₂', rf(0.1,5)]];
+    } else {
+      comp = [['C₂H₆', rf(75,90)], ['CH₄', rf(5,20)], ['C₄H₁₀', rf(0.1,3)]];
+    }
     maxDepthKm = rf(0.1, 3);
     seaLevel   = rf(0.05, 0.5);
   } else if (ammoniaLiquid) {
-    oceanComp  = 'NH₃/H₂O mix';
+    comp       = [['NH₃', rf(50,80)], ['H₂O', rf(15,45)], ['N₂H₄', rf(0.1,3)]];
     maxDepthKm = rf(0.5, 20);
     seaLevel   = rf(0.1, 0.6);
-  } else {
-    oceanComp  = 'Liquid N₂';
+  } else { // nitrogen
+    comp       = [['N₂', rf(90,99)], ['CH₄', rf(0.1,5)], ['CO', rf(0.01,1)]];
     maxDepthKm = rf(0.01, 0.5);
     seaLevel   = rf(0.01, 0.3);
   }
 
-  return {
-    composition: oceanComp,
-    maxDepthKm:  maxDepthKm,
-    seaLevel:    seaLevel
-  };
+  // Normalise composition array
+  if (Array.isArray(comp)) normaliseComp(comp);
+
+  return { composition: comp, maxDepthKm, seaLevel };
 }
 // Returns array of belt objects: { name, minAU, maxAU, type }
 // type: 'asteroid' | 'kuiper' | 'oort'
@@ -2940,7 +2950,12 @@ function renderPlanetCard(p, prefix) {
       ${p.ocean ? `
       <div class="planet-detail-col">
         <div class="detail-col-label" class="detail-col-label ocean">Ocean</div>
-        <div class="pd-row"><span class="pd-key">COMPOSITION</span><span class="pd-val" style="font-size:9px;line-height:1.4">${p.ocean.composition}</span></div>
+        <div class="pd-row pd-row-composition"><span class="pd-key">COMPOSITION</span><span class="pd-val" style="text-align:left">${(() => {
+          const c = p.ocean.composition;
+          if (!c) return 'N/A';
+          if (Array.isArray(c)) return c.map(([gas, pct]) => `${gas}: ${fmt(pct,2)}%`).join('<br>');
+          return c;
+        })()}</span></div>
         <div class="pd-row"><span class="pd-key">MAX DEPTH</span><span class="pd-val">${fmt(p.ocean.maxDepthKm, 1)} km</span></div>
         <div class="pd-row"><span class="pd-key">SEA LEVEL</span><span class="pd-val">${fmt(p.ocean.seaLevel, 2)} <span style="color:var(--text-muted);font-size:9px">(${p.ocean.seaLevel < 0.05 ? 'Trace' : p.ocean.seaLevel < 0.2 ? 'Shallow seas' : p.ocean.seaLevel < 0.5 ? 'Continental' : p.ocean.seaLevel < 0.8 ? 'Archipelago' : 'Ocean world'})</span></span></div>
       </div>` : ''}
@@ -3387,18 +3402,36 @@ function scAtmosphereBlock(planet) {
     ? (planet.type === 'gasGiant' ? 'Jupiter' : 'Neptune')
     : scAtmoModel(planet.type, planet.tClass, atmo);
   const pressure   = typeof atmo.pressure === 'number' ? atmo.pressure : parseFloat(atmo.pressure) || 0;
-  const density    = parseFloat(atmo.densityKgm3) || 0;
-  const densityCm3 = density / 1e6;
+  const density    = parseFloat(atmo.densityKgm3) || 0;  // kg/m³ — SE uses kg/m³ directly
   const greenhouse = atmo.greenhouse ? parseFloat(atmo.greenhouse) || 0 : 0;
   const lines = [];
   lines.push(`\tAtmosphere`);
   lines.push(`\t{`);
   lines.push(`\t\tModel          "${model}"`);
   if (!atmo.isGiant) {
-    lines.push(`\t\tDensity        ${densityCm3.toFixed(6)}`);
+    lines.push(`\t\tDensity        ${density.toFixed(6)}`);
     lines.push(`\t\tPressure       ${fmtSC(pressure, 4)}`);
     lines.push(`\t\tGreenhouse     ${fmtSC(greenhouse, 2)}`);
   }
+  // Bright: 0–20, driven by pressure (thicker = brighter sky)
+  const bright = atmo.isGiant ? rf(8, 15)
+    : Math.min(20, Math.max(0, pressure < 0.01 ? rf(0, 2) : pressure < 0.5 ? rf(2, 8) : pressure < 2 ? rf(6, 12) : rf(9, 18)));
+  // SkyLight: 0–10
+  const skyLight = atmo.isGiant ? rf(3, 7)
+    : Math.min(10, Math.max(0, pressure < 0.01 ? rf(0, 1) : pressure < 0.5 ? rf(1, 4) : rf(2, 6)));
+  // Hue: −0.5–0.5 (red-orange sky for CO₂-heavy, blue for N₂/O₂, neutral otherwise)
+  const hasCO2 = atmo.composition && Array.isArray(atmo.composition) &&
+    atmo.composition.some(([g]) => g.includes('CO₂') || g.includes('SO₂'));
+  const hasO2  = atmo.composition && Array.isArray(atmo.composition) &&
+    atmo.composition.some(([g, p]) => g === 'O₂' && p > 10);
+  const hue = hasCO2 ? rf(0.05, 0.3) : hasO2 ? rf(-0.15, 0.05) : rf(-0.1, 0.15);
+  // Saturation: 0–2 (vivid for dense coloured atmospheres, near 0 for thin/grey ones)
+  const saturation = atmo.isGiant ? rf(0.8, 2.0)
+    : pressure < 0.01 ? rf(0, 0.3) : hasCO2 ? rf(0.4, 1.4) : rf(0.3, 1.0);
+  lines.push(`\t\tBright         ${bright.toFixed(2)}`);
+  lines.push(`\t\tSkyLight       ${skyLight.toFixed(2)}`);
+  lines.push(`\t\tHue            ${hue.toFixed(3)}`);
+  lines.push(`\t\tSaturation     ${saturation.toFixed(3)}`);
   if (atmo.composition && atmo.composition.length > 0) {
     lines.push(scCompositionBlock(atmo.composition, '\t\t'));
   }
@@ -3414,12 +3447,10 @@ function scOceanBlock(planet) {
   lines.push(`\tOcean`);
   lines.push(`\t{`);
   lines.push(`\t\tHeight          ${heightKm}`);
-  // composition may be a string (e.g. 'H₂O (saline)') or an array of [gas, pct] pairs
   if (ocean.composition) {
     if (Array.isArray(ocean.composition) && ocean.composition.length > 0) {
       lines.push(scCompositionBlock(ocean.composition, '\t\t'));
     } else if (typeof ocean.composition === 'string') {
-      // Convert string to a single-component 100% array for SC export
       const gasKey = sanitiseGas(ocean.composition.split(' ')[0]);
       if (gasKey) lines.push(scCompositionBlock([[gasKey, 100]], '\t\t'));
     }
@@ -3442,7 +3473,7 @@ function scPlanet(planet, parentStarLabel, planetLabel) {
   if (['dwarf','chthonian','ferria'].includes(planet.type)) suppress.push('NoLava');
 
   // Pad suppress flag names so the "true" values all line up
-  const maxFlagLen = Math.max(...suppress.map(f => f.length));
+  // (maxFlagLen calculated below after TidalLocked is optionally prepended)
 
   // Life block
   let lifeBlock = '';
@@ -3509,12 +3540,13 @@ function scPlanet(planet, parentStarLabel, planetLabel) {
   sections.push(`\tMass           ${fmtSC(planet.mEarth, 6)}`);
   sections.push(`\tRadius         ${fmtSC(planet.rKm, 2)}`);
   sections.push(`\tAlbedo         ${fmtSC(planet.albedo, 3)}`);
-  if (planet.tidallyLocked) {
-    sections.push(`\tTidalLocked    true`);
-  } else {
+  if (!planet.tidallyLocked) {
     sections.push(`\tRotationPeriod ${fmtSC(planet.rotationHours, 4)}`);
   }
   sections.push('');
+  // Add TidalLocked into suppress list so true values align
+  if (planet.tidallyLocked) suppress.unshift('TidalLocked');
+  const maxFlagLen = Math.max(...suppress.map(f => f.length));
   for (const f of suppress) {
     sections.push(`\t${f.padEnd(maxFlagLen)}   true`);
   }
