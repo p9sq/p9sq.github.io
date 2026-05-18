@@ -4,467 +4,404 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Star System Generator</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #03060f;
-    --bg2: #060d1c;
-    --bg3: #0a1428;
-    --panel: #081020;
-    --border: #1a2f55;
-    --border-bright: #2a4f8f;
-    --accent: #4a9eff;
-    --accent2: #ff9f4a;
-    --accent3: #4affa9;
-    --text: #cde0ff;
-    --text-dim: #7a9acc;
-    --text-muted: #3a5888;
-    --star-o: #9bc4ff;
-    --star-b: #b8d4ff;
-    --star-a: #d4e8ff;
-    --star-f: #fff4e8;
-    --star-g: #fffbe0;
-    --star-k: #ffd580;
-    --star-m: #ff8855;
-    --star-l: #cc4433;
-    --glow: 0 0 20px rgba(74,158,255,0.3);
-    --glow2: 0 0 20px rgba(255,159,74,0.3);
+    --bg:            #0d0f12;
+    --bg2:           #12151a;
+    --bg3:           #181c22;
+    --panel:         #13161b;
+    --panel2:        #1a1e25;
+    --border:        #272b33;
+    --border-light:  #323740;
+    --accent:        #5b8dee;
+    --accent-dim:    #3d6bc4;
+    --accent2:       #e8924a;
+    --accent3:       #4ec98a;
+    --accent3-dim:   #357a5c;
+    --text:          #e2e5ea;
+    --text-dim:      #8b919e;
+    --text-muted:    #4a5060;
+    --radius:        6px;
+    --radius-sm:     4px;
+    --shadow-sm:     0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md:     0 4px 12px rgba(0,0,0,0.5);
+    --shadow-lg:     0 8px 24px rgba(0,0,0,0.6);
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 15px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
     min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Starfield background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.6) 0%, transparent 100%),
-      radial-gradient(1px 1px at 30% 60%, rgba(200,220,255,0.4) 0%, transparent 100%),
-      radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.5) 0%, transparent 100%),
-      radial-gradient(1px 1px at 70% 80%, rgba(200,220,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 90% 40%, rgba(255,255,255,0.6) 0%, transparent 100%),
-      radial-gradient(1.5px 1.5px at 15% 75%, rgba(255,240,200,0.5) 0%, transparent 100%),
-      radial-gradient(1px 1px at 45% 50%, rgba(255,255,255,0.4) 0%, transparent 100%),
-      radial-gradient(1px 1px at 80% 15%, rgba(200,220,255,0.5) 0%, transparent 100%),
-      radial-gradient(1px 1px at 25% 35%, rgba(255,255,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 60% 90%, rgba(200,220,255,0.4) 0%, transparent 100%),
-      radial-gradient(1px 1px at 5% 55%, rgba(255,255,255,0.5) 0%, transparent 100%),
-      radial-gradient(1px 1px at 85% 65%, rgba(255,240,200,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 38% 28%, rgba(255,255,255,0.6) 0%, transparent 100%),
-      radial-gradient(1px 1px at 72% 45%, rgba(200,220,255,0.4) 0%, transparent 100%),
-      radial-gradient(1px 1px at 55% 70%, rgba(255,255,255,0.3) 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 0;
+    -webkit-font-smoothing: antialiased;
   }
 
   .container {
-    position: relative;
-    z-index: 1;
-    max-width: 1400px;
+    max-width: 1360px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 0 24px 60px;
   }
 
-  /* HEADER */
+  /* ── HEADER ── */
   header {
-    text-align: center;
-    padding: 40px 20px 30px;
+    padding: 40px 0 32px;
+    margin-bottom: 32px;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 40px;
     position: relative;
-  }
-  header::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 200px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
   }
   header h1 {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(22px, 4vw, 40px);
-    font-weight: 900;
-    letter-spacing: 0.15em;
-    color: #fff;
-    text-shadow: 0 0 30px rgba(74,158,255,0.6), 0 0 60px rgba(74,158,255,0.3);
-    text-transform: uppercase;
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    text-align: center;
   }
   header p {
-    margin-top: 8px;
-    color: var(--text-dim);
-    font-size: 13px;
-    letter-spacing: 0.2em;
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 400;
   }
 
-  /* CONTROL PANEL */
+  /* ── CONTROL PANEL ── */
   .control-panel {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 30px;
-    max-width: 700px;
-    margin: 0 auto 40px;
-    position: relative;
-    overflow: hidden;
-  }
-  .control-panel::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    border-radius: var(--radius);
+    padding: 24px;
+    max-width: 680px;
+    margin: 0 auto 36px;
+    box-shadow: var(--shadow-sm);
   }
 
   .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
+    gap: 14px;
+    margin-bottom: 14px;
   }
-  .form-row.full { grid-template-columns: 1fr; }
+  .form-row.full  { grid-template-columns: 1fr; }
   .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
 
-  .field-group { display: flex; flex-direction: column; gap: 6px; }
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
   .field-group label {
-    font-family: 'Share Tech Mono', monospace;
     font-size: 11px;
-    letter-spacing: 0.2em;
-    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
     text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
   }
 
-  input[type="text"], input[type="number"], select {
+  input[type="text"],
+  input[type="number"],
+  select {
     background: var(--bg3);
     border: 1px solid var(--border);
     color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
-    padding: 9px 12px;
-    border-radius: 4px;
+    padding: 8px 11px;
+    border-radius: var(--radius-sm);
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.15s, box-shadow 0.15s;
     width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
   }
-  input[type="text"]:focus, input[type="number"]:focus, select:focus {
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  select:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(74,158,255,0.15);
+    box-shadow: 0 0 0 3px rgba(91,141,238,0.12);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%238b919e'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
   }
   select option { background: var(--bg3); }
 
-  .seed-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-  }
+  .seed-row { display: flex; gap: 7px; align-items: flex-end; }
   .seed-row input { flex: 1; }
-  .seed-row button {
-    padding: 9px 14px;
-    font-size: 11px;
-    white-space: nowrap;
-  }
 
   .checkbox-group {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 0;
+    gap: 9px;
+    padding: 8px 0;
   }
   .checkbox-group input[type="checkbox"] {
-    width: 16px; height: 16px;
+    width: 15px; height: 15px;
     accent-color: var(--accent);
     cursor: pointer;
+    border-radius: 3px;
   }
   .checkbox-group label {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--text-dim);
     cursor: pointer;
-    letter-spacing: 0.05em;
   }
 
-  .btn-row {
-    display: flex;
-    gap: 12px;
-    margin-top: 24px;
-  }
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; }
 
   button {
-    font-family: 'Orbitron', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 12px 28px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    padding: 9px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
     position: relative;
-    overflow: hidden;
+    line-height: 1;
   }
-  button::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0);
-    transition: background 0.15s;
-  }
-  button:hover::after { background: rgba(255,255,255,0.08); }
+  button:active { opacity: 0.85; }
 
   .btn-primary {
-    background: linear-gradient(135deg, #1a4a99, #2a6acc);
+    background: var(--accent);
     color: #fff;
     flex: 1;
-    box-shadow: 0 2px 12px rgba(74,158,255,0.3);
+    font-weight: 600;
   }
-  .btn-primary:hover { box-shadow: 0 4px 20px rgba(74,158,255,0.5); }
+  .btn-primary:hover { background: #6a9bf0; box-shadow: 0 2px 8px rgba(91,141,238,0.35); }
+
   .btn-secondary {
-    background: linear-gradient(135deg, #2a1a0a, #4a3010);
-    color: var(--accent2);
-    border: 1px solid rgba(255,159,74,0.3);
-  }
-  .btn-secondary:hover { box-shadow: 0 4px 20px rgba(255,159,74,0.3); }
-  .btn-small {
-    font-size: 10px;
-    padding: 9px 12px;
     background: var(--bg3);
     color: var(--text-dim);
     border: 1px solid var(--border);
   }
+  .btn-secondary:hover { border-color: var(--border-light); color: var(--text); }
 
-  /* OUTPUT AREA */
-  #output { margin-top: 20px; }
+  .btn-small {
+    font-size: 12px;
+    padding: 8px 11px;
+    background: var(--bg3);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .btn-small:hover { border-color: var(--border-light); color: var(--text); }
+
+  /* ── OUTPUT ── */
+  #output { margin-top: 4px; }
 
   .system-title {
     text-align: center;
-    padding: 20px;
-    margin-bottom: 24px;
+    padding: 16px 0 24px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
   }
   .system-title h2 {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(18px, 3vw, 30px);
+    font-size: clamp(16px, 2.5vw, 24px);
     font-weight: 700;
-    letter-spacing: 0.15em;
-    color: #fff;
-    text-shadow: 0 0 20px rgba(74,158,255,0.5);
+    color: var(--text);
+    letter-spacing: -0.01em;
   }
   .system-title .separation {
-    margin-top: 8px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 12px;
-    color: var(--text-dim);
-    letter-spacing: 0.15em;
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
   }
 
-  .panels-container {
-    display: flex;
-    gap: 20px;
-  }
+  .panels-container { display: flex; gap: 16px; }
   .panels-container.single { display: block; }
   .panels-container.dual .star-panel { flex: 1; min-width: 0; }
 
+  /* ── STAR PANEL ── */
   .star-panel {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius);
     overflow: visible;
+    box-shadow: var(--shadow-sm);
   }
 
-  /* Close binary: two stars stacked at top */
   .close-binary-header {
     display: flex;
-    gap: 0;
     border-bottom: 1px solid var(--border);
-    border-radius: 6px 6px 0 0;
+    border-radius: var(--radius) var(--radius) 0 0;
     overflow: hidden;
   }
-  .close-binary-header .star-header-half {
-    flex: 1;
-    padding: 20px;
-  }
-  .close-binary-header .star-header-half:first-child {
-    border-right: 1px solid var(--border);
-  }
+  .close-binary-header .star-header-half { flex: 1; padding: 18px 20px; }
+  .close-binary-header .star-header-half:first-child { border-right: 1px solid var(--border); }
 
   .star-header {
-    padding: 20px 24px;
+    padding: 18px 20px;
     border-bottom: 1px solid var(--border);
-    position: relative;
     display: flex;
     align-items: center;
-    gap: 16px;
-    border-radius: 6px 6px 0 0;
+    gap: 14px;
+    border-radius: var(--radius) var(--radius) 0 0;
   }
   .star-icon {
-    width: 48px; height: 48px;
+    width: 44px; height: 44px;
     border-radius: 50%;
     flex-shrink: 0;
-    position: relative;
   }
-  .star-icon::after {
-    content: '';
-    position: absolute;
-    inset: -8px;
-    border-radius: 50%;
-    opacity: 0.3;
-  }
+  .star-icon::after { display: none; }
+
   .star-info h3 {
-    font-family: 'Orbitron', monospace;
     font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    color: #fff;
-    margin-bottom: 3px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 2px;
+    font-family: 'Inter', sans-serif;
   }
   .star-info .star-type-label {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
   }
 
   .star-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0;
     border-bottom: 1px solid var(--border);
   }
   .stat-cell {
-    padding: 12px 16px;
+    padding: 10px 14px;
     border-right: 1px solid var(--border);
     text-align: center;
   }
   .stat-cell:last-child { border-right: none; }
   .stat-cell .sv {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 14px;
-    color: var(--accent);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
     display: block;
     margin-bottom: 2px;
+    font-weight: 500;
   }
   .stat-cell .sk {
     font-size: 10px;
     color: var(--text-muted);
-    letter-spacing: 0.15em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    font-family: 'JetBrains Mono', monospace;
   }
 
-  /* PLANETS */
-  .planets-section { padding: 16px; }
+  /* ── PLANETS ── */
+  .planets-section { padding: 14px 16px; }
   .planets-section h4 {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.25em;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
     color: var(--text-muted);
     text-transform: uppercase;
-    margin-bottom: 12px;
-    padding-bottom: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 7px;
     border-bottom: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
   }
 
   .no-planets {
     color: var(--text-muted);
+    font-size: 12px;
+    padding: 10px 0;
+    font-family: 'JetBrains Mono', monospace;
     font-style: italic;
-    font-size: 13px;
-    padding: 12px 0;
-    font-family: 'Share Tech Mono', monospace;
   }
 
   .planet-card {
     background: var(--bg3);
     border: 1px solid var(--border);
-    border-radius: 4px;
-    margin-bottom: 8px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 6px;
     overflow: hidden;
-    transition: border-color 0.2s;
+    transition: border-color 0.15s;
   }
-  .planet-card:hover { border-color: var(--border-bright); }
+  .planet-card:hover { border-color: var(--border-light); }
 
   .planet-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
+    gap: 10px;
+    padding: 9px 13px;
     cursor: pointer;
     user-select: none;
   }
   .planet-dot {
-    width: 12px; height: 12px;
+    width: 10px; height: 10px;
     border-radius: 50%;
     flex-shrink: 0;
   }
   .planet-name {
-    font-family: 'Orbitron', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: #fff;
+    font-weight: 500;
+    color: var(--text);
     flex: 1;
   }
   .planet-type-badge {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 2px;
-    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
     white-space: nowrap;
+    font-weight: 500;
   }
   .life-tag {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
-    padding: 2px 7px;
-    border-radius: 2px;
-    letter-spacing: 0.08em;
-    background: rgba(74,255,169,0.12);
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.04em;
+    background: rgba(78,201,138,0.1);
     color: var(--accent3);
-    border: 1px solid rgba(74,255,169,0.3);
+    border: 1px solid rgba(78,201,138,0.25);
     cursor: default;
     user-select: none;
     white-space: nowrap;
     transition: background 0.15s;
     position: relative;
+    font-weight: 500;
   }
-  .life-tag:hover { background: rgba(74,255,169,0.22); }
-  /* Popup is rendered in a fixed-position portal via JS to escape overflow:hidden */
+  .life-tag:hover { background: rgba(78,201,138,0.18); }
   .life-popup-portal {
     display: none;
     position: fixed;
     z-index: 9999;
-    background: var(--bg3);
-    border: 1px solid var(--accent3);
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-family: 'Rajdhani', sans-serif;
+    background: var(--panel2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
     color: var(--text);
     white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.75);
+    box-shadow: var(--shadow-lg);
     min-width: 180px;
     pointer-events: none;
   }
-  .life-popup-row { margin-bottom: 3px; }
+  .life-popup-row { margin-bottom: 4px; }
   .life-popup-row:last-child { margin-bottom: 0; }
   .life-popup-portal .lp-key {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
     color: var(--text-muted);
-    letter-spacing: 0.15em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     display: block;
     margin-bottom: 1px;
@@ -475,36 +412,36 @@
     font-size: 13px;
   }
   .planet-au {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
     margin-left: auto;
   }
   .planet-expand-icon {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-muted);
-    margin-left: 6px;
+    margin-left: 4px;
     transition: transform 0.2s;
   }
   .planet-card.open .planet-expand-icon { transform: rotate(180deg); }
 
   .planet-details {
     display: none;
-    padding: 0 14px 14px;
+    padding: 0 13px 13px;
     border-top: 1px solid var(--border);
   }
   .planet-card.open .planet-details { display: block; }
 
-  /* Split planet detail panel */
+  /* ── PLANET DETAIL PANELS ── */
   .planet-details-panels {
     display: grid;
-    /* column count set dynamically via inline style */
     gap: 0 1px;
     margin-top: 10px;
     background: var(--border);
     border: 1px solid var(--border);
-    border-radius: 3px;
-    overflow: hidden;
+    border-radius: var(--radius-sm);
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   @media (max-width: 900px) {
     .planet-details-panels { grid-template-columns: 1fr 1fr !important; }
@@ -512,33 +449,40 @@
   .planet-detail-col {
     background: var(--bg);
     padding: 10px 12px;
+    min-width: 160px;
   }
   .detail-col-label {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--accent);
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
     text-transform: uppercase;
     margin-bottom: 8px;
     padding-bottom: 5px;
     border-bottom: 1px solid var(--border);
+    font-weight: 500;
   }
   .detail-col-label.orbital { color: var(--accent2); }
-  .detail-col-label.atmo    { color: #88ddff; }
-  .detail-col-label.ocean   { color: #44bbee; }
-  .pd-row { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 5px; }
+  .detail-col-label.atmo    { color: #7bb8e8; }
+  .detail-col-label.ocean   { color: #4aaed4; }
+  .pd-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
   .pd-row:last-child { margin-bottom: 0; }
   .pd-row-composition { align-items: flex-start; }
   .pd-key {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
-    letter-spacing: 0.08em;
+    letter-spacing: 0.02em;
     white-space: nowrap;
   }
   .pd-val {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
     color: var(--text);
     text-align: right;
   }
@@ -548,223 +492,201 @@
     border-top: 1px solid var(--border);
   }
   .special-section .sp-label {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    color: var(--accent3);
-    letter-spacing: 0.1em;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     margin-bottom: 4px;
+    font-weight: 500;
   }
   .special-section .sp-val {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-dim);
-    line-height: 1.4;
+    line-height: 1.5;
   }
 
-  /* ASTEROID BELT (shown inline between planets) */
+  /* ── BELT ROW ── */
   .belt-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 14px;
-    margin-bottom: 8px;
+    padding: 6px 13px;
+    margin-bottom: 6px;
     border: 1px dashed var(--border);
-    border-radius: 4px;
-    background: rgba(255,255,255,0.02);
+    border-radius: var(--radius-sm);
+    background: rgba(255,255,255,0.01);
   }
-  .belt-row .belt-icon { font-size: 14px; }
+  .belt-row .belt-icon { font-size: 13px; }
   .belt-row .belt-name {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
     flex: 1;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.02em;
   }
   .belt-row .belt-au {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: var(--text-muted);
   }
 
-  /* Type badge colors */
-  .badge-ferria    { background: rgba(180,100,60,0.2);  color: #d4885a; border: 1px solid rgba(180,100,60,0.3); }
-  .badge-rocky     { background: rgba(100,140,100,0.2); color: #88cc88; border: 1px solid rgba(100,140,100,0.3); }
-  .badge-carbonia  { background: rgba(80,80,80,0.3);    color: #aaaaaa; border: 1px solid rgba(80,80,80,0.4); }
-  .badge-gasgiant  { background: rgba(200,140,60,0.2);  color: #e8c060; border: 1px solid rgba(200,140,60,0.3); }
-  .badge-icegiant  { background: rgba(60,140,200,0.2);  color: #60aaff; border: 1px solid rgba(60,140,200,0.3); }
-  .badge-dwarf     { background: rgba(120,100,160,0.2); color: #aa88cc; border: 1px solid rgba(120,100,160,0.3); }
-  .badge-aquaria   { background: rgba(60,160,200,0.2);  color: #60ccee; border: 1px solid rgba(60,160,200,0.3); }
+  /* ── BADGES ── */
+  .badge-ferria   { background: rgba(180,100,60,0.15);  color: #c9845a; border: 1px solid rgba(180,100,60,0.25); }
+  .badge-rocky    { background: rgba(90,140,90,0.15);   color: #7ab87a; border: 1px solid rgba(90,140,90,0.25); }
+  .badge-carbonia { background: rgba(90,90,90,0.2);     color: #9a9a9a; border: 1px solid rgba(90,90,90,0.3); }
+  .badge-gasgiant { background: rgba(200,140,60,0.15);  color: #d4a855; border: 1px solid rgba(200,140,60,0.25); }
+  .badge-icegiant { background: rgba(60,130,200,0.15);  color: #5899d4; border: 1px solid rgba(60,130,200,0.25); }
+  .badge-dwarf    { background: rgba(110,90,150,0.15);  color: #9878b8; border: 1px solid rgba(110,90,150,0.25); }
+  .badge-aquaria  { background: rgba(50,150,190,0.15);  color: #4ab4d4; border: 1px solid rgba(50,150,190,0.25); }
 
-  /* Scrollable container for many planets */
-  .planets-scroll {
-    max-height: 600px;
-    overflow-y: auto;
-    padding-right: 4px;
-  }
+  /* ── SCROLLBAR ── */
+  .planets-scroll { max-height: 580px; overflow-y: auto; padding-right: 4px; }
   .planets-scroll::-webkit-scrollbar { width: 4px; }
   .planets-scroll::-webkit-scrollbar-track { background: transparent; }
-  .planets-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .planets-scroll::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
 
-  /* Divider for close binary planets section */
-  .planets-divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
-    margin: 8px 0 16px;
-  }
+  .planets-divider { height: 1px; background: var(--border); margin: 8px 0 14px; }
   .planets-companion-label {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.2em;
-    color: var(--accent2);
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
     text-transform: uppercase;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 5px;
     border-bottom: 1px solid var(--border);
   }
 
-  @media (max-width: 700px) {
-    .panels-container.dual { flex-direction: column; }
-    .form-row { grid-template-columns: 1fr; }
-    .form-row.three { grid-template-columns: 1fr 1fr; }
-    .star-stats { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  /* SETTINGS MODAL */
+  /* ── SETTINGS MODAL ── */
   .settings-btn {
     position: fixed;
-    top: 16px;
+    top: 14px;
     right: 16px;
     z-index: 100;
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 14px;
-    font-family: 'Share Tech Mono', monospace;
+    border-radius: var(--radius-sm);
+    padding: 7px 13px;
+    font-family: 'Inter', sans-serif;
     font-size: 12px;
+    font-weight: 500;
     color: var(--text-dim);
     cursor: pointer;
-    letter-spacing: 0.1em;
-    transition: border-color 0.2s, color 0.2s;
+    transition: border-color 0.15s, color 0.15s;
   }
-  .settings-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .settings-btn::after { background: none; }
+  .settings-btn:hover { border-color: var(--border-light); color: var(--text); }
+  .settings-btn::after { display: none; }
 
   .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.6);
     z-index: 200;
     align-items: center;
     justify-content: center;
+    backdrop-filter: blur(2px);
   }
   .modal-overlay.open { display: flex; }
   .modal-box {
-    background: var(--panel);
-    border: 1px solid var(--border-bright);
-    border-radius: 8px;
-    padding: 28px 32px;
+    background: var(--panel2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    padding: 24px 28px;
     min-width: 300px;
-    max-width: 420px;
+    max-width: 440px;
     position: relative;
-  }
-  .modal-box::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
-    border-radius: 8px 8px 0 0;
+    box-shadow: var(--shadow-lg);
+    max-height: 90vh;
+    overflow-y: auto;
   }
   .modal-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: #fff;
-    margin-bottom: 20px;
-    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 18px;
+    letter-spacing: -0.01em;
   }
   .modal-close {
     position: absolute;
-    top: 10px; right: 14px;
+    top: 10px; right: 12px;
     background: none;
     border: none;
     color: var(--text-muted);
-    font-size: 16px;
+    font-size: 15px;
     cursor: pointer;
     padding: 4px 8px;
     line-height: 1;
     letter-spacing: 0;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s, background 0.15s;
   }
-  .modal-close:hover { color: var(--text); }
+  .modal-close:hover { color: var(--text); background: var(--bg3); }
   .modal-close::after { display: none; }
+
   .modal-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
   .modal-label {
-    font-family: 'Share Tech Mono', monospace;
     font-size: 12px;
     color: var(--text-dim);
-    letter-spacing: 0.1em;
+    font-weight: 500;
   }
   .toggle-group {
     display: flex;
     border: 1px solid var(--border);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     overflow: hidden;
   }
   .toggle-opt {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
     padding: 6px 14px;
     cursor: pointer;
     background: var(--bg3);
     color: var(--text-muted);
     border: none;
-    letter-spacing: 0.08em;
     transition: background 0.15s, color 0.15s;
   }
   .toggle-opt.active { background: var(--accent); color: #fff; }
   .toggle-opt::after { display: none; }
 
   .modal-section-title {
-    font-family: 'Share Tech Mono', monospace;
     font-size: 10px;
-    letter-spacing: 0.2em;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     color: var(--text-muted);
     text-transform: uppercase;
-    margin: 18px 0 10px;
-    padding-bottom: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 16px 0 8px;
+    padding-bottom: 5px;
     border-bottom: 1px solid var(--border);
   }
   .slider-row {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
   .slider-label {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     color: var(--text-dim);
-    letter-spacing: 0.08em;
     width: 28px;
     flex-shrink: 0;
   }
   .slider-label.wide { width: 52px; }
-  .slider-wrap {
-    flex: 1;
-    position: relative;
-  }
+  .slider-wrap { flex: 1; }
   input[type="range"] {
     -webkit-appearance: none;
     appearance: none;
     width: 100%;
-    height: 4px;
+    height: 3px;
     background: var(--border);
     border-radius: 2px;
     outline: none;
@@ -774,63 +696,67 @@
   }
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 14px; height: 14px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
-    box-shadow: 0 0 6px rgba(74,158,255,0.5);
   }
   input[type="range"]::-moz-range-thumb {
-    width: 14px; height: 14px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
     border: none;
   }
   .slider-val {
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: var(--accent);
+    color: var(--text-dim);
     width: 36px;
     text-align: right;
     flex-shrink: 0;
   }
   .modal-reset {
     width: 100%;
-    margin-top: 18px;
+    margin-top: 16px;
     background: var(--bg3);
     border: 1px solid var(--border);
     color: var(--text-dim);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    padding: 9px;
-    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    text-transform: uppercase;
-    transition: border-color 0.2s, color 0.2s;
+    transition: border-color 0.15s, color 0.15s;
   }
-  .modal-reset:hover { border-color: var(--accent2); color: var(--accent2); }
+  .modal-reset:hover { border-color: var(--border-light); color: var(--text); }
   .modal-reset::after { display: none; }
-  .modal-box { max-height: 90vh; overflow-y: auto; max-width: 460px; }
 
-  /* SEED ERROR BOX */
+  /* ── SEED ERROR ── */
   .seed-error {
     display: none;
-    margin: 0 0 14px;
-    padding: 11px 15px;
-    border: 1px solid #c0392b;
-    border-left: 3px solid #e74c3c;
-    border-radius: 5px;
-    background: rgba(231,76,60,0.08);
-    font-family: 'Share Tech Mono', monospace;
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border: 1px solid #5a2020;
+    border-radius: var(--radius-sm);
+    background: rgba(180,50,50,0.06);
     font-size: 12px;
-    color: #e07070;
-    letter-spacing: 0.05em;
-    line-height: 1.6;
+    color: #c07070;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
   }
   .seed-error.visible { display: block; }
-  .seed-error strong { color: #e74c3c; }
+  .seed-error strong { color: #d46060; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .panels-container.dual { flex-direction: column; }
+    .form-row { grid-template-columns: 1fr; }
+    .form-row.three { grid-template-columns: 1fr 1fr; }
+    .star-stats { grid-template-columns: repeat(2, 1fr); }
+    .container { padding: 0 14px 40px; }
+  }
 </style>
 </head>
 <body>
@@ -880,8 +806,8 @@
 <div class="container">
 
 <header>
-  <h1>★ Star System Generator ★</h1>
-  <p>Procedural Stellar & Planetary Formation Engine</p>
+  <h1>Star System Generator</h1>
+  <p>Procedural stellar &amp; planetary formation</p>
 </header>
 
 <div class="control-panel">
@@ -926,11 +852,12 @@
     </div>
   </div>
   <div class="btn-row">
-    <button class="btn-primary" onclick="generate()">⊕ Create</button>
-    <button class="btn-secondary" onclick="randomAll()">✦ Random</button>
+    <button class="btn-primary" onclick="generate()">Generate</button>
+    <button class="btn-secondary" onclick="randomAll()">Randomise</button>
+    <button class="btn-secondary" id="btn-export" onclick="exportSC()" style="display:none">Export .sc</button>
   </div>
   <div class="seed-error" id="seed-error">
-    <strong>No seed set.</strong> Press <strong>🎲 Roll</strong> or <strong>✦ Random</strong> to generate a seed first, then press <strong>⊕ Create</strong>.
+    <strong>No seed set.</strong> Press <strong>🎲 Roll</strong> or <strong>Randomise</strong> to generate a seed first, then press <strong>Generate</strong>.
   </div>
 </div>
 
@@ -1773,7 +1700,12 @@ function makeEarthlikePlanet(idx, a, star) {
   // Earth-like planets always clear their orbit → Planet class
   const planetClass = 'Planet';
   const atmosphere = generateAtmosphere('rocky', 'Terra', mEarth, rEarth, Teq, tClass, false, star, true);
-  const ocean      = generateOcean(atmosphere, 'rocky', Teq, mEarth, tClass, false);
+  // Force a water ocean for Earth-like worlds — they always have one
+  const ocean = generateOcean('rocky', atmosphere, Teq, mEarth, tClass) || {
+    composition: 'H₂O (saline)',
+    maxDepthKm:  rf(1, 11),
+    seaLevel:    rf(0.3, 0.75)
+  };
   return {
     idx: idx + 1,
     type: 'rocky', subClass: 'Terra',
@@ -2102,7 +2034,13 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
       break;
 
     case 'dwarf':
-      mEarth = rf(0.0001, 0.03);
+      // Mass range: up to Pluto (0.0022 M⊕) for dwarf planets; asteroids capped at Ceres (1.57e-4 M⊕)
+      // The planetClass discriminant decides which label applies after the fact;
+      // here we just generate the mass — bodies below Ceres will be classed Asteroid,
+      // bodies above Ceres up to ~0.03 M⊕ will be classed Dwarf Planet.
+      mEarth = rf(1e-6, 0.03);
+      // Hard-cap mass at Ceres for bodies that will end up as Asteroids
+      // (we can't know planetClass yet, so we clamp post-hoc in classLabel; for now use full range)
       rEarth = Math.pow(mEarth, 0.30) * rf(0.90, 1.10);
       colour = '#888880';
       break;
@@ -2207,13 +2145,9 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   }
 
   // ── PLANET CLASS (discriminant + Hygeia threshold) ───────────
-  // Hygeia mass: ~4.4×10⁻⁵ M⊕ (= 8.67×10¹⁹ kg / 5.972×10²⁴ kg)
-  // Planetary discriminant (Margot 2015 / Soter 2006 style):
-  //   Λ = (M_p / M⊕) / [ C^(3/2) × (M★/M☉)^(5/8) × (t★/1.1e5yr)^(-3/4) × (a_p/1AU)^(9/8) ]
-  // A body is a Planet if Λ ≥ 1; Dwarf Planet if mass ≥ Hygeia but Λ < 1; Asteroid otherwise.
-  // C is a dimensionless constant (Margot uses C≈1 for Solar System calibration).
-  // We use C=1. t★ in years = star.age × 1e9.
-  const HYGEIA_MEARTH = 4.4e-5;
+  // Ceres mass: ~1.57×10⁻⁴ M⊕ — anything at or below Ceres is an Asteroid.
+  // Anything above Ceres but below the planetary discriminant threshold is a Dwarf Planet.
+  const CERES_MEARTH = 1.57e-4;
   const C = 1.0;
   const tStarYr = Math.max(star.age, 1e-6) * 1e9; // star age in years
   const discriminantThreshold = Math.pow(C, 1.5)
@@ -2225,7 +2159,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   const mForClass = mEarth || 0;
   if (type === 'gasGiant' || type === 'iceGiant') {
     planetClass = 'Planet';
-  } else if (mForClass < HYGEIA_MEARTH) {
+  } else if (mForClass < CERES_MEARTH) {
     planetClass = 'Asteroid';
   } else if (mForClass >= discriminantThreshold) {
     planetClass = 'Planet';
@@ -2235,6 +2169,11 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
 
   // Dwarf type subClass now that planetClass is known
   if (type === 'dwarf') {
+    // If classed as Asteroid, hard-cap mass and radius to Ceres (1.57e-4 M⊕, ~476 km radius)
+    if (planetClass === 'Asteroid') {
+      mEarth = Math.min(mEarth, CERES_MEARTH * rf(0.01, 0.99));
+      rEarth = Math.pow(mEarth, 0.30) * rf(0.90, 1.10);
+    }
     if (a >= 1000)        subClass = 'Oort Cloud Object';
     else if (veryFar)     subClass = 'Trans-Neptunian Object';
     else if (beyondFrost) subClass = 'KBO';
@@ -2974,7 +2913,7 @@ function renderPlanetCard(p, prefix) {
       </div>
       ${p.atmosphere ? `
       <div class="planet-detail-col">
-        <div class="detail-col-label" style="color:var(--accent3)">Atmosphere</div>
+        <div class="detail-col-label" class="detail-col-label atmo">Atmosphere</div>
         <div class="pd-row"><span class="pd-key">PRESSURE</span><span class="pd-val">${(() => {
           const atm = p.atmosphere;
           if (typeof atm.pressure === 'string') return atm.pressure; // giants: pre-formatted "N bar"
@@ -3000,7 +2939,7 @@ function renderPlanetCard(p, prefix) {
       </div>` : ''}
       ${p.ocean ? `
       <div class="planet-detail-col">
-        <div class="detail-col-label" style="color:#60b8e8">Ocean</div>
+        <div class="detail-col-label" class="detail-col-label ocean">Ocean</div>
         <div class="pd-row"><span class="pd-key">COMPOSITION</span><span class="pd-val" style="font-size:9px;line-height:1.4">${p.ocean.composition}</span></div>
         <div class="pd-row"><span class="pd-key">MAX DEPTH</span><span class="pd-val">${fmt(p.ocean.maxDepthKm, 1)} km</span></div>
         <div class="pd-row"><span class="pd-key">SEA LEVEL</span><span class="pd-val">${fmt(p.ocean.seaLevel, 2)} <span style="color:var(--text-muted);font-size:9px">(${p.ocean.seaLevel < 0.05 ? 'Trace' : p.ocean.seaLevel < 0.2 ? 'Shallow seas' : p.ocean.seaLevel < 0.5 ? 'Continental' : p.ocean.seaLevel < 0.8 ? 'Archipelago' : 'Ocean world'})</span></span></div>
@@ -3025,7 +2964,7 @@ function renderStarStats(star) {
   <div class="stat-cell"><span class="sv">${fmt(star.FeH,2)}</span><span class="sk">Met [Fe/H]</span></div>
   <div class="stat-cell"><span class="sv">${Math.round(star.temp).toLocaleString()}</span><span class="sk">Temp (K)</span></div>
   <div class="stat-cell" style="grid-column:1/-1"><span class="sv">${star.evolClass === 'BH' ? 'N/A' : star.evolClass === 'NS' ? (star.rotationHours * 3600 < 0.1 ? fmt(star.rotationHours*3600*1000,1)+' ms' : fmt(star.rotationHours*3600,3)+' s') : star.tidallyLocked ? 'Tidally locked' : (star.rotationHours < 24 ? fmt(star.rotationHours,2)+' h' : fmt(star.rotationHours/24,2)+' d ('+fmt(star.rotationHours,1)+' h)')}</span><span class="sk">Rotation Period</span></div>
-  ${star.protoplanDisk ? `<div class="stat-cell" style="grid-column:1/-1;color:var(--accent3)"><span class="sv" style="color:var(--accent3)">${fmt(star.protoplanDisk.inner,3)} – ${fmt(star.protoplanDisk.outer,1)} AU</span><span class="sk" style="color:var(--accent3)">Protoplanetary Disk</span></div>` : ''}
+  ${star.protoplanDisk ? `<div class="stat-cell" style="grid-column:1/-1;color:var(--accent3)"><span class="sv">${fmt(star.protoplanDisk.inner,3)} – ${fmt(star.protoplanDisk.outer,1)} AU</span><span class="sk" style="color:var(--accent3)">Protoplanetary Disk</span></div>` : ''}
 </div>`;
 }
 
@@ -3063,6 +3002,8 @@ function renderPlanetsList(planets, belts, prefix) {
 
 function renderSystem(sys) {
   _lastSystem = sys;
+  const expBtn = document.getElementById('btn-export');
+  if (expBtn) expBtn.style.display = '';
   const el = document.getElementById('output');
 
   // Title
@@ -3255,6 +3196,421 @@ function hideLifePopup() {
 // ============================================================
 //  UI HELPERS
 // ============================================================
+// ============================================================
+//  SPACE ENGINE .SC EXPORT
+// ============================================================
+
+// Roman numeral helper
+function toRoman(n) {
+  const vals = [1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const syms = ['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+  let out = '';
+  for (let i = 0; i < vals.length; i++) {
+    while (n >= vals[i]) { out += syms[i]; n -= vals[i]; }
+  }
+  return out;
+}
+
+// Map planet type to SE Class string
+function scPlanetClass(planet) {
+  // If the planet discriminant says Asteroid, it exports as Asteroid (no Class line needed)
+  if (planet.planetClass === 'Asteroid') return 'Asteroid';
+  const type = planet.type, subClass = planet.subClass;
+  if (type === 'gasGiant') return 'Jupiter';
+  if (type === 'iceGiant')  return 'Neptune';
+  if (type === 'dwarf')     return 'Aquaria'; // KBOs/TNOs above Ceres are icy dwarf planets
+  if (type === 'chthonian') return 'Terra';
+  // For solid worlds: use the base type name only (not temperature prefix)
+  const base = subClass
+    .replace(/^(Micro|Mini|Sub|Super|Mega)-?/i, '')
+    .replace(/ \(Airless\)/, '')
+    .trim();
+  const map = {
+    'Terra':'Terra', 'Hycean':'Terra', 'Ferria':'Ferria',
+    'Aquaria':'Aquaria', 'Carbonia':'Carbonia',
+    'Chthonian':'Terra',
+    'Dwarf Planet':'Asteroid', 'KBO':'Asteroid',
+    'Trans-Neptunian Object':'Aquaria', 'Oort Cloud Object':'Asteroid',
+    '2nd-Gen Terra':'Terra',
+  };
+  return map[base] || 'Terra';
+}
+
+// Map atmosphere composition to closest SE model
+function scAtmoModel(type, tClass, atmo) {
+  if (!atmo) return 'Thin';
+  if (type === 'gasGiant') return 'Jupiter';
+  if (type === 'iceGiant')  return 'Neptune';
+  if (!atmo.composition)   return 'Thin';
+  const comp = atmo.composition;
+  // Find dominant gas
+  const sorted = [...comp].sort((a,b) => b[1]-a[1]);
+  const dominant = sorted[0]?.[0] || '';
+  const pressure = typeof atmo.pressure === 'number' ? atmo.pressure : parseFloat(atmo.pressure) || 0;
+  if (dominant === 'H₂' || dominant === 'H2') return 'Jupiter';
+  if (dominant.includes('CH₄') || dominant.includes('CH4')) return 'Titan';
+  if (dominant.includes('CO₂') || dominant.includes('CO2')) {
+    return pressure > 10 ? 'Venus' : 'Mars';
+  }
+  if (dominant.includes('N₂') || dominant.includes('N2')) {
+    const hasO2 = comp.find(x => x[0].includes('O₂') || x[0].includes('O2'));
+    if (hasO2 && (hasO2[1] > 15)) return 'Earth';
+    return pressure > 5 ? 'Thick' : (pressure < 0.01 ? 'Thin' : 'Earth');
+  }
+  if (dominant.includes('SO₂') || dominant.includes('SO2')) return 'Venus';
+  if (dominant.includes('Cl') || dominant.includes('HCl')) return 'Chlorine';
+  return pressure > 50 ? 'Thick' : 'Thin';
+}
+
+// Check if planet has rings in its specials
+function hasRings(planet) {
+  if (!planet.special) return false;
+  return planet.special.some(s => /ring/i.test(s));
+}
+
+function scRingRadii(planet) {
+  // Estimate ring extent based on planet radius
+  const innerKm = planet.rKm * 1.2;
+  const outerKm = planet.rKm * 2.5;
+  return { inner: innerKm.toFixed(1), outer: outerKm.toFixed(1) };
+}
+
+function scRandomize() {
+  // Three random values between -2.000 and 2.000
+  const r = () => (Math.random() * 4 - 2).toFixed(3);
+  return `${r()} ${r()} ${r()}`;
+}
+
+function fmtSC(n, dec=4) {
+  return parseFloat(n).toFixed(dec);
+}
+
+// Sanitise composition keys for SE (no subscripts or special chars)
+function sanitiseGas(name) {
+  return name
+    .replace(/₂/g, '2').replace(/₃/g, '3').replace(/₄/g, '4')
+    .replace(/₅/g, '5').replace(/₆/g, '6')
+    .replace(/[^A-Za-z0-9]/g, '');
+}
+
+// Build the SC block for a single star
+function scStar(star, label, parentSystem, binaryOrbit) {
+  const lines = [];
+  lines.push(`Star\t"${label}"`);
+  lines.push('{');
+  lines.push(`\tParentBody     "${parentSystem} System"`);
+  // Spectral class
+  const cls = star.isRemnant
+    ? (star.evolClass === 'WD' ? star.wdSubtype
+     : star.evolClass === 'NS' ? 'Q'
+     : 'X')
+    : `${star.spectralClass}${star.isBD ? '' : star.lumClassSuffix}`;
+  lines.push(`\tClass          "${cls}"`);
+  if (!star.isRemnant || star.evolClass === 'WD') {
+    lines.push(`\tLuminosity     ${fmtSC(star.lum, 6)}`);
+  }
+  lines.push(`\tMassSol        ${fmtSC(star.mass, 4)}`);
+  lines.push(`\tRadSol         ${fmtSC(star.radius, 4)}`);
+  if (star.temp > 0) {
+    lines.push(`\tTeff           ${Math.round(star.temp)}`);
+  }
+  lines.push(`\tAge            ${fmtSC(star.age, 4)}`);
+  lines.push(`\tFeH            ${fmtSC(star.FeH, 3)}`);
+  lines.push('');
+  if (star.tidallyLocked) {
+    lines.push(`\tTidalLocked    true`);
+  } else {
+    lines.push(`\tRotationPeriod ${fmtSC(star.rotationHours, 4)}`);
+  }
+  if (binaryOrbit) {
+    lines.push('');
+    lines.push('\tBinaryOrbit');
+    lines.push('\t{');
+    lines.push('\t\tRefPlane        "Equator"');
+    lines.push(`\t\tSeparation      ${fmtSC(binaryOrbit.separation, 4)}`);
+    lines.push(`\t\tEccentricity    ${fmtSC(binaryOrbit.ecc, 4)}`);
+    if (binaryOrbit.incl !== undefined) {
+      lines.push(`\t\tInclination     ${fmtSC(binaryOrbit.incl, 2)}`);
+    }
+    lines.push('\t}');
+  }
+  lines.push('}');
+  return lines.join('\n');
+}
+
+// Build the SC block for a planet
+// Normalise a composition array so values sum to exactly 100.00 (4 dp)
+function normaliseToHundred(comp) {
+  // comp is [[gasName, value], ...]
+  // Filter out zero/negative entries first
+  const valid = comp.filter(([, v]) => v > 0);
+  if (!valid.length) return valid;
+  const rawSum = valid.reduce((s, [, v]) => s + v, 0);
+  if (rawSum === 0) return valid;
+  // Scale each value proportionally, round to 4dp
+  const scaled = valid.map(([g, v]) => [g, Math.round((v / rawSum) * 100 * 10000) / 10000]);
+  // Fix rounding error: adjust the largest component so sum is exactly 100
+  const scaledSum = scaled.reduce((s, [, v]) => s + v, 0);
+  const diff = parseFloat((100 - scaledSum).toFixed(4));
+  if (diff !== 0) {
+    // Find largest component to absorb the rounding difference
+    let maxIdx = 0;
+    for (let i = 1; i < scaled.length; i++) {
+      if (scaled[i][1] > scaled[maxIdx][1]) maxIdx = i;
+    }
+    scaled[maxIdx][1] = parseFloat((scaled[maxIdx][1] + diff).toFixed(4));
+  }
+  return scaled;
+}
+
+function scCompositionBlock(comp, indent) {
+  if (!comp || !comp.length) return '';
+  const normalised = normaliseToHundred(comp.map(([g, v]) => [g, typeof v === 'number' ? v : parseFloat(v) || 0]));
+  if (!normalised.length) return '';
+  const t = indent;
+  const lines = [];
+  lines.push('');
+  lines.push(`${t}Composition`);
+  lines.push(`${t}{`);
+  for (const [gas, pct] of normalised) {
+    const key = sanitiseGas(gas);
+    if (key) lines.push(`${t}\t${key.padEnd(12)} ${pct.toFixed(4)}`);
+  }
+  lines.push(`${t}}`);
+  return lines.join('\n');
+}
+
+function scAtmosphereBlock(planet) {
+  const atmo = planet.atmosphere;
+  if (!atmo) return '';
+  const model = atmo.isGiant
+    ? (planet.type === 'gasGiant' ? 'Jupiter' : 'Neptune')
+    : scAtmoModel(planet.type, planet.tClass, atmo);
+  const pressure   = typeof atmo.pressure === 'number' ? atmo.pressure : parseFloat(atmo.pressure) || 0;
+  const density    = parseFloat(atmo.densityKgm3) || 0;
+  const densityCm3 = density / 1e6;
+  const greenhouse = atmo.greenhouse ? parseFloat(atmo.greenhouse) || 0 : 0;
+  const lines = [];
+  lines.push(`\tAtmosphere`);
+  lines.push(`\t{`);
+  lines.push(`\t\tModel          "${model}"`);
+  if (!atmo.isGiant) {
+    lines.push(`\t\tDensity        ${densityCm3.toFixed(6)}`);
+    lines.push(`\t\tPressure       ${fmtSC(pressure, 4)}`);
+    lines.push(`\t\tGreenhouse     ${fmtSC(greenhouse, 2)}`);
+  }
+  if (atmo.composition && atmo.composition.length > 0) {
+    lines.push(scCompositionBlock(atmo.composition, '\t\t'));
+  }
+  lines.push(`\t}`);
+  return lines.join('\n');
+}
+
+function scOceanBlock(planet) {
+  const ocean = planet.ocean;
+  if (!ocean) return '';
+  const heightKm = ocean.maxDepthKm != null ? fmtSC(ocean.maxDepthKm, 2) : '1.00';
+  const lines = [];
+  lines.push(`\tOcean`);
+  lines.push(`\t{`);
+  lines.push(`\t\tHeight          ${heightKm}`);
+  // composition may be a string (e.g. 'H₂O (saline)') or an array of [gas, pct] pairs
+  if (ocean.composition) {
+    if (Array.isArray(ocean.composition) && ocean.composition.length > 0) {
+      lines.push(scCompositionBlock(ocean.composition, '\t\t'));
+    } else if (typeof ocean.composition === 'string') {
+      // Convert string to a single-component 100% array for SC export
+      const gasKey = sanitiseGas(ocean.composition.split(' ')[0]);
+      if (gasKey) lines.push(scCompositionBlock([[gasKey, 100]], '\t\t'));
+    }
+  }
+  lines.push(`\t}`);
+  return lines.join('\n');
+}
+
+function scPlanet(planet, parentStarLabel, planetLabel) {
+  const cls = scPlanetClass(planet);
+
+  // Build suppression flags
+  const suppress = [];
+  const hasOceanData = planet.ocean || (planet.life && planet.life.habitats && (planet.life.habitats.includes('marine') || planet.life.habitats.includes('terrestrial')));
+  if (!hasOceanData)      suppress.push('NoOcean');
+  if (!planet.atmosphere) suppress.push('NoAtmosphere');
+  if (!hasRings(planet))  suppress.push('NoRings');
+  suppress.push('NoCometTail');
+  suppress.push('NoAccretionDisk');
+  if (['dwarf','chthonian','ferria'].includes(planet.type)) suppress.push('NoLava');
+
+  // Pad suppress flag names so the "true" values all line up
+  const maxFlagLen = Math.max(...suppress.map(f => f.length));
+
+  // Life block
+  let lifeBlock = '';
+  if (planet.life) {
+    const l = planet.life;
+    const chem  = l.chemistry.charAt(0).toUpperCase()  + l.chemistry.slice(1);
+    const comp2 = l.complexity.charAt(0).toUpperCase() + l.complexity.slice(1);
+    const biome = l.habitats.map(h => h.charAt(0).toUpperCase() + h.slice(1)).join('/');
+    lifeBlock = [
+      `\tLife`,
+      `\t{`,
+      `\t\tClass   "${chem}"`,
+      `\t\tType    "${comp2}"`,
+      `\t\tBiome   "${biome}"`,
+      `\t}`
+    ].join('\n');
+  }
+
+  // Rings block
+  let ringsBlock = '';
+  if (hasRings(planet)) {
+    const r = scRingRadii(planet);
+    ringsBlock = [
+      `\tRings`,
+      `\t{`,
+      `\t\tInnerRadiusKm   ${r.inner}`,
+      `\t\tOuterRadiusKm   ${r.outer}`,
+      `\t}`
+    ].join('\n');
+  }
+
+  // Orbit block
+  const orbitBlock = [
+    `\tOrbit`,
+    `\t{`,
+    `\t\tRefPlane        "Equator"`,
+    `\t\tPeriod          ${fmtSC(planet.period / 365.25, 6)}`,
+    `\t\tSemiMajorAxis   ${fmtSC(planet.a, 6)}`,
+    `\t\tEccentricity    ${fmtSC(Math.max(planet.ecc, 0), 6)}`,
+    `\t\tInclination     ${fmtSC(planet.inclination, 4)}`,
+    `\t\tAscendingNode   ${fmtSC(planet.ascNode, 4)}`,
+    `\t\tArgOfPericen    ${fmtSC(planet.argPeri, 4)}`,
+    `\t\tMeanAnomaly     ${fmtSC(planet.meanAnom, 4)}`,
+    `\t}`
+  ].join('\n');
+
+  // Surface block
+  const surfaceBlock = [
+    `\tSurface`,
+    `\t{`,
+    `\t\tRandomize      (${scRandomize()})`,
+    `\t}`
+  ].join('\n');
+
+  // Assemble: header → suppress flags → Life → Surface → Ocean → Atmosphere → Rings → Orbit → close
+  const sections = [];
+  const isAsteroid = planet.planetClass === 'Asteroid';
+  sections.push(`${isAsteroid ? 'Asteroid' : 'Planet'}\t"${planetLabel}"`);
+  sections.push('{');
+  sections.push(`\tParentBody     "${parentStarLabel}"`);
+  if (!isAsteroid) {
+    sections.push(`\tClass          "${cls}"`);
+  }
+  sections.push(`\tMass           ${fmtSC(planet.mEarth, 6)}`);
+  sections.push(`\tRadius         ${fmtSC(planet.rKm, 2)}`);
+  sections.push(`\tAlbedo         ${fmtSC(planet.albedo, 3)}`);
+  if (planet.tidallyLocked) {
+    sections.push(`\tTidalLocked    true`);
+  } else {
+    sections.push(`\tRotationPeriod ${fmtSC(planet.rotationHours, 4)}`);
+  }
+  sections.push('');
+  for (const f of suppress) {
+    sections.push(`\t${f.padEnd(maxFlagLen)}   true`);
+  }
+
+  // Life first (above Surface)
+  if (lifeBlock) { sections.push(''); sections.push(lifeBlock); }
+
+  // Surface
+  sections.push('');
+  sections.push(surfaceBlock);
+
+  // Ocean (if present, or if life implies one)
+  const oceanSC = scOceanBlock(planet);
+  if (oceanSC) { sections.push(''); sections.push(oceanSC); }
+
+  // Atmosphere (if present)
+  const atmoSC = scAtmosphereBlock(planet);
+  if (atmoSC) { sections.push(''); sections.push(atmoSC); }
+
+  // Rings (if present)
+  if (ringsBlock) { sections.push(''); sections.push(ringsBlock); }
+
+  // Orbit — always last big block
+  sections.push('');
+  sections.push(orbitBlock);
+
+  sections.push('}');
+  return sections.join('\n');
+}
+
+function exportSC() {
+  const sys = _lastSystem;
+  if (!sys) return;
+
+  const name = sys.name || 'Unnamed';
+  const blocks = [];
+
+  // ── Stars ────────────────────────────────────────────────────
+  if (!sys.companion) {
+    // Single star
+    blocks.push(scStar(sys.primary, name, name, null));
+  } else if (sys.companionType === 'close') {
+    // Close binary — BinaryOrbit only on star A
+    const heavier = sys.primary.mass >= sys.companion.mass ? sys.primary : sys.companion;
+    const lighter = heavier === sys.primary ? sys.companion : sys.primary;
+    const bOrbit  = { separation: sys.separation, ecc: sys.stellarEcc, incl: sys.stellarIncl };
+    blocks.push(scStar(heavier, `${name} A`, name, bOrbit));
+    blocks.push('');
+    blocks.push(scStar(lighter, `${name} B`, name, null));
+  } else {
+    // Distant binary
+    const bOrbit = { separation: sys.separation, ecc: sys.stellarEcc, incl: sys.stellarIncl };
+    blocks.push(scStar(sys.primary,   `${name} A`, name, bOrbit));
+    blocks.push('');
+    blocks.push(scStar(sys.companion, `${name} B`, name, null));
+  }
+
+  // ── Planets ──────────────────────────────────────────────────
+  function addPlanets(planets, parentLabel, useAB) {
+    // Filter out belt objects (belts are separate — skip dwarf/belt types for SC export)
+    const realPlanets = planets.filter(p => p.idx !== undefined);
+    for (const p of realPlanets) {
+      // Skip Oort Cloud Objects from export (SE generates those procedurally)
+      if (p.subClass === 'Oort Cloud Object') continue;
+      const roman  = toRoman(p.idx);
+      const pLabel = useAB ? `${parentLabel} ${roman}` : `${name} ${roman}`;
+      const block  = scPlanet(p, parentLabel, pLabel);
+      blocks.push('');
+      blocks.push(block);
+    }
+  }
+
+  if (!sys.companion) {
+    addPlanets(sys.primaryPlanets, name, false);
+  } else if (sys.companionType === 'close') {
+    addPlanets(sys.primaryPlanets, name, false);
+  } else {
+    // Distant binary — planets labelled with A/B
+    addPlanets(sys.primaryPlanets,   `${name} A`, true);
+    addPlanets(sys.compPlanets || [], `${name} B`, true);
+  }
+
+  const content = blocks.join('\n');
+
+  // Download
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `${name.replace(/[^a-zA-Z0-9_-]/g, '_')}.sc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function randomiseSeed() {
   // Combine two Math.random() calls for ~53 bits of entropy, giving a 15-digit seed
   const hi = Math.floor(Math.random() * 1e7);   // 0–9,999,999
