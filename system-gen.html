@@ -1227,10 +1227,13 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   // Age: PMS stars are very young; evolved stars must be older; MS normal range
   const tMain = 10 * (mass / lumMS); // MS lifetime in Gyr
   let age;
-  if (forcedAge !== null) {
-    // Binary companion: share the primary's age exactly.
-    // If the forced age is incompatible with the evolClass (e.g. a giant that needs age > tMain*0.5
-    // but primary is young), override evolClass back to MS to stay consistent.
+
+  // Remnants (WD/NS/BH) always need their own age derived from their evolutionary history —
+  // they can never share the primary's age because they must be older than tMain.
+  const isRemnantClass = (evolClass === 'WD' || evolClass === 'NS' || evolClass === 'BH');
+
+  if (forcedAge !== null && !isRemnantClass) {
+    // Non-remnant binary companion: share the primary's age, but validate compatibility.
     age = forcedAge;
     const minAgeForEvol = {
       PMS: 0, MS: 0, SD: 0.5,
@@ -1243,30 +1246,30 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       G3: tMain * 0.95, BG2: tMain * 0.95,
       SGA: tMain * 0.98, SGB: tMain * 0.98
     }[evolClass] ?? 12;
-    // If the system is in PMS age territory (<10 Myr), force all non-remnant companions to PMS
-    if (forcedAge < 0.010 && !['WD','NS','BH','BD'].includes(evolClass)) {
+    // Young system (<10 Myr): force all non-remnant companions to PMS
+    if (forcedAge < 0.010 && !sp.bd) {
       evolClass = 'PMS';
       radiusMult = rf(1.5, 4.0);
       lum = lumMS * rf(0.5, 3.0);
     } else if (age < minAgeForEvol || age > Math.min(maxAgeForEvol, 13.8)) {
-      // Otherwise demote to MS if forced age is incompatible with the chosen evolClass
+      // Forced age incompatible with this evolClass — demote to MS
       evolClass = 'MS';
       radiusMult = 1.0;
       lum = lumMS;
     }
   } else if (evolClass === 'WD') {
-    // WD age = progenitor MS lifetime + time since becoming WD (cooling time)
-    // tMain for typical WD progenitor (1–8 M☉): 0.05–10 Gyr
-    // Add 0.1–8 Gyr of cooling time; total capped at universe age (~13.8 Gyr)
+    // WD age = progenitor MS lifetime + cooling time (0.1–8 Gyr).
+    // tMain here is the companion's own tMain (based on its mass), which is the
+    // correct progenitor MS lifetime. Always at least tMain + some cooling.
     age = Math.min(tMain + rf(0.1, 8.0), 13.8);
   } else if (evolClass === 'NS' || evolClass === 'BH') {
-    // NS/BH progenitors are massive stars (M > 8 M☉), MS lifetime ~0.003–0.05 Gyr
-    // Add post-SN age: 0.01–several Gyr; total rarely exceeds 5 Gyr for isolated NS
+    // NS/BH progenitors: massive stars with short tMain (~0.003–0.05 Gyr).
+    // Add post-SN age of 0.01–5 Gyr.
     age = Math.min(tMain + rf(0.01, 5.0), 13.8);
   } else if (evolClass === 'PMS') {
-    age = rf(0.000001, 0.010); // 1 kyr – 10 Myr in Gyr
+    age = rf(0.000001, 0.010); // 1 kyr – 10 Myr
   } else if (evolClass === 'SGA' || evolClass === 'SGB' || evolClass === 'BG2') {
-    age = rf(0.003, Math.min(tMain * 0.98, 0.5)); // massive stars die young
+    age = rf(0.003, Math.min(tMain * 0.98, 0.5));
   } else if (evolClass === 'G3' || evolClass === 'SG4') {
     age = rf(tMain * 0.5, Math.min(tMain * 0.95, 12));
   } else {
@@ -1698,7 +1701,7 @@ function makeEarthlikePlanet(idx, a, star) {
   const densityGcm3 = 5.514 * mEarth / Math.pow(rEarth, 3);
   // Earth-like planets always clear their orbit → Planet class
   const planetClass = 'Planet';
-  const atmosphere = generateAtmosphere('rocky', 'Terra', mEarth, rEarth, Teq, tClass, false, star, true);
+  const atmosphere = generateAtmosphere('rocky', 'Terra', mEarth, rEarth, Teq, tClass, false, true, star, a);
   // Force a water ocean for Earth-like worlds — they always have one
   const ocean = generateOcean('rocky', atmosphere, Teq, mEarth, tClass) || {
     composition: 'H₂O (saline)',
@@ -1853,6 +1856,23 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
       }
       planets.push(rogue);
       planets.sort((a, b) => a.a - b.a);
+      // Check if rogue crosses any Eccentric Jupiter's orbit
+      for (const ej of eccJupiters) {
+        const ejApo  = ej.a * (1 + ej.ecc);
+        const ejPeri = ej.a * (1 - ej.ecc);
+        const rApo   = rogue.a * (1 + rogue.ecc);
+        const rPeri  = rogue.a * (1 - rogue.ecc);
+        if (rApo >= ejPeri && rPeri <= ejApo && rogue.type !== 'gasGiant') {
+          if (roll(0.6)) {
+            planets.splice(planets.indexOf(rogue), 1);
+          } else {
+            rogue.ecc = Math.min(0.85, rogue.ecc + rf(0.15, 0.45));
+            if (!rogue.special) rogue.special = [];
+            rogue.special.push('Perturbed by Eccentric Jupiter');
+          }
+          break;
+        }
+      }
       planets.forEach((p, i) => { p.idx = i + 1; });
     }
   }
@@ -1984,7 +2004,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
         subClass = 'hot';   // flag — rendered as "Hot Jupiter" special case below
         gjColour = '#e89040';
       } else if (a > 0.5 && a < frostLine * 1.5 && roll(0.20)) {
-        subClass = 'eccentric'; // Eccentric Jupiter
+        subClass = 'Eccentric Jupiter'; // set final label immediately for clearing check
         gjColour = '#d4a060';
       } else if (mJup < 0.1) {
         subClass = 'puff'; // Super-Puff (very low density, handled in radius)
@@ -2011,7 +2031,6 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
         else                  baseR = 12.0 - (mJup - 4.0) / 9.0 * 1.0;
         rEarth = Math.max(baseR, 9.0) * rf(0.92, 1.08);
       }
-      mass = mEarth;
       break;
     }
 
@@ -2096,20 +2115,17 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
   let baseTypeName;
   if (type === 'gasGiant') {
     if (subClass === 'hot') {
-      // Hot Jupiters: always displayed as "Hot Jupiter" regardless of size
       baseTypeName = null;
       subClass = 'Hot Jupiter';
       colour = '#e89040';
-    } else if (subClass === 'eccentric') {
+    } else if (subClass === 'Eccentric Jupiter') {
+      // Already set as final label; just confirm baseTypeName is null
       baseTypeName = null;
-      subClass = 'Eccentric Jupiter';
-      colour = '#d4a060';
     } else if (subClass === 'puff') {
       baseTypeName = null;
       subClass = 'Super-Puff';
       colour = '#80b8e0';
     } else {
-      // Normal gas giant: "(size)-Giant" or just "Gas Giant"
       baseTypeName = 'Gas';
     }
   } else if (type === 'iceGiant') {
@@ -2252,7 +2268,7 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     * (1.0 / Math.pow(rEarthClamped, 5));
   const tidallyLocked = star.age > tau_lock_Gyr;
 
-  const atmosphere = generateAtmosphere(type, subClass, mActual, rEarth, TeqActual, tClass, isAirless, star, forceEarthlike);
+  const atmosphere = generateAtmosphere(type, subClass, mActual, rEarth, TeqActual, tClass, isAirless, forceEarthlike, star, a);
   let ocean = generateOcean(atmosphere, type, TeqActual, mActual, tClass, isAirless);
 
   const life = generateLife(type, subClass, tClass, TeqActual, mActual, star.age, tidallyLocked, a, star, forceEarthlike, isAirless);
