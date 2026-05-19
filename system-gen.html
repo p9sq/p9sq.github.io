@@ -1144,10 +1144,20 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   let radiusMult = 1.0;
   switch(evolClass) {
     case 'PMS':
-      // T Tauri / Herbig Ae-Be: slightly larger, somewhat brighter than ZAMS
-      // Age is young (0.001 – 10 Myr range)
-      radiusMult = rf(1.5, 4.0);
-      lum = lumMS * rf(0.5, 3.0); // can be under- or over-luminous vs MS
+      // T Tauri / Herbig Ae/Be: above the ZAMS, contracting toward MS.
+      // Low-mass T Tauri (< 2 M☉): 1.5–3.0× MS radius, 0.5–3× MS luminosity
+      // Herbig Ae/Be (2–8 M☉): 1.1–2.0× MS radius (closer to ZAMS)
+      // Massive PMS (>8 M☉): 1.0–1.3× MS radius (reach ZAMS very quickly)
+      if (mass < 2.0) {
+        radiusMult = rf(1.5, 3.0);
+        lum = lumMS * rf(0.5, 3.0);
+      } else if (mass < 8.0) {
+        radiusMult = rf(1.1, 2.0);
+        lum = lumMS * rf(0.8, 2.5);
+      } else {
+        radiusMult = rf(1.0, 1.3);
+        lum = lumMS * rf(0.9, 1.5);
+      }
       break;
     case 'SD':
       // Two distinct subdwarf populations:
@@ -1170,20 +1180,28 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       }
       break;
     case 'SG4':
-      // Sub-giant (IV): slightly expanded, 1–3× luminosity boost
-      radiusMult = rf(1.5, 3.5);
+      // Sub-giant (IV): slightly expanded off the MS. Radius 1.5–6 R☉ (absolute),
+      // luminosity 1.5–8× MS (this ratio is fine here since SG4 is always close to MS lum).
+      // Cap radiusMult so massive A/F sub-giants don't exceed giant territory.
+      radiusMult = rf(1.5, 6.0) / Math.pow(Math.max(mass, 0.8), 0.8);
       lum = lumMS * rf(1.5, 6.0);
       break;
     case 'G3':
-      // Giant (III): 10–100× luminosity, 10–50 R☉
-      radiusMult = rf(8, 50);
-      lum = lumMS * rf(10, 100);
+      // Giant (III): 10–200 L☉ (absolute), radius 8–50 R☉ (in solar units)
+      // Using absolute lum avoids blow-up for A/B-type progenitors.
+      // radiusMult is divided by M^0.8 below so we target absolute R directly.
+      // Instead, store the desired absolute radius range and set radiusMult accordingly.
+      // For a typical 1 M☉ progenitor: radiusMult = R_target; for 2 M☉: radiusMult = R_target/1.74.
+      // Simpler: just use absolute lum and a reasonable radiusMult that works for G/K,
+      // capped so massive progenitors don't get absurd radii.
+      radiusMult = rf(8, 50) / Math.pow(Math.max(mass, 0.8), 0.8); // target 8–50 R☉ regardless of mass
+      lum = rf(10, 200); // absolute L☉
       break;
     case 'BG2':
-      // Bright giant (II): 20–100 R☉, luminosity 100–3000 L☉
-      // (100 R☉ at ~4000 K gives ~1500 L☉ via S-B; upper end is consistent)
-      radiusMult = rf(20, 100);
-      lum = lumMS * rf(100, 3000);
+      // Bright giant (II): 100–3000 L☉ (absolute), radius 20–100 R☉
+      // lumMS * multiplier gives absurd values for B-type progenitors (lumMS ~1000 L☉ × 3000 = 3e6 L☉)
+      radiusMult = rf(20, 100) / Math.pow(Math.max(mass, 0.8), 0.8);
+      lum = rf(100, 3000); // absolute L☉
       break;
     case 'SGA':
       // Supergiant Ia (most luminous): 100–1500 R☉, 30000–500000 L☉ (absolute)
@@ -1197,8 +1215,13 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       lum = rf(10000, 100000);
       break;
     case 'WD':
-      radiusMult = rf(0.008, 0.020);
-      lum = rf(0.0001, 0.01); // WDs are dimmer than NS; range 0.0001–0.01 L_Sun
+      // WD radius: 0.008–0.020 R☉ (Earth-comparable; most cluster ~0.010–0.015 R☉)
+      // Must be set directly like NS — applying as radiusMult * progenitor_mass^0.8
+      // gives wildly wrong radii (e.g. 8 M☉ progenitor → 0.10 R☉ = 70,000 km, way too large)
+      radiusMult = 0; // sentinel — radius set explicitly below
+      // WD luminosity: 0.0001–0.10 L☉ (hot young WDs can reach ~0.05–0.1 L☉;
+      // cool old WDs drop to ~0.0001 L☉). Age-dependent temp already handles this.
+      lum = rf(0.0001, 0.10);
       break;
     case 'NS':
       // Neutron star radius: 8.5–13 km regardless of progenitor mass.
@@ -1289,9 +1312,17 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   }
 
   // Radius: BDs ≈ Jupiter-sized; MS ≈ M^0.8; evolved classes use multiplier
-  // Neutron star: fix radius to physical range (8.5–13 km) regardless of progenitor mass
+  // WD: 0.008–0.020 R☉. Inverse mass-radius: heavier WDs are slightly smaller.
+  // Using the non-relativistic Chandrasekhar approximation: R ∝ M^(-1/3)
+  // Anchored to 0.6 M☉ WD → ~0.013 R☉.
+  // NS: 8.5–13 km = 1.22e-5–1.87e-5 R☉. Set directly regardless of progenitor mass.
+  const wdRadiusSol = (evolClass === 'WD')
+    ? 0.013 * Math.pow(0.6 / Math.max(finalMass, 0.17), 1/3) * rf(0.90, 1.10)
+    : null;
   const radius = (evolClass === 'NS')
-    ? rf(8.5, 13.0) / 695700  // km → R☉
+    ? rf(8.5, 13.0) / 695700                   // km → R☉
+    : (evolClass === 'WD')
+    ? Math.max(0.006, Math.min(0.022, wdRadiusSol)) // clamp to physical range
     : sp.bd ? rf(0.08, 0.12)
     : Math.pow(mass, 0.8) * radiusMult;
 
@@ -3486,12 +3517,21 @@ function scStar(star, label, parentSystem, binaryOrbit) {
       diskTemp = Math.round(rf(1e4, 1e6));
     }
     const outerAU  = innerAU * rf(20, 200);
+    // Use enough decimal places so neither radius rounds to zero.
+    // Determine precision dynamically: enough dp to show at least 4 significant figures.
+    function diskDP(val) {
+      if (val <= 0) return 8;
+      const mag = Math.floor(Math.log10(val));
+      return Math.max(8, -mag + 3); // e.g. 2.96e-7 → dp = 7+3 = 10
+    }
+    const innerDP = diskDP(innerAU);
+    const outerDP = diskDP(outerAU);
     const diskLum  = fmtSC(star.lum > 0 ? star.lum : 0.001, 4);
     lines.push('');
     lines.push(`\tAccretionDisk`);
     lines.push(`\t{`);
-    lines.push(`\t\tInnerRadius    ${fmtSC(innerAU, 8)}`);
-    lines.push(`\t\tOuterRadius    ${fmtSC(outerAU, 4)}`);
+    lines.push(`\t\tInnerRadius    ${innerAU.toFixed(innerDP)}`);
+    lines.push(`\t\tOuterRadius    ${outerAU.toFixed(outerDP)}`);
     lines.push(`\t\tTemperature    ${diskTemp}`);
     lines.push(`\t\tLuminosity     ${diskLum}`);
     lines.push(`\t\tLuminosityBol  ${diskLum}`);
