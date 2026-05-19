@@ -1201,7 +1201,11 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       lum = rf(0.0001, 0.01); // WDs are dimmer than NS; range 0.0001–0.01 L_Sun
       break;
     case 'NS':
-      radiusMult = 0.000014;
+      // Neutron star radius: 8.5–13 km regardless of progenitor mass.
+      // 1 R☉ = 695,700 km → 8.5 km = 1.222e-5 R☉, 13 km = 1.868e-5 R☉
+      // We override radius directly after the switch using a flag so it isn't
+      // multiplied by the potentially large progenitor mass.
+      radiusMult = 0; // sentinel — radius set explicitly below
       lum = rf(0.01, 0.1); // NS: hotter surface, higher luminosity than old WDs
       break;
     case 'BH':
@@ -1285,7 +1289,11 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   }
 
   // Radius: BDs ≈ Jupiter-sized; MS ≈ M^0.8; evolved classes use multiplier
-  const radius = sp.bd ? rf(0.08, 0.12) : Math.pow(mass, 0.8) * radiusMult;
+  // Neutron star: fix radius to physical range (8.5–13 km) regardless of progenitor mass
+  const radius = (evolClass === 'NS')
+    ? rf(8.5, 13.0) / 695700  // km → R☉
+    : sp.bd ? rf(0.08, 0.12)
+    : Math.pow(mass, 0.8) * radiusMult;
 
   // Temperature
   let temp;
@@ -2914,7 +2922,7 @@ function formatRotation(hours, tidallyLocked) {
   if (tidallyLocked) return 'Tidally locked';
   if (hours < 24)   return fmt(hours, 2) + ' hours';
   const days = hours / 24;
-  if (days < 365)   return fmt(days, 2) + ' days (' + fmt(hours, 1) + ' h)';
+  if (days < 365)   return fmt(days, 2) + ' days';
   return fmt(days / 365.25, 2) + ' years';
 }
 
@@ -3080,7 +3088,7 @@ function renderStarStats(star) {
   } else {
     rotDisplay = star.rotationHours < 24
       ? fmt(star.rotationHours, 2) + ' h'
-      : fmt(star.rotationHours / 24, 2) + ' d (' + fmt(star.rotationHours, 1) + ' h)';
+      : fmt(star.rotationHours / 24, 2) + ' d';
     rotLabel = 'Rotation Period';
   }
 
