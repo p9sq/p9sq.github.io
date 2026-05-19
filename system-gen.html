@@ -1319,10 +1319,15 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   const wdRadiusSol = (evolClass === 'WD')
     ? 0.013 * Math.pow(0.6 / Math.max(finalMass, 0.17), 1/3) * rf(0.90, 1.10)
     : null;
+  // BH: Schwarzschild radius r_s = 2GM/c² ≈ 2.953 km per M☉
+  // Used as the effective "surface" radius for display; not a real photosphere.
+  const bhRadiusSol = (evolClass === 'BH') ? (2.953 * finalMass) / 695700 : null;
   const radius = (evolClass === 'NS')
-    ? rf(8.5, 13.0) / 695700                   // km → R☉
+    ? rf(8.5, 13.0) / 695700                              // km → R☉
     : (evolClass === 'WD')
-    ? Math.max(0.006, Math.min(0.022, wdRadiusSol)) // clamp to physical range
+    ? Math.max(0.006, Math.min(0.022, wdRadiusSol))       // clamp to physical range
+    : (evolClass === 'BH')
+    ? bhRadiusSol                                          // Schwarzschild radius
     : sp.bd ? rf(0.08, 0.12)
     : Math.pow(mass, 0.8) * radiusMult;
 
@@ -3482,7 +3487,11 @@ function scStar(star, label, parentSystem, binaryOrbit) {
     lines.push(`\tLuminosity     ${fmtSC(star.lum, 6)}`);
   }
   lines.push(`\tMassSol        ${fmtSC(star.mass, 4)}`);
-  lines.push(`\tRadSol         ${fmtSC(star.radius, 4)}`);
+  // Use scientific notation for very small radii (NS, BH, WD) to avoid "0.0000"
+  const radStr = star.radius < 0.001
+    ? star.radius.toExponential(8)
+    : fmtSC(star.radius, 6);
+  lines.push(`\tRadSol         ${radStr}`);
   if (star.temp > 0) {
     lines.push(`\tTeff           ${Math.round(star.temp)}`);
   }
@@ -3498,43 +3507,92 @@ function scStar(star, label, parentSystem, binaryOrbit) {
   } else if (star.rotationHours != null) {
     lines.push(`\tRotationPeriod ${fmtSC(star.rotationHours, 4)}`);
   }
-  // AccretionDisk — placed before BinaryOrbit so it sits above the orbit block
+  // AccretionDisk — placed before BinaryOrbit (matches SE convention, ref: Vela Pulsar)
+  // All radii in km; thickness, noise, jet parameters modelled on Vela Pulsar .sc
   if (star.hasAccretionDisk) {
-    let innerAU, diskTemp;
+    let innerKm, outerKm, diskTemp, accrRate, diskDensity, diskLumBol;
+
     if (star.evolClass === 'BH') {
-      // ISCO = 3 × Schwarzschild radius; r_s(km) = 2.953 × M/M☉
-      const rsKm = 2.953 * star.mass;
-      innerAU  = (3 * rsKm) / 149597870.7;
-      diskTemp = Math.round(rf(1e5, 1e7));
+      // ISCO = 6 × gravitational radii = 3 × Schwarzschild radius
+      // r_s (km) = 2.953 × M/M☉
+      const rsKm    = 2.953 * star.mass;
+      innerKm       = 3 * rsKm;                           // ISCO
+      outerKm       = innerKm * rf(50, 500);
+      diskTemp      = Math.round(rf(1e5, 1e7));
+      accrRate      = (1e-12 * rf(0.1, 100)).toExponential(3);
+      diskDensity   = (1e-8  * rf(0.1, 10)).toExponential(3);
+      diskLumBol    = fmtSC(star.lum > 0 ? star.lum * 0.1 : 0.01, 4);
     } else if (star.evolClass === 'NS') {
-      // NS surface ~10 km radius; inner edge at magnetospheric radius ~20–100 km
-      const innerKm = rf(10, 100);
-      innerAU  = innerKm / 149597870.7;
-      diskTemp = Math.round(rf(1e6, 1e8));
+      // Inner edge at magnetospheric (Alfvén) radius: ~10–100× NS surface radius
+      // NS radius ~10 km, so inner edge ~20–200 km
+      const nsRadKm = star.radius * 695700;                // R☉ → km
+      innerKm       = Math.max(nsRadKm * rf(1.5, 10), 10);
+      outerKm       = innerKm * rf(20, 300);
+      diskTemp      = Math.round(rf(1e4, 1e8));            // wide range: cold to X-ray hot
+      accrRate      = (1e-15 * rf(0.1, 1000)).toExponential(3);
+      diskDensity   = (1e-6  * rf(0.1, 100)).toExponential(3);
+      diskLumBol    = fmtSC(star.lum > 0 ? star.lum * 0.5 : 0.001, 4);
     } else {
-      // WD: inner edge at ~WD radius (0.008–0.02 R☉) converted to AU; 1 R☉ = 0.00465 AU
-      innerAU  = star.radius * 0.00465 * rf(1.0, 2.0);
-      diskTemp = Math.round(rf(1e4, 1e6));
+      // WD: inner edge at ~1–2× WD radius
+      const wdRadKm = star.radius * 695700;
+      innerKm       = wdRadKm * rf(1.0, 2.0);
+      outerKm       = innerKm * rf(20, 200);
+      diskTemp      = Math.round(rf(1e4, 1e6));
+      accrRate      = (1e-10 * rf(0.1, 10)).toExponential(3);
+      diskDensity   = (1e-7  * rf(0.1, 10)).toExponential(3);
+      diskLumBol    = fmtSC(star.lum > 0 ? star.lum * 0.3 : 0.0001, 4);
     }
-    const outerAU  = innerAU * rf(20, 200);
-    // Use enough decimal places so neither radius rounds to zero.
-    // Determine precision dynamically: enough dp to show at least 4 significant figures.
-    function diskDP(val) {
-      if (val <= 0) return 8;
-      const mag = Math.floor(Math.log10(val));
-      return Math.max(8, -mag + 3); // e.g. 2.96e-7 → dp = 7+3 = 10
-    }
-    const innerDP = diskDP(innerAU);
-    const outerDP = diskDP(outerAU);
-    const diskLum  = fmtSC(star.lum > 0 ? star.lum : 0.001, 4);
+
+    // Thickness scales with radius (~5–15% of outer radius)
+    const innerThick = innerKm * rf(0.05, 0.12);
+    const outerThick = outerKm * rf(0.05, 0.15);
+    const diskLum    = fmtSC(star.lum > 0 ? star.lum : 0.001, 4);
+
+    // Jet parameters (relativistic jets, common for NS/BH)
+    const hasJet = (star.evolClass === 'BH' || star.evolClass === 'NS') && roll(0.6);
+    const jetLen  = outerKm * rf(1.0, 5.0);
+    const jetSR   = innerKm * rf(1.0, 2.0);
+    const jetER   = innerKm * rf(3.0, 8.0);
+
     lines.push('');
     lines.push(`\tAccretionDisk`);
     lines.push(`\t{`);
-    lines.push(`\t\tInnerRadius    ${innerAU.toFixed(innerDP)}`);
-    lines.push(`\t\tOuterRadius    ${outerAU.toFixed(outerDP)}`);
-    lines.push(`\t\tTemperature    ${diskTemp}`);
-    lines.push(`\t\tLuminosity     ${diskLum}`);
-    lines.push(`\t\tLuminosityBol  ${diskLum}`);
+    lines.push(`\t\tInnerRadiusKm     ${fmtSC(innerKm, 2)}`);
+    lines.push(`\t\tOuterRadiusKm     ${fmtSC(outerKm, 2)}`);
+    lines.push(`\t\tInnerThicknessKm  ${fmtSC(innerThick, 3)}`);
+    lines.push(`\t\tOuterThicknessKm  ${fmtSC(outerThick, 3)}`);
+    lines.push(`\t\tThicknessPow      3`);
+    lines.push(`\t\tDetailScaleR      6`);
+    lines.push(`\t\tDetailScaleV      1`);
+    lines.push(`\t\tOctaveDistortionX 0.5`);
+    lines.push(`\t\tOctaveDistortionY 0.35`);
+    lines.push(`\t\tOctaveDistortionZ 0.2`);
+    lines.push(`\t\tOctaveScale       0.5`);
+    lines.push(`\t\tDiskNoiseContrast 1`);
+    lines.push(`\t\tDiskTempContrast  0.15`);
+    lines.push(`\t\tDiskOuterSpin     ${fmtSC(rf(0.01, 0.1), 3)}`);
+    lines.push(`\t\tTwistMagn         ${fmtSC(rf(100, 5000), 1)}`);
+    lines.push(`\t\tAccretionRate     ${accrRate}`);
+    lines.push(`\t\tTemperature       ${diskTemp}`);
+    lines.push(`\t\tDensity           ${diskDensity}`);
+    lines.push(`\t\tLuminosity        ${diskLum}`);
+    lines.push(`\t\tLuminosityBol     ${diskLumBol}`);
+    lines.push(`\t\tBrightness        1`);
+    if (hasJet) {
+      lines.push(`\t\tJetLengthKm       ${fmtSC(jetLen, 1)}`);
+      lines.push(`\t\tJetStartRadiusKm  ${fmtSC(jetSR, 2)}`);
+      lines.push(`\t\tJetEndRadiusKm    ${fmtSC(jetER, 2)}`);
+      lines.push(`\t\tJetStartTemp      ${diskTemp}`);
+      lines.push(`\t\tJetEndTemp        ${Math.round(diskTemp * rf(0.5, 0.9))}`);
+      lines.push(`\t\tJetVelocity       ${fmtSC(rf(0.3, 0.95), 2)}`);
+      lines.push(`\t\tJetDistortion     ${fmtSC(rf(0.2, 0.6), 2)}`);
+      lines.push(`\t\tJetThickness      ${fmtSC(rf(0.1, 0.5), 2)}`);
+      lines.push(`\t\tJetDensity        ${(parseFloat(diskDensity) * 1e-4).toExponential(3)}`);
+      lines.push(`\t\tJetBrightness     1`);
+    }
+    lines.push(`\t\tLightingBright    1`);
+    lines.push(`\t\tShadowContrast    1`);
+    lines.push(`\t\tShadowLength      0.5`);
     lines.push(`\t}`);
   }
   if (binaryOrbit) {
