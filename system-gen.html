@@ -1316,6 +1316,14 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   // Using the non-relativistic Chandrasekhar approximation: R ∝ M^(-1/3)
   // Anchored to 0.6 M☉ WD → ~0.013 R☉.
   // NS: 8.5–13 km = 1.22e-5–1.87e-5 R☉. Set directly regardless of progenitor mass.
+  // Override mass to realistic remnant values after evolClass is settled
+  let finalMass = mass;
+  if (evolClass === 'WD') finalMass = rf(0.5, 1.35);   // Chandrasekhar limit 1.4
+  else if (evolClass === 'NS') finalMass = rf(1.1, 2.3);
+  else if (evolClass === 'BH') finalMass = rf(3.0, 20.0);
+  // Use finalMass for display; original mass used for tMain calc above
+  const displayMass = finalMass;
+
   const wdRadiusSol = (evolClass === 'WD')
     ? 0.013 * Math.pow(0.6 / Math.max(finalMass, 0.17), 1/3) * rf(0.90, 1.10)
     : null;
@@ -1397,13 +1405,7 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   // Brown dwarfs use subclass 0-9 within type; stars add luminosity class Roman numeral
   // PMS stars still carry luminosity class V but with 'e' emission suffix
   // (T Tauri / Herbig Ae-Be are identified by emission lines, not a separate MK numeral)
-  // Override mass to realistic remnant values after evolClass is settled
-  let finalMass = mass;
-  if (evolClass === 'WD') finalMass = rf(0.5, 1.35);   // Chandrasekhar limit 1.4
-  else if (evolClass === 'NS') finalMass = rf(1.1, 2.3);
-  else if (evolClass === 'BH') finalMass = rf(3.0, 20.0);
-  // Use finalMass for display; original mass used for tMain calc above
-  const displayMass = finalMass;
+
 
   const lumClassSuffix = sp.bd ? '' : { MS:'V', PMS:'Ve', SD:'VI', SG4:'IV', G3:'III', BG2:'II', SGA:'Ia', SGB:'Ib', WD:'VII', NS:'', BH:'' }[evolClass] || 'V';
 
