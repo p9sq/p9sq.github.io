@@ -1269,11 +1269,19 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   } else if (evolClass === 'PMS') {
     age = rf(0.000001, 0.010); // 1 kyr – 10 Myr
   } else if (evolClass === 'SGA' || evolClass === 'SGB' || evolClass === 'BG2') {
-    age = rf(0.003, Math.min(tMain * 0.98, 0.5));
+    // Massive evolved stars are near end of life: age ∈ [70%–99% of tMain]
+    const ageMin = Math.max(0.001, tMain * 0.70);
+    const ageMax = Math.min(tMain * 0.99, 13.8);
+    age = rf(ageMin, Math.max(ageMin + 0.001, ageMax));
   } else if (evolClass === 'G3' || evolClass === 'SG4') {
-    age = rf(tMain * 0.5, Math.min(tMain * 0.95, 12));
+    const ageMin = Math.max(0.1, tMain * 0.50);
+    const ageMax = Math.min(tMain * 0.95, 13.0);
+    age = rf(ageMin, Math.max(ageMin + 0.001, ageMax));
   } else {
-    age = rf(0.1, Math.min(tMain * 0.9, 12));
+    // MS, SD: always within the MS lifetime, with a physical lower bound
+    const ageMin = (sp.t === 'O' || sp.t === 'B') ? 0.001 : 0.1;
+    const ageMax = Math.min(tMain * 0.90, 13.0);
+    age = rf(ageMin, Math.max(ageMin + 0.001, ageMax));
   }
 
   // Radius: BDs ≈ Jupiter-sized; MS ≈ M^0.8; evolved classes use multiplier
@@ -1290,9 +1298,22 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   } else if (evolClass === 'BH') {
     temp = 0;
   } else if (sp.bd) {
-    if (sp.t === 'L') temp = rf(1300, 2200);
-    else if (sp.t === 'T') temp = rf(700, 1300);
-    else temp = rf(300, 700);
+    // Brown dwarfs cool with age — use Burrows/Baraffe cooling track approximation.
+    // Initial temp set by mass; then cooled by (age/1Myr)^-0.35.
+    // Mass in Jupiter masses (roughly 13–80 MJ for BDs; sub-stellar 1–13 MJ for sub-BDs)
+    const mJup = mass / 0.001 * 1.047; // M☉ → MJ approx
+    let tInitial; // temp at ~1 Myr
+    if (sp.t === 'L')      tInitial = 1500 + mJup * 25;    // L: 1300–2200 K at youth
+    else if (sp.t === 'T') tInitial = 900  + mJup * 15;    // T: 700–1300 K at youth
+    else                   tInitial = 400  + mJup * 8;     // Y: 300–700 K at youth
+    // Cool with age: T ∝ t^-0.35 (Baraffe et al. 2003)
+    const bdAgeMyr = Math.max(age * 1000, 0.1); // Gyr → Myr, min 0.1 Myr
+    const coolingFactor = Math.pow(1.0 / bdAgeMyr, 0.35);
+    temp = tInitial * coolingFactor * rf(0.95, 1.05);
+    // Clamp to physical range for each type
+    if (sp.t === 'L')      temp = Math.max(1300, Math.min(2200, temp));
+    else if (sp.t === 'T') temp = Math.max(700,  Math.min(1300, temp));
+    else                   temp = Math.max(300,  Math.min(700,  temp));
   } else if (evolClass === 'MS' || evolClass === 'PMS' || evolClass === 'SD') {
     // Use empirical mass→temperature relations instead of Stefan-Boltzmann,
     // which produces wildly wrong temps for cool/low-mass stars.
@@ -1384,13 +1405,35 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
     const periodSec = roll(0.3) ? rf(0.001, 0.1) : rf(0.1, 10.0); // ms pulsar vs normal
     rotationHours = periodSec / 3600;
   } else if (evolClass === 'BH') {
-    rotationHours = 0; // undefined / event horizon
+    // Rotating vs non-rotating BH — spin parameter a* ∈ [0, 0.998] (Kerr limit)
+    rotationHours = null; // BHs don't have a classical rotation period
   } else if (evolClass === 'WD') {
-    // WDs spin hours to days
-    rotationHours = rf(0.5, 240);
+    // WDs: observed spin periods range from ~seconds (young/recycled) to ~hours (typical isolated)
+    // Most isolated WDs: 1–10 hours; extreme cases up to ~100 hours
+    rotationHours = rf(0.017, 100); // 1 min – ~4 days, log-flat distribution
   } else {
-    const baseRotHours = 600 * Math.pow(Math.max(age,0.001) / 4.6, 0.5) * Math.pow(Math.max(mass,0.08), -0.5) * rf(0.5, 1.8);
-    rotationHours = Math.max(5, baseRotHours);
+    // Stellar rotation depends strongly on mass/spectral type:
+    // O/B: radiation pressure inhibits magnetic braking; fast rotators, ~0.5–5 days
+    // A: intermediate, ~0.5–3 days
+    // F/G/K/M: Skumanich magnetic braking, period ∝ age^0.5
+    if (sp.t === 'O') {
+      // O stars: equatorial v_eq ~100–400 km/s → period ~0.5–3 days ≈ 12–72 h
+      rotationHours = rf(12, 72);
+    } else if (sp.t === 'B') {
+      rotationHours = rf(12, 120); // ~0.5–5 days
+    } else if (sp.t === 'A') {
+      rotationHours = rf(12, 96);  // ~0.5–4 days; A stars don't brake efficiently
+    } else {
+      // Solar-type Skumanich law: P ∝ age^0.5 × mass^-0.5
+      // Calibrated: Sun (1 M☉, 4.6 Gyr) → ~600 h ≈ 25 days ✓
+      const baseRotHours = 600
+        * Math.pow(Math.max(age, 0.001) / 4.6, 0.5)
+        * Math.pow(Math.max(mass, 0.08), -0.5)
+        * rf(0.5, 1.8);
+      // Minimum reasonable period: fast young F/G ≈ 5 days; M dwarfs can be fast too
+      const minHours = sp.t === 'F' ? 24 : sp.t === 'G' ? 20 : sp.t === 'K' ? 16 : 8;
+      rotationHours = Math.max(minHours, baseRotHours);
+    }
   }
 
   // Protoplanetary disk (PMS only) — always present if star is young enough,
@@ -1418,11 +1461,17 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
   }
 
   const isRemnant = (evolClass === 'WD' || evolClass === 'NS' || evolClass === 'BH');
+  // Black hole spin (Kerr parameter a* ∈ [0, 0.998])
+  const bhSpin = (evolClass === 'BH') ? rf(0, 0.998) : null;
+  // Accretion disk: rare for isolated BH/NS, slightly more common in binaries
+  const hasAccretionDisk = (evolClass === 'BH' || evolClass === 'NS') ? roll(0.08) : false;
+  // BH luminosity: 0 unless it has an accretion disk
+  if (evolClass === 'BH') lum = hasAccretionDisk ? rf(0.01, 1e5) : 0;
   let col = sp.col;
   if (evolClass === 'WD') col = temp > 40000 ? '#b0c8ff' : temp > 15000 ? '#ddeeff' : temp > 8000 ? '#fff8f0' : '#ffddaa';
-  else if (evolClass === 'NS') col = '#88aaff'; // blue-tinged hot neutron star
-  else if (evolClass === 'BH') col = '#111111'; // black
-  return { label, sp, spectralClass, wdSubtype, lumClassSuffix, evolClass, mass: displayMass, lum, radius, temp, FeH, age, rotationHours, tidallyLocked: false, col, isBD: sp.bd || false, isRemnant, protoplanDisk };
+  else if (evolClass === 'NS') col = '#88aaff';
+  else if (evolClass === 'BH') col = '#111111';
+  return { label, sp, spectralClass, wdSubtype, lumClassSuffix, evolClass, mass: displayMass, lum, radius, temp, FeH, age, rotationHours, tidallyLocked: false, col, isBD: sp.bd || false, isRemnant, protoplanDisk, bhSpin, hasAccretionDisk };
 }
 
 // ============================================================
@@ -2986,15 +3035,65 @@ function renderStarIcon(star) {
 }
 
 function renderStarStats(star) {
+  // Radius display: km for NS/BH, R☉ for everything else
+  let radiusDisplay, radiusLabel;
+  if (star.evolClass === 'NS') {
+    radiusDisplay = Math.round(star.radius * 695700) + ' km';
+    radiusLabel   = 'Radius';
+  } else if (star.evolClass === 'BH') {
+    // Schwarzschild radius: r_s = 2GM/c² ≈ 2.953 km × (M/M☉)
+    const rs = 2.953 * star.mass;
+    radiusDisplay = fmt(rs, 2) + ' km';
+    radiusLabel   = 'Radius (Schwarz.)';
+  } else {
+    radiusDisplay = fmt(star.radius, 3);
+    radiusLabel   = 'Radius (R☉)';
+  }
+
+  // Luminosity display
+  let lumDisplay, lumLabel;
+  if (star.evolClass === 'BH' && !star.hasAccretionDisk) {
+    lumDisplay = '0 (no disk)';
+    lumLabel   = 'Lum (L☉)';
+  } else {
+    lumDisplay = star.lum < 0.0001 ? star.lum.toExponential(2) : fmt(star.lum, 4);
+    lumLabel   = 'Lum (L☉)';
+  }
+
+  // Rotation display
+  let rotDisplay, rotLabel;
+  if (star.evolClass === 'BH') {
+    // Show spin parameter a* instead of rotation period
+    rotDisplay = star.bhSpin != null ? fmt(star.bhSpin, 4) + ' (a*)' : 'N/A';
+    rotLabel   = 'Spin';
+  } else if (star.evolClass === 'NS') {
+    const periodMs = star.rotationHours * 3600 * 1000;
+    rotDisplay = periodMs < 1000 ? fmt(periodMs, 2) + ' ms' : fmt(star.rotationHours * 3600, 3) + ' s';
+    rotLabel   = 'Rotation Period';
+  } else if (star.evolClass === 'WD') {
+    const periodMin = star.rotationHours * 60;
+    rotDisplay = periodMin < 60 ? fmt(periodMin, 2) + ' min' : fmt(star.rotationHours, 2) + ' h';
+    rotLabel   = 'Rotation Period';
+  } else if (star.tidallyLocked) {
+    rotDisplay = 'Tidally locked';
+    rotLabel   = 'Rotation Period';
+  } else {
+    rotDisplay = star.rotationHours < 24
+      ? fmt(star.rotationHours, 2) + ' h'
+      : fmt(star.rotationHours / 24, 2) + ' d (' + fmt(star.rotationHours, 1) + ' h)';
+    rotLabel = 'Rotation Period';
+  }
+
   return `
 <div class="star-stats">
   <div class="stat-cell"><span class="sv">${star.age < 0.01 ? (star.age*1000).toFixed(2)+' Myr' : star.age < 0.1 ? fmt(star.age,4)+' Gyr' : fmt(star.age,2)+' Gyr'}</span><span class="sk">Age</span></div>
   <div class="stat-cell"><span class="sv">${fmt(star.mass,3)}</span><span class="sk">Mass (M☉)</span></div>
-  <div class="stat-cell"><span class="sv">${star.lum < 0.0001 ? star.lum.toExponential(2) : fmt(star.lum,4)}</span><span class="sk">Lum (L☉)</span></div>
-  <div class="stat-cell"><span class="sv">${fmt(star.radius,3)}</span><span class="sk">Radius (R☉)</span></div>
+  <div class="stat-cell"><span class="sv">${lumDisplay}</span><span class="sk">${lumLabel}</span></div>
+  <div class="stat-cell"><span class="sv">${radiusDisplay}</span><span class="sk">${radiusLabel}</span></div>
   <div class="stat-cell"><span class="sv">${fmt(star.FeH,2)}</span><span class="sk">Met [Fe/H]</span></div>
-  <div class="stat-cell"><span class="sv">${Math.round(star.temp).toLocaleString()}</span><span class="sk">Temp (K)</span></div>
-  <div class="stat-cell" style="grid-column:1/-1"><span class="sv">${star.evolClass === 'BH' ? 'N/A' : star.evolClass === 'NS' ? (star.rotationHours * 3600 < 0.1 ? fmt(star.rotationHours*3600*1000,1)+' ms' : fmt(star.rotationHours*3600,3)+' s') : star.tidallyLocked ? 'Tidally locked' : (star.rotationHours < 24 ? fmt(star.rotationHours,2)+' h' : fmt(star.rotationHours/24,2)+' d ('+fmt(star.rotationHours,1)+' h)')}</span><span class="sk">Rotation Period</span></div>
+  <div class="stat-cell"><span class="sv">${star.temp > 0 ? Math.round(star.temp).toLocaleString() : 'N/A'}</span><span class="sk">Temp (K)</span></div>
+  <div class="stat-cell" style="grid-column:1/-1"><span class="sv">${rotDisplay}</span><span class="sk">${rotLabel}</span></div>
+  ${star.hasAccretionDisk ? `<div class="stat-cell" style="grid-column:1/-1;color:var(--accent2)"><span class="sv">Active</span><span class="sk" style="color:var(--accent2)">Accretion Disk</span></div>` : ''}
   ${star.protoplanDisk ? `<div class="stat-cell" style="grid-column:1/-1;color:var(--accent3)"><span class="sv">${fmt(star.protoplanDisk.inner,3)} – ${fmt(star.protoplanDisk.outer,1)} AU</span><span class="sk" style="color:var(--accent3)">Protoplanetary Disk</span></div>` : ''}
 </div>`;
 }
@@ -3115,14 +3214,14 @@ function renderSystem(sys) {
     ${renderStarHeader(stA, (sys.name||'Star') + ' A')}
     <div class="planets-section">
       <h4>Planetary System — ${base} A</h4>
-      ${renderPlanetsList(planetsA, beltsA, base + 'A')}
+      ${renderPlanetsList(planetsA, beltsA, base + ' A')}
     </div>
   </div>
   <div class="star-panel">
     ${renderStarHeader(stB, (sys.name||'Star') + ' B')}
     <div class="planets-section">
       <h4>Planetary System — ${base} B</h4>
-      ${renderPlanetsList(planetsB, beltsB, base + 'B')}
+      ${renderPlanetsList(planetsB, beltsB, base + ' B')}
     </div>
   </div>
 </div>`;
@@ -3339,6 +3438,9 @@ function scStar(star, label, parentSystem, binaryOrbit) {
   lines.push(`\tClass          "${cls}"`);
   if (!star.isRemnant || star.evolClass === 'WD') {
     lines.push(`\tLuminosity     ${fmtSC(star.lum, 6)}`);
+  } else if (star.evolClass === 'NS' || star.evolClass === 'BH') {
+    // Always export luminosity for NS/BH — 0 for BH without disk
+    lines.push(`\tLuminosity     ${fmtSC(star.lum, 6)}`);
   }
   lines.push(`\tMassSol        ${fmtSC(star.mass, 4)}`);
   lines.push(`\tRadSol         ${fmtSC(star.radius, 4)}`);
@@ -3348,10 +3450,44 @@ function scStar(star, label, parentSystem, binaryOrbit) {
   lines.push(`\tAge            ${fmtSC(star.age, 4)}`);
   lines.push(`\tFeH            ${fmtSC(star.FeH, 3)}`);
   lines.push('');
-  if (star.tidallyLocked) {
+  if (star.evolClass === 'BH') {
+    if (star.bhSpin != null && star.bhSpin > 0.01) {
+      lines.push(`\tKerrSpin       ${fmtSC(star.bhSpin, 4)}`);
+    }
+  } else if (star.tidallyLocked) {
     lines.push(`\tTidalLocked    true`);
-  } else {
+  } else if (star.rotationHours != null) {
     lines.push(`\tRotationPeriod ${fmtSC(star.rotationHours, 4)}`);
+  }
+  // AccretionDisk — placed before BinaryOrbit so it sits above the orbit block
+  if (star.hasAccretionDisk) {
+    let innerAU, diskTemp;
+    if (star.evolClass === 'BH') {
+      // ISCO = 3 × Schwarzschild radius; r_s(km) = 2.953 × M/M☉
+      const rsKm = 2.953 * star.mass;
+      innerAU  = (3 * rsKm) / 149597870.7;
+      diskTemp = Math.round(rf(1e5, 1e7));
+    } else if (star.evolClass === 'NS') {
+      // NS surface ~10 km radius; inner edge at magnetospheric radius ~20–100 km
+      const innerKm = rf(10, 100);
+      innerAU  = innerKm / 149597870.7;
+      diskTemp = Math.round(rf(1e6, 1e8));
+    } else {
+      // WD: inner edge at ~WD radius (0.008–0.02 R☉) converted to AU; 1 R☉ = 0.00465 AU
+      innerAU  = star.radius * 0.00465 * rf(1.0, 2.0);
+      diskTemp = Math.round(rf(1e4, 1e6));
+    }
+    const outerAU  = innerAU * rf(20, 200);
+    const diskLum  = fmtSC(star.lum > 0 ? star.lum : 0.001, 4);
+    lines.push('');
+    lines.push(`\tAccretionDisk`);
+    lines.push(`\t{`);
+    lines.push(`\t\tInnerRadius    ${fmtSC(innerAU, 8)}`);
+    lines.push(`\t\tOuterRadius    ${fmtSC(outerAU, 4)}`);
+    lines.push(`\t\tTemperature    ${diskTemp}`);
+    lines.push(`\t\tLuminosity     ${diskLum}`);
+    lines.push(`\t\tLuminosityBol  ${diskLum}`);
+    lines.push(`\t}`);
   }
   if (binaryOrbit) {
     lines.push('');
@@ -3536,13 +3672,16 @@ function scPlanet(planet, parentStarLabel, planetLabel) {
     `\t}`
   ].join('\n');
 
-  // Surface block
-  const surfaceBlock = [
+  const surfaceLines = [
     `\tSurface`,
     `\t{`,
     `\t\tRandomize      (${scRandomize()})`,
-    `\t}`
-  ].join('\n');
+  ];
+  if (planet.ocean && planet.ocean.seaLevel != null) {
+    surfaceLines.push(`\t\tSeaLevel       ${fmtSC(planet.ocean.seaLevel, 4)}`);
+  }
+  surfaceLines.push(`\t}`);
+  const surfaceBlock = surfaceLines.join('\n');
 
   // Assemble: header → suppress flags → Life → Surface → Ocean → Atmosphere → Rings → Orbit → close
   const sections = [];
@@ -3628,7 +3767,7 @@ function exportSC() {
       // Skip Oort Cloud Objects from export (SE generates those procedurally)
       if (p.subClass === 'Oort Cloud Object') continue;
       const roman  = toRoman(p.idx);
-      const pLabel = useAB ? `${parentLabel} ${roman}` : `${name} ${roman}`;
+      const pLabel = useAB ? `${parentLabel}-${roman}` : `${name}-${roman}`;
       const block  = scPlanet(p, parentLabel, pLabel);
       blocks.push('');
       blocks.push(block);
@@ -3640,7 +3779,7 @@ function exportSC() {
   } else if (sys.companionType === 'close') {
     addPlanets(sys.primaryPlanets, name, false);
   } else {
-    // Distant binary — planets labelled with A/B
+    // Distant binary — planets labelled "Name A-x" and "Name B-x"
     addPlanets(sys.primaryPlanets,   `${name} A`, true);
     addPlanets(sys.compPlanets || [], `${name} B`, true);
   }
