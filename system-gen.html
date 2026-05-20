@@ -1216,32 +1216,27 @@ function generateStar(label, massConstraint=null, isCompanion=false, forcedAge=n
       lum = rf(100, 3000); // absolute L☉
       break;
     case 'SGA':
-      // Supergiant Ia (most luminous): 100–1500 R☉, 30000–500000 L☉ (absolute)
-      // Using absolute range avoids runaway values for already-luminous O-star progenitors
-      radiusMult = rf(100, 1500);
+      // Supergiant Ia: 100–1500 R☉, 30000–500000 L☉ (absolute)
+      // Divide by mass^0.8 to cancel the multiplication below so radius comes out correct
+      radiusMult = rf(100, 1500) / Math.pow(Math.max(mass, 0.8), 0.8);
       lum = rf(30000, 500000);
       break;
     case 'SGB':
       // Supergiant Ib: 30–400 R☉, 10000–100000 L☉ (absolute)
-      radiusMult = rf(30, 400);
+      radiusMult = rf(30, 400) / Math.pow(Math.max(mass, 0.8), 0.8);
       lum = rf(10000, 100000);
       break;
     case 'WD':
-      // WD radius: 0.008–0.020 R☉ (Earth-comparable; most cluster ~0.010–0.015 R☉)
-      // Must be set directly like NS — applying as radiusMult * progenitor_mass^0.8
-      // gives wildly wrong radii (e.g. 8 M☉ progenitor → 0.10 R☉ = 70,000 km, way too large)
       radiusMult = 0; // sentinel — radius set explicitly below
-      // WD luminosity: 0.0001–0.10 L☉ (hot young WDs can reach ~0.05–0.1 L☉;
-      // cool old WDs drop to ~0.0001 L☉). Age-dependent temp already handles this.
-      lum = rf(0.0001, 0.10);
+      // WD intrinsic photospheric luminosity only — accretion disk handles extra brightness
+      // Hot young WD: ~0.001 L☉; cool old WD: ~0.00001 L☉
+      lum = rf(0.00001, 0.001);
       break;
     case 'NS':
-      // Neutron star radius: 8.5–13 km regardless of progenitor mass.
-      // 1 R☉ = 695,700 km → 8.5 km = 1.222e-5 R☉, 13 km = 1.868e-5 R☉
-      // We override radius directly after the switch using a flag so it isn't
-      // multiplied by the potentially large progenitor mass.
       radiusMult = 0; // sentinel — radius set explicitly below
-      lum = rf(0.01, 0.1); // NS: hotter surface, higher luminosity than old WDs
+      // NS thermal luminosity from surface cooling only (~1e-5 to 1e-4 L☉)
+      // Any X-ray brightness from accretion is in the disk Luminosity parameter
+      lum = rf(1e-5, 1e-4);
       break;
     case 'BH':
       // Stellar-mass black hole: 3–20 M☉, no real photosphere
@@ -1592,27 +1587,19 @@ function generateSystem(name, companionOpt, planetsOpt, forceTerrestrial, seed) 
 
     if (companionType === 'close') {
       separation = rf(0.02, 0.25);
-      if (primary.isRemnant && !primary.hasAccretionDisk) {
-        if (roll(0.70)) {
-          primary.hasAccretionDisk = true;
-          if (primary.evolClass === 'BH') primary.lum = rf(0.01, 1e5);
-        }
-      } // reduced upper limit for realistic close binaries
       // Close binary eccentricity: circularised by tides, moderately low
       stellarEcc = Math.pow(rng(), 2) * (separation < 0.1 ? 0.10 : 0.30);
       // Inclination relative to sky plane: near-coplanar with any disc, small scatter
       stellarIncl = rf(0, 15) * (roll(0.15) ? rf(1,6) : 1);
 
-      // Tidal locking for close binary
-      // Also boost companion remnant disk chance in close binary
-      if (companion && companion.isRemnant && !companion.hasAccretionDisk) {
-        if (roll(0.70)) {
-          companion.hasAccretionDisk = true;
-          if (companion.evolClass === 'BH') companion.lum = rf(0.01, 1e5);
+      // Accretion disks form via Roche lobe overflow only in very tight binaries (sep < 0.05 AU)
+      const rlocheOverflow = separation < 0.05;
+      if (rlocheOverflow) {
+        if (primary.isRemnant && !primary.hasAccretionDisk && roll(0.80)) {
+          primary.hasAccretionDisk = true;
+          if (primary.evolClass === 'BH') primary.lum = rf(0.01, 1e5);
         }
-      }
-      if (companion && companion.isRemnant && !companion.hasAccretionDisk) {
-        if (roll(0.70)) {
+        if (companion.isRemnant && !companion.hasAccretionDisk && roll(0.80)) {
           companion.hasAccretionDisk = true;
           if (companion.evolClass === 'BH') companion.lum = rf(0.01, 1e5);
         }
@@ -1680,7 +1667,7 @@ function generateSystem(name, companionOpt, planetsOpt, forceTerrestrial, seed) 
   // For circumbinary systems, minimum stable orbit ~ 3.5 × separation (Holman & Wiegert)
   // No upper AU cap for circumbinary (planets orbit both stars, no inner truncation from separation)
   const circumbinaryMinAU = companionType === 'close' ? separation * 3.5 : null;
-  const primaryPlanets = generatePlanets(primary, nPlanets, false, null, circumbinaryMinAU);
+  const primaryPlanets = generatePlanets(primary, nPlanets, false, null, circumbinaryMinAU, companionType === 'close' ? stellarIncl : null);
   const primaryBelts   = generateBelts(primary, primaryPlanets, null, circumbinaryMinAU, true);
 
   // Distant companion planets + belts
@@ -1864,7 +1851,7 @@ function calcTeq(lum, a, albedo=0.3) {
   return 278 * Math.pow(lum * (1 - albedo), 0.25) / Math.sqrt(a);
 }
 
-function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
+function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null, circumbinaryIncl=null) {
   if (nRaw === 0) return [];
 
   const planets = [];
@@ -1880,6 +1867,12 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
   else if (sp === 'F' || sp === 'G') innerEdge = rf(0.05, 0.2);
   else if (sp === 'K') innerEdge = rf(0.03, 0.1);
   else innerEdge = rf(0.01, 0.05); // M / BD
+
+  // Clamp innerEdge to outside the star's physical radius (1 R☉ = 0.00465 AU).
+  // Critical for giant/supergiant stars whose radii can be hundreds of AU.
+  const starRadiusAU = star.radius * 0.00465;
+  if (innerEdge < starRadiusAU * 1.05) innerEdge = starRadiusAU * rf(1.05, 2.0);
+
   // For circumbinary orbits, enforce Holman-Wiegert minimum stable distance
   if (minAU && innerEdge < minAU) innerEdge = minAU * rf(1.0, 1.3);
 
@@ -1936,11 +1929,11 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
         if (p === ej) continue;
         const pApo  = p.a * (1 + p.ecc);
         const pPeri = p.a * (1 - p.ecc);
-        // Orbits cross if their peri/apo ranges overlap
         const orbitsCross = pApo >= ejPeri && pPeri <= ejApo;
-        if (orbitsCross && p.type !== 'gasGiant') {
-          // 60% chance of ejection, 40% chance of perturbed orbit
-          if (roll(0.6)) {
+        if (orbitsCross && p !== ej) {
+          // Massive eccentric Jupiter (>50 M⊕) always clears crossing orbits
+          const isHeavy = ej.mEarth > 50;
+          if (isHeavy || roll(0.75)) {
             planets.splice(i, 1);
           } else {
             p.ecc = Math.min(0.85, p.ecc + rf(0.15, 0.45));
@@ -2010,6 +2003,33 @@ function generatePlanets(star, nRaw, forceTerrestrial, maxAU, minAU=null) {
         }
       }
       planets.forEach((p, i) => { p.idx = i + 1; });
+    }
+  }
+
+  // ── Circumbinary inclination alignment ──────────────────────────
+  // Circumbinary planets form in the same plane as the binary orbit.
+  // Apply the stellar inclination as a reference, with small scatter (~1–3°).
+  if (circumbinaryIncl !== null) {
+    for (const p of planets) {
+      p.inclination = circumbinaryIncl + rf(-3, 3);
+    }
+  }
+
+  // ── Eccentricity orbit-crossing guard ──────────────────────────
+  // After all planets are placed, clamp eccentricities so no planet's apoapsis
+  // exceeds the periapsis of the next planet out (leaving a 5% gap for safety).
+  if (planets.length > 1) {
+    planets.sort((a, b) => a.a - b.a);
+    for (let i = 0; i < planets.length - 1; i++) {
+      const inner = planets[i];
+      const outer = planets[i + 1];
+      // inner apoapsis must be < outer periapsis × 0.95
+      const maxApo  = outer.a * (1 - outer.ecc) * 0.95;
+      const maxEcc  = Math.max(0, 1 - maxApo / inner.a);
+      if (inner.a * (1 + inner.ecc) > maxApo) {
+        inner.ecc = Math.min(inner.ecc, maxEcc * 0.95);
+        inner.ecc = Math.max(0, inner.ecc);
+      }
     }
   }
 
@@ -2451,11 +2471,16 @@ function classifyPlanet(idx, a, Teq, frostLine, hz, star, isHabitable, forceRock
     } else if (type === 'dwarf') {
       baseRot = rf(4, 12);
     } else {
-      baseRot = rf(10, 120); // rocky/ferria/carbonia/aquaria highly variable
+      // Rocky/ferria/carbonia/aquaria: highly variable but physically bounded
+      // Earth = 24h; Venus = 5832h (retrograde); Mars = 24.6h
+      // Fast end: tidal locking already handled; bare minimum ~14h for unlocked rocky world
+      baseRot = rf(14, 120);
     }
-    // Slight age-dependent slowdown for rocky worlds (magnetic braking analogue)
+    // Age-dependent slowdown for rocky worlds (tidal/magnetic braking analogue)
+    // Apply before floor so the floor is the absolute physical minimum
     if (type !== 'gasGiant' && type !== 'iceGiant') {
-      baseRot *= Math.pow(star.age / 4.6, 0.15);
+      baseRot *= Math.pow(Math.max(star.age, 0.001) / 4.6, 0.15);
+      baseRot = Math.max(baseRot, type === 'dwarf' ? 4 : 14); // re-clamp after scaling
     }
     rotationHours = baseRot * rf(0.9, 1.1);
   }
@@ -3554,34 +3579,35 @@ function scStar(star, label, parentSystem, binaryOrbit) {
     let innerKm, outerKm, diskTemp, accrRate, diskDensity, diskLumBol;
 
     if (star.evolClass === 'BH') {
-      // ISCO = 6 × gravitational radii = 3 × Schwarzschild radius
-      // r_s (km) = 2.953 × M/M☉
-      const rsKm    = 2.953 * star.mass;
-      innerKm       = 3 * rsKm;                           // ISCO
-      outerKm       = innerKm * rf(50, 500);
-      diskTemp      = Math.round(rf(1e5, 1e7));
-      accrRate      = (1e-12 * rf(0.1, 100)).toExponential(3);
-      diskDensity   = (1e-8  * rf(0.1, 10)).toExponential(3);
-      diskLumBol    = fmtSC(star.lum > 0 ? star.lum * 0.1 : 0.01, 4);
+      // ISCO = 3 × Schwarzschild radius; r_s(km) = 2.953 × M/M☉
+      const rsKm = 2.953 * star.mass;
+      innerKm     = 3 * rsKm;                        // ISCO ~few tens of km
+      outerKm     = innerKm * rf(100, 1000);          // realistic: ~1,000–100,000 km max
+      outerKm     = Math.min(outerKm, 1e6);           // hard cap at 1 million km
+      diskTemp    = Math.round(rf(1e5, 1e7));
+      accrRate    = (1e-12 * rf(0.1, 100)).toExponential(3);
+      diskDensity = (1e-8  * rf(0.1, 10)).toExponential(3);
+      diskLumBol  = fmtSC(star.lum > 0 ? star.lum * 0.1 : 0.01, 4);
     } else if (star.evolClass === 'NS') {
-      // Inner edge at magnetospheric (Alfvén) radius: ~10–100× NS surface radius
-      // NS radius ~10 km, so inner edge ~20–200 km
-      const nsRadKm = star.radius * 695700;                // R☉ → km
-      innerKm       = Math.max(nsRadKm * rf(1.5, 10), 10);
-      outerKm       = innerKm * rf(20, 300);
-      diskTemp      = Math.round(rf(1e4, 1e8));            // wide range: cold to X-ray hot
-      accrRate      = (1e-15 * rf(0.1, 1000)).toExponential(3);
-      diskDensity   = (1e-6  * rf(0.1, 100)).toExponential(3);
-      diskLumBol    = fmtSC(star.lum > 0 ? star.lum * 0.5 : 0.001, 4);
+      // NS surface ~10 km; inner edge at Alfvén radius ~20–200 km
+      const nsRadKm = star.radius * 695700;
+      innerKm     = Math.max(nsRadKm * rf(1.5, 5), 10);
+      outerKm     = innerKm * rf(10, 100);            // NS disks: ~100–50,000 km
+      outerKm     = Math.min(outerKm, 5e4);           // hard cap at 50,000 km
+      diskTemp    = Math.round(rf(1e6, 1e8));
+      accrRate    = (1e-15 * rf(0.1, 1000)).toExponential(3);
+      diskDensity = (1e-6  * rf(0.1, 100)).toExponential(3);
+      diskLumBol  = fmtSC(star.lum > 0 ? star.lum * 0.5 : 0.001, 4);
     } else {
-      // WD: inner edge at ~1–2× WD radius
+      // WD: inner edge just above WD surface (~0.01 R☉ ≈ 7,000 km)
       const wdRadKm = star.radius * 695700;
-      innerKm       = wdRadKm * rf(1.0, 2.0);
-      outerKm       = innerKm * rf(20, 200);
-      diskTemp      = Math.round(rf(1e4, 1e6));
-      accrRate      = (1e-10 * rf(0.1, 10)).toExponential(3);
-      diskDensity   = (1e-7  * rf(0.1, 10)).toExponential(3);
-      diskLumBol    = fmtSC(star.lum > 0 ? star.lum * 0.3 : 0.0001, 4);
+      innerKm     = wdRadKm * rf(1.0, 1.5);          // just above surface
+      outerKm     = innerKm * rf(10, 80);             // WD disks: ~10,000–100,000 km
+      outerKm     = Math.min(outerKm, 1e5);           // hard cap at 100,000 km
+      diskTemp    = Math.round(rf(1e4, 1e6));
+      accrRate    = (1e-10 * rf(0.1, 10)).toExponential(3);
+      diskDensity = (1e-7  * rf(0.1, 10)).toExponential(3);
+      diskLumBol  = fmtSC(star.lum > 0 ? star.lum * 0.3 : 0.0001, 4);
     }
 
     // Thickness scales with radius (~5–15% of outer radius)
@@ -3913,8 +3939,7 @@ function exportSC() {
     for (const p of realPlanets) {
       // Skip Oort Cloud Objects from export (SE generates those procedurally)
       if (p.subClass === 'Oort Cloud Object') continue;
-      const roman  = toRoman(p.idx);
-      const pLabel = useAB ? `${parentLabel}-${roman}` : `${name}-${roman}`;
+      const pLabel = useAB ? `${parentLabel}-${p.idx}` : `${name}-${p.idx}`;
       const block  = scPlanet(p, parentLabel, pLabel);
       blocks.push('');
       blocks.push(block);
@@ -3924,7 +3949,8 @@ function exportSC() {
   if (!sys.companion) {
     addPlanets(sys.primaryPlanets, name, false);
   } else if (sys.companionType === 'close') {
-    addPlanets(sys.primaryPlanets, name, false);
+    // Circumbinary planets orbit both stars — parent body is the system
+    addPlanets(sys.primaryPlanets, `${name} System`, false);
   } else {
     // Distant binary — planets labelled "Name A-x" and "Name B-x"
     addPlanets(sys.primaryPlanets,   `${name} A`, true);
