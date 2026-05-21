@@ -1,151 +1,207 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Planetary Archive — Exoplanet Corporation</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
-</head>
-<body class="page-index">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Planetary Archive — Exoplanet Corporation</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="page-index">
+    <!-- BACKGROUND GRID -->
+    <div class="bg-grid"></div>
+    <div class="bg-vignette"></div>
+    <canvas id="starfield"></canvas>
 
-  <!-- BACKGROUND GRID -->
-  <div class="bg-grid"></div>
-  <div class="bg-vignette"></div>
-  <canvas id="starfield"></canvas>
-
-  <!-- NAV -->
-  <nav class="nav">
-    <a href="index.html" class="nav-logo">
-      <span class="nav-logo-icon">⬡</span>
-      <div>
-        <div class="nav-logo-main"><span class="nav-logo-full">PLANETARY ARCHIVE</span><span class="nav-logo-short">P. ARCHIVE</span></div>
-        <div class="nav-logo-sub">Exoplanet Corporation · TIRA</div>
-      </div>
-    </a>
-    <ul class="nav-links">
-      <li><a href="index.html" class="active">Home</a></li>
-      <li><a href="catalogued.html">Catalogued Systems</a></li>
-      <li><a href="promising.html">Terrania 2.0 Candidates</a></li>
-      <li><a href="terraformed.html">Terraformed Worlds</a></li>
-    </ul>
-    <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu"><span></span><span></span><span></span></button>
-    <div class="nav-status">
-      <span class="status-dot"></span>
-      <span>ARCHIVE LIVE</span>
-    </div>
-  </nav>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-eyebrow">Exoplanet Corporation · Terranian Interplanetary Research Authority</div>
-    <h1 class="hero-title">
-      <span class="hero-title-line1">PLANETARY</span>
-      <span class="hero-title-line2">ARCHIVE</span>
-    </h1>
-    <p class="hero-subtitle">
-      The definitive catalogue of known planetary systems, habitability candidates,<br>
-      and colonised worlds beyond the Phebe System.
-    </p>
-    <div class="hero-stats">
-      <div class="hero-stat" id="stat-systems">
-        <div class="hero-stat-num" data-target="0" id="num-systems">0</div>
-        <div class="hero-stat-label">Catalogued Systems</div>
-      </div>
-      <div class="hero-stat-divider"></div>
-      <div class="hero-stat" id="stat-candidates">
-        <div class="hero-stat-num" data-target="0" id="num-candidates">0</div>
-        <div class="hero-stat-label">T-2.0 Candidates</div>
-      </div>
-      <div class="hero-stat-divider"></div>
-      <div class="hero-stat" id="stat-terraformed">
-        <div class="hero-stat-num" data-target="0" id="num-terraformed">0</div>
-        <div class="hero-stat-label">Terraformed Worlds</div>
-      </div>
-    </div>
-    <div class="hero-cta">
-      <a href="catalogued.html" class="btn btn-primary">Browse Catalogue</a>
-      <a href="promising.html" class="btn btn-ghost">Terrania 2.0 Mission</a>
-    </div>
-  </section>
-
-  <!-- SECTION: ABOUT TIRA & EXOCORP -->
-  <section class="about-section">
-    <div class="about-grid">
-      <div class="about-card">
-        <div class="about-card-icon">◈</div>
-        <div class="about-card-label">ABOUT TIRA</div>
-        <h2 class="about-card-title">Terranian Interplanetary Research Authority</h2>
-        <p>TIRA is Terrania's foremost scientific institution, charged with the exploration and study of the cosmos beyond the Phebe System. Its public mandate spans deep-space telescope networks, advanced propulsion research, long-baseline observatories, and crewed exploration programmes. Founded in the early centuries of the Terranian space age, TIRA has remained at the forefront of interstellar discovery for over a millennium.</p>
-      </div>
-      <div class="about-card about-card-highlight">
-        <div class="about-card-icon">◆</div>
-        <div class="about-card-label">ABOUT EXOPLANET CORPORATION</div>
-        <h2 class="about-card-title">Exoplanet Corporation</h2>
-        <p>A semi-independent subsidiary of TIRA, the Exoplanet Corporation operates gravitational-lensing observatories stationed hundreds of AU from the Phebe System's barycentre, achieving kilometre-scale resolution of distant planetary systems. Its singular mission: locate a second Terrania — a world capable of supporting Terranian civilisation — before crewed interstellar travel matures into widespread practice.</p>
-        <p>The Planetary Archive is the Exoplanet Corporation's public-facing catalogue of all known exoplanetary systems and colonisation candidates.</p>
-      </div>
-      <div class="about-card">
-        <div class="about-card-icon">◉</div>
-        <div class="about-card-label">THE TERRANIA 2.0 MISSION</div>
-        <h2 class="about-card-title">Finding a Second Home</h2>
-        <p>With interstellar travel approaching feasibility, the search for a world that can serve as a second cradle for Terranian life has never been more urgent. The Terrania 2.0 programme catalogues promising planetary candidates by habitability index, atmospheric composition, and biosignature potential — ranking the most viable destinations for future colonisation efforts.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- SECTION: QUICK LINKS -->
-  <section class="quicklinks-section">
-    <div class="ql-label">ARCHIVE SECTIONS</div>
-    <div class="quicklinks-grid">
-      <a href="catalogued.html" class="ql-card">
-        <div class="ql-card-num">01</div>
-        <div class="ql-card-title">Catalogued Systems</div>
-        <div class="ql-card-desc">Full listing of all surveyed planetary systems in the Exoplanet Corporation's database, including discovery metadata, system architecture, and life status.</div>
-        <div class="ql-card-arrow">→</div>
+    <!-- NAV -->
+    <nav class="nav">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-icon">⬡</span>
+        <div>
+          <div class="nav-logo-main">
+            <span class="nav-logo-full">PLANETARY ARCHIVE</span
+            ><span class="nav-logo-short">P. ARCHIVE</span>
+          </div>
+          <div class="nav-logo-sub">Exoplanet Corporation · TIRA</div>
+        </div>
       </a>
-      <a href="promising.html" class="ql-card">
-        <div class="ql-card-num">02</div>
-        <div class="ql-card-title">Terrania 2.0 Candidates</div>
-        <div class="ql-card-desc">Shortlisted worlds assessed for habitability, atmospheric suitability, and potential to host or support Terranian life, ranked by the Exoplanet Corporation's scoring models.</div>
-        <div class="ql-card-arrow">→</div>
-      </a>
-      <a href="terraformed.html" class="ql-card">
-        <div class="ql-card-num">03</div>
-        <div class="ql-card-title">Terraformed Worlds</div>
-        <div class="ql-card-desc">A record of planets and moons that have undergone full or partial terraforming operations, with current biosphere and life-origin data.</div>
-        <div class="ql-card-arrow">→</div>
-      </a>
-    </div>
-  </section>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="catalogued.html">Catalogued Systems</a></li>
+        <li><a href="promising.html">Terrania 2.0 Candidates</a></li>
+        <li><a href="terraformed.html">Terraformed Worlds</a></li>
+      </ul>
+      <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-status">
+        <span class="status-dot"></span>
+        <span>ARCHIVE LIVE</span>
+      </div>
+    </nav>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
-    <div class="footer-info">
-      Exoplanet Corporation · A TIRA Subsidiary<br>
-      All data is subject to classification review. Certain systems are omitted by directive of the Terranian government.
-    </div>
-    <div class="footer-copy">© 3000 Terranian Standard · Exoplanet Corporation</div>
-  </footer>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-eyebrow">
+        Exoplanet Corporation · Terranian Interplanetary Research Authority
+      </div>
+      <h1 class="hero-title">
+        <span class="hero-title-line1">PLANETARY</span>
+        <span class="hero-title-line2">ARCHIVE</span>
+      </h1>
+      <p class="hero-subtitle">
+        The definitive catalogue of known planetary systems, habitability
+        candidates,<br />
+        and colonised worlds beyond the Phebe System.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat" id="stat-systems">
+          <div class="hero-stat-num" data-target="0" id="num-systems">0</div>
+          <div class="hero-stat-label">Catalogued Systems</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat" id="stat-candidates">
+          <div class="hero-stat-num" data-target="0" id="num-candidates">0</div>
+          <div class="hero-stat-label">T-2.0 Candidates</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat" id="stat-terraformed">
+          <div class="hero-stat-num" data-target="0" id="num-terraformed">
+            0
+          </div>
+          <div class="hero-stat-label">Terraformed Worlds</div>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <a href="catalogued.html" class="btn btn-primary">Browse Catalogue</a>
+        <a href="promising.html" class="btn btn-ghost">Terrania 2.0 Mission</a>
+      </div>
+    </section>
 
-  <script src="script/starfield.js"></script>
-  <script src="script/data.js"></script>
-  <script src="script/main.js"></script>
-  <script>
-    const btn = document.getElementById("navHamburger");
-    const links = document.querySelector(".nav-links");
-    btn.addEventListener("click", function() {
-      btn.classList.toggle("open");
-      links.classList.toggle("open");
-    });
-    links.querySelectorAll("a").forEach(function(a) {
-      a.addEventListener("click", function() {
-        btn.classList.remove("open");
-        links.classList.remove("open");
+    <!-- SECTION: ABOUT TIRA & EXOCORP -->
+    <section class="about-section">
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-card-icon">◈</div>
+          <div class="about-card-label">ABOUT TIRA</div>
+          <h2 class="about-card-title">
+            Terranian Interplanetary Research Authority
+          </h2>
+          <p>
+            TIRA is Terrania's foremost scientific institution, charged with the
+            exploration and study of the cosmos beyond the Phebe System. Its
+            public mandate spans deep-space telescope networks, advanced
+            propulsion research, long-baseline observatories, and crewed
+            exploration programmes. Founded in the early centuries of the
+            Terranian space age, TIRA has remained at the forefront of
+            interstellar discovery for over a millennium.
+          </p>
+        </div>
+        <div class="about-card about-card-highlight">
+          <div class="about-card-icon">◆</div>
+          <div class="about-card-label">ABOUT EXOPLANET CORPORATION</div>
+          <h2 class="about-card-title">Exoplanet Corporation</h2>
+          <p>
+            A semi-independent subsidiary of TIRA, the Exoplanet Corporation
+            operates gravitational-lensing observatories stationed hundreds of
+            AU from the Phebe System's barycentre, achieving kilometre-scale
+            resolution of distant planetary systems. Its singular mission:
+            locate a second Terrania — a world capable of supporting Terranian
+            civilisation — before crewed interstellar travel matures into
+            widespread practice.
+          </p>
+          <p>
+            The Planetary Archive is the Exoplanet Corporation's public-facing
+            catalogue of all known exoplanetary systems and colonisation
+            candidates.
+          </p>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon">◉</div>
+          <div class="about-card-label">THE TERRANIA 2.0 MISSION</div>
+          <h2 class="about-card-title">Finding a Second Home</h2>
+          <p>
+            With interstellar travel approaching feasibility, the search for a
+            world that can serve as a second cradle for Terranian life has never
+            been more urgent. The Terrania 2.0 programme catalogues promising
+            planetary candidates by habitability index, atmospheric composition,
+            and biosignature potential — ranking the most viable destinations
+            for future colonisation efforts.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: QUICK LINKS -->
+    <section class="quicklinks-section">
+      <div class="ql-label">ARCHIVE SECTIONS</div>
+      <div class="quicklinks-grid">
+        <a href="catalogued.html" class="ql-card">
+          <div class="ql-card-num">01</div>
+          <div class="ql-card-title">Catalogued Systems</div>
+          <div class="ql-card-desc">
+            Full listing of all surveyed planetary systems in the Exoplanet
+            Corporation's database, including discovery metadata, system
+            architecture, and life status.
+          </div>
+          <div class="ql-card-arrow">→</div>
+        </a>
+        <a href="promising.html" class="ql-card">
+          <div class="ql-card-num">02</div>
+          <div class="ql-card-title">Terrania 2.0 Candidates</div>
+          <div class="ql-card-desc">
+            Shortlisted worlds assessed for habitability, atmospheric
+            suitability, and potential to host or support Terranian life, ranked
+            by the Exoplanet Corporation's scoring models.
+          </div>
+          <div class="ql-card-arrow">→</div>
+        </a>
+        <a href="terraformed.html" class="ql-card">
+          <div class="ql-card-num">03</div>
+          <div class="ql-card-title">Terraformed Worlds</div>
+          <div class="ql-card-desc">
+            A record of planets and moons that have undergone full or partial
+            terraforming operations, with current biosphere and life-origin
+            data.
+          </div>
+          <div class="ql-card-arrow">→</div>
+        </a>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
+      <div class="footer-info">
+        Exoplanet Corporation · A TIRA Subsidiary<br />
+        All data is subject to classification review. Certain systems are
+        omitted by directive of the Terranian government.
+      </div>
+      <div class="footer-copy">
+        © 3000 Terranian Standard · Exoplanet Corporation
+      </div>
+    </footer>
+
+    <script src="script/starfield.js"></script>
+    <script src="script/data.js"></script>
+    <script src="script/main.js"></script>
+    <script>
+      const btn = document.getElementById("navHamburger");
+      const links = document.querySelector(".nav-links");
+      btn.addEventListener("click", function () {
+        btn.classList.toggle("open");
+        links.classList.toggle("open");
       });
-    });
-  </script>
-</body>
+      links.querySelectorAll("a").forEach(function (a) {
+        a.addEventListener("click", function () {
+          btn.classList.remove("open");
+          links.classList.remove("open");
+        });
+      });
+    </script>
+  </body>
 </html>
