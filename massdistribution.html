@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mass Distribution Generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #171b26;
+    --surface2:  #1e2333;
+    --surface3:  #252a3a;
+    --border:    #2e3550;
+    --border2:   #3d4566;
+    --text:      #e2e8f0;
+    --muted:     #8899bb;
+    --faint:     #4a567a;
+    --accent-l:  #7c9ef0;   /* moon side — blue */
+    --accent-lh: #a4b8f8;
+    --accent-r:  #c47cf0;   /* planet side — purple */
+    --accent-rh: #d9a8ff;
+    --gold:      #f0c050;
+    --green:     #5ecb8a;
+    --red:       #f07070;
+    --radius:    10px;
+    --radius-sm: 6px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    text-align: center;
+    padding: 24px 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  header h1 { font-size: 22px; font-weight: 600; letter-spacing: .5px; color: var(--text); }
+  header p  { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .panels {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ── Left / Right panel ── */
+  .panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 14px;
+    overflow-y: auto;
+  }
+  .panel-left  { border-right: 1px solid var(--border); }
+
+  .panel-title {
+    font-size: 15px;
+    font-weight: 600;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-left  .panel-title { color: var(--accent-l); }
+  .panel-right .panel-title { color: var(--accent-r); }
+
+  /* ── Form controls ── */
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label  { font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .4px; }
+
+  input[type="number"],
+  select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    padding: 7px 10px;
+    width: 100%;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type="number"]:focus,
+  select:focus { border-color: var(--border2); }
+  input[type="number"]::placeholder { color: var(--faint); }
+  select option { background: var(--surface2); }
+
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* ── Buttons ── */
+  .btn {
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    width: 100%;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-left  { background: var(--accent-l); color: #0a1030; }
+  .btn-right { background: var(--accent-r); color: #180a30; }
+  .btn:hover { opacity: .88; }
+  .btn-clear {
+    background: var(--surface3);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    margin-top: 4px;
+  }
+
+  /* ── Result area ── */
+  .result-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+  .result-box.visible { display: flex; }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .meta-card {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+  }
+  .meta-card .mc-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 3px; }
+  .meta-card .mc-value { font-size: 13px; color: var(--text); font-weight: 500; word-break: break-word; }
+
+  .body-list-header {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .body-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .body-list::-webkit-scrollbar { width: 4px; }
+  .body-list::-webkit-scrollbar-track { background: transparent; }
+  .body-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  .body-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface3);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    gap: 8px;
+  }
+  .body-num   { font-size: 11px; color: var(--faint); min-width: 22px; }
+  .body-mass  { font-size: 13px; font-variant-numeric: tabular-nums; flex: 1; }
+  .body-flag  { font-size: 13px; }
+  .body-bar-wrap { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .body-bar   { height: 100%; border-radius: 2px; }
+  .panel-left  .body-bar { background: var(--accent-l); }
+  .panel-right .body-bar { background: var(--accent-r); }
+
+  .footer-note {
+    font-size: 11px;
+    color: var(--faint);
+    text-align: center;
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+  }
+
+  .error-msg {
+    background: #2a1212;
+    border: 1px solid #6b2020;
+    border-radius: var(--radius-sm);
+    color: var(--red);
+    padding: 10px 12px;
+    font-size: 13px;
+    display: none;
+  }
+  .error-msg.visible { display: block; }
+
+  .inline-warn {
+    background: #2a1a0a;
+    border: 1px solid #6b3a10;
+    border-radius: var(--radius-sm);
+    color: #f0a060;
+    padding: 7px 10px;
+    font-size: 12px;
+    display: none;
+  }
+  .inline-warn.visible { display: block; }
+
+  /* ── Checkbox toggle ── */
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .check-row input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent-l);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .hab-flag-hot  { font-size: 11px; color: #f09060; background: #2a1208; border: 1px solid #6b3010; border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+  .hab-flag-hab  { font-size: 11px; color: #60c080; background: #0a2a12; border: 1px solid #106b30; border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+  .hab-flag-cold { font-size: 11px; color: #80c0f0; background: #081828; border: 1px solid #104866; border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+  .hab-flag-small{ font-size: 11px; color: var(--faint); background: var(--surface3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; white-space: nowrap; }
+
+  .star-only { display: none; }
+
+  .btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+  /* ── Collapsible section ── */
+  .collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 8px 10px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    user-select: none;
+    transition: border-color .15s;
+  }
+  .collapsible-header:hover { border-color: var(--border2); }
+  .collapsible-header span { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .collapsible-chevron { font-size: 11px; color: var(--faint); transition: transform .2s; }
+  .collapsible-chevron.open { transform: rotate(180deg); }
+  .collapsible-body { display: none; flex-direction: column; gap: 10px; padding-top: 2px; }
+  .collapsible-body.open { display: flex; }
+
+  /* ── Zone result table ── */
+  .zone-section { display: flex; flex-direction: column; gap: 8px; }
+  .zone-section-title {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+  }
+  .zone-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .zone-table th { text-align: left; color: var(--faint); font-weight: 500; padding: 4px 6px; font-size: 11px; }
+  .zone-table td { padding: 5px 6px; color: var(--text); border-top: 1px solid var(--border); font-variant-numeric: tabular-nums; }
+  .zone-table tr:first-child td { border-top: none; }
+  .zone-hot  { color: #f09060; }
+  .zone-hz   { color: #60c080; }
+  .zone-frost { color: #80c0f0; }
+  .meta-card.extrap { border-color: #6b3a10; background: #2a1a0a; }
+  .meta-card.extrap .mc-label { color: #f0a060; }
+  .meta-card.extrap .mc-value { color: #f0c080; font-size: 12px; }
+
+  /* ── Divider ── */
+  .divider { width: 1px; background: var(--border); }
+
+  @media (max-width: 700px) {
+    .panels { flex-direction: column; }
+    .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Mass Distribution Generator</h1>
+  <p>Moon mass distribution for planets &nbsp;·&nbsp; Planet mass distribution for brown &amp; red dwarfs</p>
+</header>
+
+<div class="panels">
+
+  <!-- ══════════════ LEFT — Moon Mass Distribution ══════════════ -->
+  <div class="panel panel-left">
+    <div class="panel-title">Moon Mass Distribution</div>
+
+    <div class="field">
+      <label>Parent Planet Mass</label>
+      <div class="row-2">
+        <input type="number" id="l-mass" placeholder="e.g. 317.8" min="0.0001" step="any" oninput="checkMassOverride()" />
+        <select id="l-unit" onchange="checkMassOverride()">
+          <option value="earth">Earth masses (M⊕)</option>
+          <option value="jupiter">Jupiter masses (M♃)</option>
+        </select>
+      </div>
+      <label class="check-row" style="margin-top:4px;">
+        <input type="checkbox" id="l-override" onchange="checkMassOverride()" />
+        Allow super-Jupiter masses (&gt; 13 M♃)
+      </label>
+      <div class="inline-warn" id="l-mass-warn" style="margin-top:4px;"></div>
+    </div>
+
+    <div class="field">
+      <label>Stellar Distance (AU) <span style="font-weight:400;color:var(--faint);">— affects disk budget &amp; theft</span></label>
+      <input type="number" id="l-dist" placeholder="e.g. 2.0 (default 2 AU)" min="0.01" max="50" step="any" />
+    </div>
+
+    <div class="field">
+      <label>Disk Mass Model <span style="font-weight:400;color:var(--faint);">— for gas giants ≥ 2 M♃</span></label>
+      <select id="l-disk-model">
+        <option value="empirical">Empirical — 6.3 × 10⁻⁴ (Dencs &amp; Dobos 2025, allows Earth-mass moons)</option>
+        <option value="canonical">Canonical — 10⁻⁴ (Canup &amp; Ward 2006, conservative lower bound)</option>
+      </select>
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Number of Moons <span style="font-weight:400;color:var(--faint);">— blank = auto</span></label>
+        <input type="number" id="l-count" placeholder="Auto" min="1" step="1" oninput="checkCountDecimal()" />
+        <div class="inline-warn" id="l-count-warn">Moon count must be a whole number — decimals are not allowed.</div>
+      </div>
+      <div class="field">
+        <label>Hill Sphere (AU) <span style="font-weight:400;color:var(--faint);">— blank = calculated</span></label>
+        <input type="number" id="l-hill" placeholder="Auto" min="0.0001" step="any" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Distribution Style</label>
+      <select id="l-style">
+        <option value="auto">Auto-select</option>
+        <option value="saturn">Saturn-like (one dominant + many small)</option>
+        <option value="hybrid">Hybrid (one large + graduated smaller)</option>
+        <option value="galilean">Galilean-like (several comparable masses)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Sort Order</label>
+      <select id="l-sort">
+        <option value="descending">Descending (largest → smallest)</option>
+        <option value="ascending">Ascending (smallest → largest)</option>
+        <option value="random">Random (no sorting)</option>
+      </select>
+    </div>
+
+    <!-- Collapsible stellar parameters (left panel) -->
+    <div>
+      <div class="collapsible-header" onclick="toggleCollapsibleLeft()">
+        <span>Stellar Parameters (optional)</span>
+        <span class="collapsible-chevron" id="l-chevron">▼</span>
+      </div>
+      <div class="collapsible-body" id="l-collapsible">
+        <label class="check-row" style="margin-top:8px;">
+          <input type="checkbox" id="l-binary" onchange="updateBinaryLabels()" />
+          Binary system — inputs below are combined values for both stars
+        </label>
+        <div class="inline-warn" id="l-binary-note" style="display:none; margin-top:4px; color:#a4b8f8; background:#0a1230; border-color:#2e4a80;">
+          For circumbinary (P-type) orbits, enter the <strong>combined</strong> mass (M_A + M_B) and <strong>combined</strong> luminosity (L_A + L_B). For metallicity, enter either star's value — both stars form from the same molecular cloud and will have nearly identical metallicities. Use the same age for both stars.
+        </div>
+        <div class="row-2" style="margin-top:8px;">
+          <div class="field">
+            <label id="l-smass-label">Stellar Mass (M☉)</label>
+            <input type="number" id="l-smass" placeholder="1.0 = solar" min="0.01" max="300" step="any" />
+          </div>
+          <div class="field">
+            <label id="l-slum-label">Luminosity (L☉)</label>
+            <input type="number" id="l-slum" placeholder="1.0 = solar" min="0" step="any" />
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label id="l-sfeh-label">Metallicity [Fe/H] (dex)</label>
+            <input type="number" id="l-sfeh" placeholder="0.0 = solar" min="-2.0" max="0.7" step="0.01" oninput="checkLeftMetallicity()" />
+            <div class="inline-warn" id="l-feh-warn">Metallicity exceeds +0.7 dex — above the supported maximum.</div>
+          </div>
+          <div class="field">
+            <label>Stellar Age (Gyr)</label>
+            <input type="number" id="l-sage" placeholder="e.g. 4.6" min="0.001" max="13.8" step="0.1" />
+          </div>
+        </div>
+        <div class="field">
+          <label id="l-steff-label">Effective Temperature T<sub>eff</sub> (K)</label>
+          <input type="number" id="l-steff" placeholder="5778 = solar" min="0" step="1" />
+        </div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="l-error"></div>
+
+    <button class="btn btn-left" id="l-generate-btn" onclick="generateMoons()">Generate Moon Distribution</button>
+    <button class="btn btn-clear" onclick="clearPanel('l')">Clear</button>
+
+    <div class="result-box" id="l-result">
+      <div class="meta-grid" id="l-meta"></div>
+      <div class="body-list-header" id="l-list-header"></div>
+      <ul class="body-list" id="l-list"></ul>
+      <div class="footer-note">🌕 = mass ≥ ~1 Luna &nbsp;·&nbsp; Habitability: <span class="hab-flag-hab" style="font-size:10px;">habitable</span> <span class="hab-flag-hot" style="font-size:10px;">too hot</span> <span class="hab-flag-cold" style="font-size:10px;">too cold</span> <span class="hab-flag-small" style="font-size:10px;">too small</span> &nbsp;·&nbsp; All values in M⊕</div>
+    </div>
+  </div>
+
+  <!-- ══════════════ RIGHT — Planet Mass Distribution ══════════════ -->
+  <div class="panel panel-right">
+    <div class="panel-title">Planet Mass Distribution</div>
+
+    <div class="field">
+      <label>Parent Body Mass</label>
+      <div class="row-2">
+        <input type="number" id="r-mass" placeholder="e.g. 40" min="0.0001" step="any" oninput="checkSolarLimit()" />
+        <select id="r-unit" onchange="checkSolarLimit()">
+          <option value="jupiter">Jupiter masses (M♃)</option>
+          <option value="solar">Solar masses (M☉)</option>
+          <option value="earth">Earth masses (M⊕)</option>
+        </select>
+      </div>
+      <div class="inline-warn" id="r-solar-warn">Mass exceeds 0.6 M☉ — above the M0 red dwarf limit. Please enter a value within range.</div>
+    </div>
+
+    <div class="field">
+      <label>Number of Planets</label>
+      <input type="number" id="r-count" placeholder="e.g. 7" min="1" step="1" />
+    </div>
+
+    <div class="field">
+      <label>Distribution Style</label>
+      <select id="r-style">
+        <option value="auto">Auto-select</option>
+        <option value="saturn">Saturn-like (one dominant + many small)</option>
+        <option value="hybrid">Hybrid (one large + graduated smaller)</option>
+        <option value="galilean">Galilean-like (several comparable masses)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Sort Order</label>
+      <select id="r-sort">
+        <option value="descending">Descending (largest → smallest)</option>
+        <option value="ascending">Ascending (smallest → largest)</option>
+        <option value="random">Random (no sorting)</option>
+      </select>
+    </div>
+
+    <div class="row-2 star-only" id="r-star-fields">
+      <div class="field">
+        <label>Metallicity [Fe/H] (dex)</label>
+        <input type="number" id="r-feh" placeholder="0.0 = solar" min="-2.0" max="0.7" step="0.01" oninput="checkMetallicityLimit()" />
+        <div class="inline-warn" id="r-feh-warn">Metallicity exceeds +0.7 dex — above the supported maximum. Please enter a value ≤ +0.7.</div>
+      </div>
+      <div class="field">
+        <label>Stellar Age (Gyr)</label>
+        <input type="number" id="r-age" placeholder="e.g. 7.6" min="0.001" max="13.8" step="0.1" />
+      </div>
+    </div>
+
+    <!-- Collapsible stellar parameters -->
+    <div>
+      <div class="collapsible-header" onclick="toggleCollapsible()">
+        <span>Stellar Parameters (optional)</span>
+        <span class="collapsible-chevron" id="r-chevron">▼</span>
+      </div>
+      <div class="collapsible-body" id="r-collapsible">
+        <div class="row-2" style="margin-top:8px;">
+          <div class="field">
+            <label>Luminosity (L<sub>☉</sub>)</label>
+            <input type="number" id="r-lum" placeholder="e.g. 0.0005" min="0" step="any" />
+          </div>
+          <div class="field">
+            <label>Bolometric Luminosity (L<sub>bol,☉</sub>)</label>
+            <input type="number" id="r-lbol" placeholder="e.g. 0.0005" min="0" step="any" />
+          </div>
+        </div>
+        <div class="row-2">
+          <div class="field">
+            <label>Effective Temperature T<sub>eff</sub> (K)</label>
+            <input type="number" id="r-teff" placeholder="e.g. 3000" min="0" step="1" />
+          </div>
+          <div class="field">
+            <label>Star Radius</label>
+            <div style="display:flex; gap:6px;">
+              <input type="number" id="r-radius" placeholder="e.g. 0.12" min="0" step="any" style="flex:1;" />
+              <select id="r-radius-unit" style="width:auto; min-width:80px;">
+                <option value="solar">R☉</option>
+                <option value="jupiter">R♃</option>
+                <option value="earth">R⊕</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="inline-warn" id="r-stellar-inconsist" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="error-msg" id="r-error"></div>
+
+    <button class="btn btn-right" onclick="generatePlanets()">Generate Planet Distribution</button>
+    <button class="btn btn-clear" onclick="clearPanel('r')">Clear</button>
+
+    <div class="result-box" id="r-result">
+      <div class="meta-grid" id="r-meta"></div>
+      <div class="body-list-header" id="r-list-header"></div>
+      <ul class="body-list" id="r-list"></ul>
+      <div class="footer-note">All values in Earth masses (M⊕)</div>
+      <div id="r-zones"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const M_JUP_EARTH  = 317.832;
+const M_SUN_EARTH  = 332946.0;
+const BD_MIN_ME    = 13 * M_JUP_EARTH;
+const BD_MAX_ME    = 80 * M_JUP_EARTH;
+const STAR_MAX_ME  = 0.6 * M_SUN_EARTH;
+const LUNAR_MASS_EARTH = 0.012293627139077726;
+const THRESHOLD_GAS_GIANT    = 50;
+const THRESHOLD_ICE_GIANT    = 10;
+const THRESHOLD_MINI_NEPTUNE =  2;
+const ICY_SCALE       = 1.2335;
+const ICY_EXP         = 0.2948;
+const EARTH_RADIUS_KM = 6371;
+
+function icyRadiusKmToMass(km) {
+  return Math.pow((km / EARTH_RADIUS_KM) / ICY_SCALE, 1 / ICY_EXP);
+}
+
+function classifyBody(me) {
+  if (me < BD_MIN_ME)    return "planet";
+  if (me <= BD_MAX_ME)   return "brown_dwarf";
+  if (me <= STAR_MAX_ME) return "red_dwarf";
+  return "out_of_range";
+}
+
+function getSpectralType(me) {
+  const mj   = me / M_JUP_EARTH;
+  const mSun = me / M_SUN_EARTH;
+  if (mj < 13) return null;
+  if (mj < 80) {
+    if (mj < 20) return `Brown dwarf (~${mj.toFixed(1)} M♃) — M/L-type when young, T/Y-type when old`;
+    if (mj < 40) return `Brown dwarf (~${mj.toFixed(1)} M♃) — L/T-type when young, T/Y-type when old`;
+    return              `Brown dwarf (~${mj.toFixed(1)} M♃) — L-type when young, T-type when old`;
+  }
+  if (mSun < 0.10) return "Red dwarf (M9–M7, ~0.08–0.10 M☉)";
+  if (mSun < 0.15) return "Red dwarf (M7–M5, ~0.10–0.15 M☉)";
+  if (mSun < 0.25) return "Red dwarf (M5–M3, ~0.15–0.25 M☉)";
+  if (mSun < 0.40) return "Red dwarf (M3–M1, ~0.25–0.40 M☉)";
+  return                   "Red dwarf (M1–M0, ~0.40–0.60 M☉)";
+}
+
+function getPlanetType(me, style) {
+  if (me >= THRESHOLD_GAS_GIANT) return "Gas giant";
+  if (me >= THRESHOLD_ICE_GIANT)
+    return style === "saturn"
+      ? "Ice giant (Neptune-like — captured dominant moon)"
+      : "Ice giant (Uranus-like — naturally formed spread)";
+  if (me >= THRESHOLD_MINI_NEPTUNE) return "Mini-Neptune";
+  return "Rocky / Icy planet";
+}
+
+function getMoonMassRatio(me, style, FeH, ageGyr) {
+  const bc = classifyBody(me);
+  if (bc === "brown_dwarf" || bc === "red_dwarf") {
+    const baseRatio = bc === "red_dwarf" ? 1/6000 : 1/10000;
+    const f_met  = Math.pow(10, 0.5 * (FeH ?? 0.0));
+    const mSun   = me / M_SUN_EARTH;
+    const M_ref  = bc === "red_dwarf" ? 0.15 : (40 * M_JUP_EARTH) / M_SUN_EARTH;
+    const f_mass = Math.pow(mSun / M_ref, 0.7);
+    return Math.max(1/50000, Math.min(1/800, baseRatio * f_met * f_mass));
+  }
+  // For gas giants ≥ ~Saturn mass (0.3 Mj): canonical 10^-4
+  // (empirical toggle handled in generateMoons)
+  const mj = me / M_JUP_EARTH;
+  if (mj >= 0.3) return 1e-4;
+  if (me >= THRESHOLD_ICE_GIANT) return style === "saturn" ? 1/4767 : 1/1674;
+  if (me >= THRESHOLD_MINI_NEPTUNE) return 1/20000;
+  return 1/50000;
+}
+
+// ── Stellar theft factor (Dencs & Dobos 2025) ─────────────────────────────
+// Base retention fitted to paper's 10 Mj simulations:
+//   ~60% retained at 1 au, ~68% at 2 au, ~73% at 3 au, ~79% at 5 au
+// Planet mass correction: smaller planets have smaller Hill spheres so the
+// star steals proportionally more. Fitted so that a 1 Mj planet at 5.2 AU
+// around a 1 M☉ star produces ~0.068 M⊕ total Galilean mass (real Jupiter).
+// Scaling: f_planet = (Mj / 10)^0.25 — mild exponent, empirically calibrated.
+function stellarTheftRetainFraction(distAU, mj) {
+  const d  = Math.max(0.1, distAU);
+  const f  = 1 - (0.42 * Math.exp(-0.18 * d) + 0.18);
+  const fBase = Math.max(0.55, Math.min(0.95, f));
+  // Planet mass correction: 1 Mj → ×0.562, 10 Mj → ×1.0, 2 Mj → ×0.669
+  const mjClamped = Math.max(0.3, mj ?? 10);
+  const f_planet  = Math.pow(mjClamped / 10, 0.25);
+  return Math.max(0.20, Math.min(0.95, fBase * f_planet));
+}
+
+function getDefaultStyle(me, FeH, ageGyr, distAU) {
+  const bc = classifyBody(me);
+  if (bc === "brown_dwarf" || bc === "red_dwarf") {
+    const metalRich = (FeH ?? 0) > 0.2;
+    const metalPoor = (FeH ?? 0) < -0.2;
+    const old   = ageGyr !== null && ageGyr > 8;
+    const young = ageGyr !== null && ageGyr < 1;
+    if (metalPoor || old)   return "galilean";
+    if (metalRich && young) return "saturn";
+    if (metalRich)          return "hybrid";
+    return "galilean";
+  }
+  const mj = me / M_JUP_EARTH;
+  if (mj < 0.1)  return "hybrid";   // ice giant / sub-Neptune
+  if (mj <= 0.5) return "hybrid";   // sub-Jupiter / Saturn-mass
+  return "galilean";                 // gas giant > 0.5 Mj
+}
+
+// ── Galilean log-uniform spread (now superseded by per-class spread in distributeMasses) ──
+function galileanLogRange(distAU, spreadRatio) {
+  const R    = spreadRatio ?? (3.0 + Math.min(1.0, (Math.max(0.5, distAU) - 1) / 4));
+  const half = Math.log(Math.sqrt(R));
+  return [-half, half];
+}
+
+function distributeMasses(totalMass, count, style, distAU, maxMoonMass, parentMass) {
+  const cap = (maxMoonMass != null && maxMoonMass > 0) ? maxMoonMass : Infinity;
+
+  // ── Planet-class-dependent physical minimum moon mass ─────────────────
+  const mjP = parentMass != null ? parentMass / M_JUP_EARTH : 10;
+  let PHYS_MIN;
+  if      (mjP >= 0.3)  PHYS_MIN = 0.0000953;  // ~Mimas
+  else if (mjP >= 0.03) PHYS_MIN = 0.000100;   // ~Miranda / small Uranian
+  else                  PHYS_MIN = 1e-5;        // small moonlet
+
+  // ── Planet-class-dependent mass spread ratio ───────────────────────────
+  // Gas giant (≥0.3 Mj):      3–4×   (Galilean-like, tight)
+  // Sub-Jupiter / ice giant:  10–20×  (Saturn non-Titan / Uranus style)
+  // Sub-Neptune:               6–12×
+  let spreadRatio;
+  if      (mjP >= 0.3)  spreadRatio = 3.0 + Math.min(1.0, Math.max(0, distAU - 1) / 4);
+  else if (mjP >= 0.03) spreadRatio = 10  + Math.min(10,  Math.max(0, distAU - 1));
+  else                  spreadRatio = 6   + Math.min(6,   Math.max(0, distAU - 1) / 2);
+
+  // ── Pre-check: reduce count if budget can't support PHYS_MIN per moon ─
+  const spreadFactor = Math.sqrt(spreadRatio);
+  let actualCount = count;
+  while (actualCount > 1 && (totalMass / (actualCount * spreadFactor)) < PHYS_MIN) {
+    actualCount--;
+  }
+
+  let raw = [];
+  if (style === "saturn") {
+    if (actualCount === 1) {
+      raw.push(totalMass);
+    } else {
+      const dom = 0.55 + Math.random() * 0.15;
+      raw.push(totalMass * dom);
+      for (let i = 1; i < actualCount; i++) {
+        const hi = Math.max(150, 700 - (i - 1) * 80);
+        const lo = Math.max(50,  hi - 150);
+        raw.push(icyRadiusKmToMass(lo + Math.random() * (hi - lo)));
+      }
+    }
+    if (raw[0] > cap) raw[0] = cap;
+    return { masses: raw, actualCount };
+  } else if (style === "galilean") {
+    const [lMin, lMax] = galileanLogRange(distAU, spreadRatio);
+    for (let i = 0; i < actualCount; i++)
+      raw.push(Math.exp(lMin + Math.random() * (lMax - lMin)));
+  } else {
+    // hybrid
+    if (actualCount === 1) {
+      raw.push(1.0);
+    } else {
+      const dom = 0.35 + Math.random() * 0.15;
+      raw.push(dom);
+      const rem = 1 - dom;
+      for (let i = 1; i < actualCount; i++) {
+        raw.push(rem * Math.pow(0.75, i) * (0.7 + Math.random() * 0.6));
+      }
+    }
+  }
+
+  const sum = raw.reduce((a,b) => a+b, 0);
+  let masses = raw.map(m => (m / sum) * totalMass);
+
+  // Soft cap: scale entire distribution down proportionally
+  if (cap < Infinity) {
+    const maxM = Math.max(...masses);
+    if (maxM > cap) masses = masses.map(m => m * (cap / maxM));
+  }
+
+  return { masses, actualCount };
+}
+
+function formatMass(m) {
+  if (m === 0) return "0";
+  if (m < 5e-7) return m.toExponential(4);
+  const dec = Math.max(6, Math.ceil(-Math.log10(m)) + 4);
+  return m.toFixed(dec);
+}
+
+const styleLabels = { saturn: "Saturn-like", hybrid: "Hybrid", galilean: "Galilean-like" };
+const sortLabels  = { descending: "Largest → Smallest", ascending: "Smallest → Largest", random: "Unsorted / Random" };
+
+// ── Habitability classification (Dencs & Dobos 2025) ─────────────────────
+// Minimum mass: 1 M_Mars = 0.107 M⊕ (Lammer et al. 2014 / paper threshold)
+// We flag each moon relative to the stellar HZ at the given distance.
+// Simplified approach: at distance d from star with solar-like luminosity,
+// compare moon's expected tidal + stellar flux to HZ limits.
+// For the left panel (no stellar luminosity given), we use a stellar-distance
+// proxy: if d is in the nominal HZ (0.95–1.67 AU for solar), apply full HZ
+// criteria; otherwise flag conservatively.
+const M_MARS_EARTH = 0.107;  // 1 Mars mass in Earth masses
+
+// Rough solar HZ boundaries (AU) — used when no stellar luminosity provided
+const SOLAR_HZ_INNER = 0.95;
+const SOLAR_HZ_OUTER = 1.67;
+const SOLAR_TOO_HOT  = 0.75;  // inside this → too hot even with moons
+
+function classifyMoonHabitability(moonMassEarth, distAU) {
+  if (moonMassEarth < M_MARS_EARTH) return "too_small";
+  // Use stellar distance proxy for solar-like star
+  const d = distAU ?? 2;
+  if (d < SOLAR_TOO_HOT)  return "too_hot";
+  if (d <= SOLAR_HZ_OUTER) return "habitable";
+  // Beyond HZ: tidal heating can extend range (paper finds habitable moons at 2–3 au)
+  // Tidal heating significance increases with distance; beyond ~5 au almost none are habitable
+  if (d <= 3.5) return "habitable";  // tidal heating can compensate per paper results
+  if (d <= 5.0) return "too_cold";   // marginal — paper finds very few habitable at 5 au
+  return "too_cold";
+}
+
+function habFlagHTML(cat) {
+  if (cat === "habitable") return '<span class="hab-flag-hab">habitable</span>';
+  if (cat === "too_hot")   return '<span class="hab-flag-hot">too hot</span>';
+  if (cat === "too_cold")  return '<span class="hab-flag-cold">too cold</span>';
+  if (cat === "too_small") return '<span class="hab-flag-small">too small</span>';
+  return '';
+}
+
+function metaCard(label, value) {
+  const isWarn = label.startsWith('⚠');
+  return `<div class="meta-card${isWarn ? ' extrap' : ''}"><div class="mc-label">${label}</div><div class="mc-value">${value}</div></div>`;
+}
+
+function renderResults(prefix, masses, meta, bodyLabel, distAU) {
+  const box    = document.getElementById(`${prefix}-result`);
+  const metaEl = document.getElementById(`${prefix}-meta`);
+  const hdrEl  = document.getElementById(`${prefix}-list-header`);
+  const listEl = document.getElementById(`${prefix}-list`);
+
+  metaEl.innerHTML = meta.map(([l,v]) => metaCard(l,v)).join('');
+  hdrEl.textContent = `${bodyLabel} Masses`;
+
+  const maxMass = Math.max(...masses);
+  listEl.innerHTML = masses.map((m, i) => {
+    const pct      = maxMass > 0 ? (m / maxMass) * 100 : 0;
+    const lunaFlag = (bodyLabel === "Moon" && m >= LUNAR_MASS_EARTH) ? '<span class="body-flag">🌕</span>' : '';
+    let habFlag    = '';
+    if (bodyLabel === "Moon" && distAU != null) {
+      const cat = classifyMoonHabitability(m, distAU);
+      habFlag   = habFlagHTML(cat);
+    }
+    return `<li class="body-item">
+      <span class="body-num">#${i+1}</span>
+      <span class="body-mass">${formatMass(m)} M⊕</span>
+      ${lunaFlag}${habFlag}
+      <div class="body-bar-wrap"><div class="body-bar" style="width:${pct.toFixed(1)}%"></div></div>
+    </li>`;
+  }).join('');
+
+  box.classList.add('visible');
+}
+
+function showError(prefix, msg) {
+  const el = document.getElementById(`${prefix}-error`);
+  el.textContent = msg;
+  el.classList.add('visible');
+  document.getElementById(`${prefix}-result`).classList.remove('visible');
+}
+function clearError(prefix) {
+  document.getElementById(`${prefix}-error`).classList.remove('visible');
+}
+
+// ── Generate button gating ─────────────────────────────────────────────────
+function updateGenerateButton() {
+  const massWarnVisible  = document.getElementById('l-mass-warn').classList.contains('visible');
+  const countWarnVisible = document.getElementById('l-count-warn').classList.contains('visible');
+  document.getElementById('l-generate-btn').disabled = massWarnVisible || countWarnVisible;
+}
+
+// ── Override checkbox handler ──────────────────────────────────────────────
+function checkMassOverride() {
+  const raw      = parseFloat(document.getElementById('l-mass').value);
+  const unit     = document.getElementById('l-unit').value;
+  const override = document.getElementById('l-override').checked;
+  const warn     = document.getElementById('l-mass-warn');
+  if (!raw || isNaN(raw)) {
+    warn.classList.remove('visible');
+    warn.textContent = '';
+  } else {
+    const me = unit === 'jupiter' ? raw * M_JUP_EARTH : raw;
+    const mj = me / M_JUP_EARTH;
+    if (mj >= 13 && !override) {
+      warn.textContent = `${mj.toFixed(1)} M♃ exceeds the 13 M♃ planet limit. Tick "Allow super-Jupiter masses" to proceed.`;
+      warn.classList.add('visible');
+    } else if (mj >= 13 && override && mj > 80) {
+      warn.textContent = `${mj.toFixed(1)} M♃ is above 80 M♃ (brown dwarf territory). Super-Jupiter moon physics applies up to ~20 M♃.`;
+      warn.classList.add('visible');
+    } else {
+      warn.classList.remove('visible');
+      warn.textContent = '';
+    }
+  }
+  updateGenerateButton();
+}
+
+// ── Decimal moon count handler ─────────────────────────────────────────────
+function checkCountDecimal() {
+  const val  = document.getElementById('l-count').value;
+  const warn = document.getElementById('l-count-warn');
+  if (val !== '' && val !== null && !Number.isInteger(parseFloat(val))) {
+    warn.classList.add('visible');
+  } else {
+    warn.classList.remove('visible');
+  }
+  updateGenerateButton();
+}
+
+// ── Left panel collapsible ────────────────────────────────────────────────
+function toggleCollapsibleLeft() {
+  const body    = document.getElementById('l-collapsible');
+  const chevron = document.getElementById('l-chevron');
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+function checkLeftMetallicity() {
+  const val  = parseFloat(document.getElementById('l-sfeh').value);
+  const warn = document.getElementById('l-feh-warn');
+  if (!isNaN(val) && val > 0.7) warn.classList.add('visible');
+  else warn.classList.remove('visible');
+}
+
+function updateBinaryLabels() {
+  const isBinary = document.getElementById('l-binary').checked;
+  const note     = document.getElementById('l-binary-note');
+  note.style.display = isBinary ? 'block' : 'none';
+  document.getElementById('l-smass-label').textContent = isBinary ? 'Combined Mass (M☉)' : 'Stellar Mass (M☉)';
+  document.getElementById('l-slum-label').textContent  = isBinary ? 'Combined Luminosity (L☉)' : 'Luminosity (L☉)';
+  document.getElementById('l-sfeh-label').textContent  = isBinary ? 'Lum.-weighted [Fe/H] (dex)' : 'Metallicity [Fe/H] (dex)';
+  document.getElementById('l-steff-label').innerHTML   = isBinary ? 'Combined T<sub>eff</sub> (K) — optional' : 'Effective Temperature T<sub>eff</sub> (K)';
+}
+
+// ── Stellar parameter helpers (left panel) ────────────────────────────────
+// Hill sphere radius (AU): R_H = a * (M_pl / 3M_star)^(1/3)
+// Outer disk edge = 0.4 × R_H  (Domingos et al. 2006)
+function hillRadiusAU(distAU, M_pl_earth, M_star_solar) {
+  const M_pl_solar = M_pl_earth / M_SUN_EARTH;
+  return distAU * Math.pow(M_pl_solar / (3 * M_star_solar), 1/3);
+}
+
+// Frost line (AU): d_frost = 2.7 * sqrt(L_star/L_sun)
+// Used to scale ICY_SCALE for disk composition adjustments
+function frostLineAU_star(L_star_solar) {
+  return 2.7 * Math.sqrt(L_star_solar);
+}
+
+// Metallicity disk mass multiplier: f_met = 10^(0.5 * [Fe/H])
+// Higher metallicity → more solid material → larger effective disk
+function metallicityDiskFactor(FeH) {
+  return Math.pow(10, 0.5 * (FeH ?? 0.0));
+}
+
+// Stellar mass theft factor correction:
+// Paper assumed M_star = 1 M☉. For a different stellar mass, the Hill sphere
+// scales as M_star^(-1/3), so theft efficiency scales inversely.
+// More massive star → smaller Hill sphere → more theft → lower retention.
+// We correct the base retention fraction by (1/M_star)^0.2 (empirical exponent).
+function stellarMassTheftCorrection(M_star_solar) {
+  return Math.pow(1.0 / Math.max(0.05, M_star_solar), 0.2);
+}
+
+// Stellar age disk depletion: older systems have had more time for disk
+// erosion and dynamical clearing. We apply a mild age factor:
+// f_age = exp(-age / 10)  → ~0.90 at 1 Gyr, ~0.63 at 5 Gyr, ~0.40 at 9 Gyr
+function ageDiskFactor(ageGyr) {
+  if (ageGyr == null) return 1.0;
+  return Math.exp(-ageGyr / 10);
+}
+
+// ── Auto moon count (Dencs & Dobos 2025 Fig. 5A fit) — defined before generateMoons ──
+
+function autoMoonCount(distAU, M_pl_earth, M_star_solar, style, overrideHillAU) {
+  const M_star = M_star_solar ?? 1.0;
+  const R_hill = overrideHillAU != null ? overrideHillAU : hillRadiusAU(distAU, M_pl_earth, M_star);
+  const R_disk = 0.4 * R_hill;
+  const mj     = M_pl_earth / M_JUP_EARTH;
+
+  // ── Ice giants and sub-Neptunes: fixed realistic counts ───────────────
+  // Uranus/Neptune each have 5 major moons; sub-Neptunes 2–3.
+  // These are not well described by the paper's power law (which is for 2–10 Mj).
+  if (mj < 0.03) {
+    // Sub-Neptune: 1–3 moons
+    const N = style === "saturn" ? 2 : Math.round(1 + Math.random());
+    return Math.max(1, Math.min(3, N));
+  }
+  if (mj < 0.1) {
+    // Ice giant (Uranus/Neptune analogue): target 4–6 moons
+    const base  = 4 + Math.round(Math.random() * 2);
+    const f_sty = style === "saturn" ? 0.6 : style === "hybrid" ? 0.8 : 1.0;
+    return Math.max(2, Math.min(6, Math.round(base * f_sty)));
+  }
+  if (mj <= 0.5) {
+    // Sub-Jupiter / Saturn-mass (0.1–0.5 Mj): target 4–7 moons
+    const base  = 4 + Math.round(Math.random() * 3);
+    const f_sty = style === "saturn" ? 0.7 : style === "hybrid" ? 0.85 : 1.0;
+    return Math.max(2, Math.min(7, Math.round(base * f_sty)));
+  }
+
+  // ── Gas giants (> 0.5 Mj): split by whether in paper's mass range ─────
+  const N_all  = 62 * Math.pow(Math.max(1e-6, R_disk), 0.93);
+  const f_mass = Math.pow(Math.max(0.3, mj) / 10, 0.15);
+
+  if (style === "saturn") {
+    const N_smalls = Math.round(Math.max(2, N_all * f_mass * 0.4));
+    return Math.max(2, Math.min(20, N_smalls));
+  }
+
+  // f_major (sub-Mars filter) only valid for paper's 2–10 Mj range
+  const inPaperMassRange = mj >= 2 && mj <= 10;
+  const f_major = inPaperMassRange
+    ? Math.exp(-0.15 * Math.max(0.5, distAU))
+    : 1.0;
+  const N_major = N_all * f_major * f_mass;
+
+  if (style === "hybrid") return Math.max(1, Math.min(6,  Math.round(N_major * 0.7)));
+  return                         Math.max(1, Math.min(8,  Math.round(N_major)));
+}
+
+// ── Moon panel ──────────────────────────────────────────────────────────────
+function generateMoons() {
+  clearError('l');
+  const rawMass  = parseFloat(document.getElementById('l-mass').value);
+  const unit     = document.getElementById('l-unit').value;
+  const countRaw = document.getElementById('l-count').value;
+  const hillRaw  = document.getElementById('l-hill').value;
+  const styleIn  = document.getElementById('l-style').value;
+  const sortIn   = document.getElementById('l-sort').value;
+  const override  = document.getElementById('l-override').checked;
+  const isBinary  = document.getElementById('l-binary').checked;
+  const distRaw   = document.getElementById('l-dist').value;
+  const distAU    = distRaw !== '' ? parseFloat(distRaw) : 2.0;
+  const diskModel = document.getElementById('l-disk-model').value;
+
+  // Stellar inputs
+  const sMassRaw = document.getElementById('l-smass').value;
+  const sLumRaw  = document.getElementById('l-slum').value;
+  const sFehRaw  = document.getElementById('l-sfeh').value;
+  const sAgeRaw  = document.getElementById('l-sage').value;
+  const sTeffRaw = document.getElementById('l-steff').value;
+
+  const M_star = sMassRaw !== '' ? parseFloat(sMassRaw) : 1.0;
+  const L_star = sLumRaw  !== '' ? parseFloat(sLumRaw)  : null;
+  const FeH    = sFehRaw  !== '' ? parseFloat(sFehRaw)  : 0.0;
+  const ageGyr = sAgeRaw  !== '' ? parseFloat(sAgeRaw)  : null;
+  const T_eff  = sTeffRaw !== '' ? parseFloat(sTeffRaw) : null;
+
+  if (!rawMass || rawMass <= 0) return showError('l', 'Please enter a valid parent planet mass.');
+  if (isNaN(distAU) || distAU <= 0) return showError('l', 'Please enter a valid stellar distance (AU > 0).');
+  if (FeH > 0.7)  return showError('l', 'Metallicity exceeds +0.7 dex — above the supported maximum.');
+  if (FeH < -2.0) return showError('l', 'Metallicity is below −2.0 dex — below the supported minimum.');
+
+  let parentMass = unit === 'jupiter' ? rawMass * M_JUP_EARTH : rawMass;
+  const mj = parentMass / M_JUP_EARTH;
+  const bc = classifyBody(parentMass);
+
+  if (bc !== "planet") {
+    if (!override || mj > 80) {
+      return showError('l', `Parent mass (${mj.toFixed(1)} M♃) is above the planet limit (13 M♃). Tick "Allow super-Jupiter masses" to proceed, or use the right panel for brown/red dwarfs.`);
+    }
+  }
+
+  // ── Style ──────────────────────────────────────────────────────────────
+  const style = styleIn === "auto" ? getDefaultStyle(parentMass, null, null, distAU) : styleIn;
+
+  // ── Hill sphere — manual override or calculated ────────────────────────
+  const hillManual   = hillRaw !== '' ? parseFloat(hillRaw) : null;
+  const hillCalc     = hillRadiusAU(distAU, parentMass, M_star);
+  const hillAU       = (hillManual != null && hillManual > 0) ? hillManual : hillCalc;
+  const hillIsManual = (hillManual != null && hillManual > 0);
+
+  // ── Auto moon count using resolved Hill sphere ─────────────────────────
+  const countIsAuto = countRaw === '' || countRaw == null;
+  let count;
+  if (countIsAuto) {
+    count = autoMoonCount(distAU, parentMass, M_star, style, hillAU);
+  } else {
+    count = parseInt(countRaw);
+    if (!count || count < 1) return showError('l', 'Please enter a valid moon count (≥ 1).');
+  }
+
+  // ── Planet class detection ─────────────────────────────────────────────
+  // isGasGiant:    > 0.5 Mj (Jupiter and above)
+  // isSubJupiter:  0.1–0.5 Mj (Saturn-mass through warm Saturn / sub-Jupiter)
+  // isIceGiant:    0.03–0.1 Mj (~10–32 M⊕, Uranus/Neptune analogues)
+  // isSubNeptune:  THRESHOLD_MINI_NEPTUNE–0.03 Mj (~2–10 M⊕)
+  // else:          rocky / very small — no cap, tiny budget
+  const isGasGiant    = mj >  0.5;
+  const isSubJupiter  = mj >= 0.1  && mj <= 0.5;
+  const isIceGiant    = mj >= 0.03 && mj <  0.1;
+  const isSubNeptune  = parentMass >= THRESHOLD_MINI_NEPTUNE && mj < 0.03;
+
+  // ── Disk mass ratio ────────────────────────────────────────────────────
+  let diskRatio;
+  if (isGasGiant) {
+    diskRatio = diskModel === 'empirical' ? 6.3e-4 : 1e-4;
+  } else if (isSubJupiter) {
+    // Between Saturn and Neptune — use hybrid anchor, slightly above ice giant
+    diskRatio = style === 'saturn' ? 1/4767 : 1/3000;
+  } else {
+    diskRatio = getMoonMassRatio(parentMass, style, null, null);
+  }
+
+  // ── Stellar corrections ────────────────────────────────────────────────
+  const f_met = metallicityDiskFactor(FeH);
+  const f_age = ageGyr != null ? Math.exp(-ageGyr / 30) : 1.0;
+  const f_stellar_corr = Math.max(0.5, Math.min(2.0, f_met * f_age));
+  const f_disk = (isGasGiant || isSubJupiter) ? f_stellar_corr : 1.0;
+  const rawDiskMass = parentMass * diskRatio * f_disk;
+
+  // ── Stellar theft ──────────────────────────────────────────────────────
+  const baseRetain  = stellarTheftRetainFraction(distAU, mj);
+  const massCorrect = stellarMassTheftCorrection(M_star);
+  const retainFrac  = Math.max(0.15, Math.min(0.95, baseRetain * massCorrect));
+  const totalBudget = rawDiskMass * retainFrac;
+
+  // ── Extrapolation flag ─────────────────────────────────────────────────
+  const inPaperRange  = mj >= 2 && mj <= 10;
+  const isExtrapolated = inPaperRange && (distAU < 1.0 || distAU > 5.0);
+
+  // ── Distance-dependent mass scaling ───────────────────────────────────
+  // Only applied to gas giants and sub-Jupiters (paper's regime).
+  // α scales with planet mass so lighter planets decay more slowly.
+  // Hard floor scales up for lighter planets so they never hit asteroid sizes:
+  //   10 Mj: floor=0.05,  1 Mj: floor=0.12,  0.3 Mj: floor=0.18
+  let f_dist = 1.0;
+  if (isGasGiant || isSubJupiter) {
+    const alpha    = 0.45 * Math.pow(Math.max(0.1, mj) / 10, 0.4);
+    const floorVal = Math.min(0.25, 0.05 * Math.pow(10 / Math.max(0.1, mj), 0.2));
+    f_dist = Math.max(floorVal, Math.exp(-alpha * Math.max(0, distAU - 1)));
+  }
+  const effectiveBudget = totalBudget * f_dist;
+
+  // ── Planet-class-dependent moon mass cap ──────────────────────────────
+  // Gas giant:   anchored on paper Fig 5B / Ganymede, decays with distance
+  // Sub-Jupiter: anchored on Titan (0.0225 M⊕ for Saturn at 0.299 Mj)
+  //              scales as 0.0225 × (mj/0.299)^0.6
+  // Ice giant:   anchored on Titania (0.00593 M⊕ for Uranus at 0.046 Mj)
+  //              scales as 0.00593 × (mj/0.046)^0.5
+  // Sub-Neptune: 1/500 of planet mass in M⊕
+  const f_cap_dist = (isGasGiant || isSubJupiter)
+    ? Math.pow(Math.max(1.0, distAU), -0.22)
+    : 1.0;
+
+  let maxMoonMass = null;
+  if (isGasGiant) {
+    const baseCap = diskModel === 'empirical'
+      ? 0.74 * Math.pow(Math.max(0.3, mj) / 10, 0.7)
+      : 0.025 * Math.pow(Math.max(0.3, mj), 0.65);
+    maxMoonMass = baseCap * f_cap_dist;
+  } else if (isSubJupiter) {
+    maxMoonMass = 0.0225 * Math.pow(mj / 0.299, 0.6) * f_cap_dist;
+  } else if (isIceGiant) {
+    maxMoonMass = 0.00593 * Math.pow(mj / 0.046, 0.5);
+  } else if (isSubNeptune) {
+    maxMoonMass = parentMass / 500;
+  }
+
+  let { masses, actualCount: distributedCount } = distributeMasses(effectiveBudget, count, style, distAU, maxMoonMass, parentMass);
+  if (sortIn === "descending") masses.sort((a,b) => b-a);
+  else if (sortIn === "ascending") masses.sort((a,b) => a-b);
+
+  // ── Display strings ────────────────────────────────────────────────────
+  const parentDisplay = unit === 'jupiter'
+    ? `${rawMass.toFixed(4)} M♃ (${parentMass.toFixed(2)} M⊕)`
+    : `${rawMass.toLocaleString(undefined,{maximumFractionDigits:4})} M⊕`;
+
+  const theftPct = ((1 - retainFrac) * 100).toFixed(0);
+  const frostAU  = L_star != null ? frostLineAU_star(L_star) : null;
+
+  let starTypeLabel = isBinary
+    ? `${M_star.toFixed(2)} M☉ combined (binary)`
+    : `${M_star.toFixed(2)} M☉`;
+  if (T_eff) starTypeLabel += `, T_eff ${Math.round(T_eff)} K`;
+
+  const meta = [
+    ["Parent Mass",        parentDisplay],
+    ["Planet Type",        mj >= 13 ? `Super-Jupiter (~${mj.toFixed(1)} M♃)` : getPlanetType(parentMass, style)],
+    ["Host Star",          starTypeLabel],
+    ...(isBinary ? [["System Type", "Circumbinary (P-type orbit)"]] : []),
+    ["Stellar Distance",   `${distAU.toFixed(2)} AU`],
+    ["Hill Radius",        `${hillAU.toFixed(4)} AU${hillIsManual ? " (manual)" : " (calculated)"}`],
+    ["System Style",       styleLabels[style]],
+    ["Moon Count",         countIsAuto
+      ? `${masses.length} (auto-generated${distributedCount < count ? `, reduced from ${count} — budget too small for more` : ''})`
+      : `${masses.length} (user-set${distributedCount < count ? `, reduced from ${count} — budget too small for more` : ''})`],
+    ["Raw Disk Budget",    `${formatMass(rawDiskMass)} M⊕`],
+    ["Stellar Theft Loss", `~${theftPct}% removed`],
+    ["Net Moon Budget",    `${formatMass(totalBudget)} M⊕`],
+    ...(maxMoonMass != null ? [["Max Moon Mass", `${maxMoonMass.toFixed(5)} M⊕`]] : []),
+    ...(isExtrapolated ? [["⚠ Extrapolation", `${distAU.toFixed(1)} AU is outside the paper's simulated range (1–5 AU for 2–10 M♃ planets) — results are extrapolated and less certain`]] : []),
+    ["Disk/Planet Ratio",  isGasGiant
+      ? (diskModel === 'empirical' ? "6.3 × 10⁻⁴ (empirical)" : "1 × 10⁻⁴ (canonical)")
+      : `1 : ${Math.round(1/diskRatio).toLocaleString()}`],
+    ...(FeH !== 0.0 || sFehRaw !== '' ? [["Metallicity [Fe/H]", `${FeH >= 0 ? '+' : ''}${FeH.toFixed(2)} dex${isBinary ? " (lum.-weighted)" : ""}`]] : []),
+    ...(ageGyr != null ? [["Stellar Age", `${ageGyr.toFixed(1)} Gyr`]] : []),
+    ...(frostAU != null ? [["Frost Line", `${frostAU.toFixed(3)} AU`]] : []),
+    ["Sort Order",         sortLabels[sortIn]],
+  ];
+
+  renderResults('l', masses, meta, "Moon", distAU);
+}
+
+// ── Planet panel ─────────────────────────────────────────────────────────────
+// Always show star fields on right panel
+document.getElementById('r-star-fields').style.display = 'grid';
+
+function checkSolarLimit() {
+  const rawMass = parseFloat(document.getElementById('r-mass').value);
+  const unit    = document.getElementById('r-unit').value;
+  const warn    = document.getElementById('r-solar-warn');
+  if (!rawMass || isNaN(rawMass)) { warn.classList.remove('visible'); return; }
+  let me;
+  if      (unit === 'jupiter') me = rawMass * M_JUP_EARTH;
+  else if (unit === 'solar')   me = rawMass * M_SUN_EARTH;
+  else                         me = rawMass;
+  if (me > STAR_MAX_ME) warn.classList.add('visible');
+  else warn.classList.remove('visible');
+}
+
+function checkMetallicityLimit() {
+  const val  = parseFloat(document.getElementById('r-feh').value);
+  const warn = document.getElementById('r-feh-warn');
+  if (!isNaN(val) && val > 0.7) warn.classList.add('visible');
+  else warn.classList.remove('visible');
+}
+
+function toggleCollapsible() {
+  const body    = document.getElementById('r-collapsible');
+  const chevron = document.getElementById('r-chevron');
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+// ── Stellar physics constants ──────────────────────────────────────────────
+const SIGMA      = 5.670374419e-8;  // W m^-2 K^-4
+const L_SUN_W    = 3.828e26;        // W
+const R_SUN_M    = 6.957e8;         // m
+const R_JUP_M    = 7.1492e7;        // m
+const R_EARTH_M  = 6.371e6;         // m
+const AU_M       = 1.495978707e11;  // m
+
+// Convert radius input to solar radii
+function toSolarRadii(val, unit) {
+  if (unit === 'solar')   return val;
+  if (unit === 'jupiter') return val * (R_JUP_M / R_SUN_M);
+  if (unit === 'earth')   return val * (R_EARTH_M / R_SUN_M);
+}
+
+// Derive Teff from L and R: T = (L / 4πR²σ)^0.25
+function teffFromLR(L_sun, R_sun) {
+  const L = L_sun * L_SUN_W;
+  const R = R_sun * R_SUN_M;
+  return Math.pow(L / (4 * Math.PI * R * R * SIGMA), 0.25);
+}
+
+// Derive R from L and T: R = sqrt(L / 4πσT^4)
+function radiusFromLT(L_sun, Teff) {
+  const L = L_sun * L_SUN_W;
+  return Math.sqrt(L / (4 * Math.PI * SIGMA * Math.pow(Teff, 4))) / R_SUN_M;
+}
+
+// ── Spectral type from Teff (Pecaut & Mamajek 2013 / standard tables) ──────
+// Returns a descriptive string. Covers Y/T/L brown dwarfs + M/K range.
+function spectralTypeFromTeff(Teff) {
+  if (Teff < 500)  return `Y dwarf (T_eff < 500 K)`;
+  if (Teff < 700)  return `Y dwarf (~${Math.round(Teff)} K)`;
+  if (Teff < 1300) return `T dwarf (~${Math.round(Teff)} K)`;
+  if (Teff < 1400) return `T/L dwarf (~${Math.round(Teff)} K)`;
+  if (Teff < 2000) return `L dwarf (~${Math.round(Teff)} K)`;
+  if (Teff < 2200) return `L/M dwarf (~${Math.round(Teff)} K)`;
+  if (Teff < 2400) return `M9–M8 (~${Math.round(Teff)} K)`;
+  if (Teff < 2600) return `M8–M7 (~${Math.round(Teff)} K)`;
+  if (Teff < 2800) return `M7–M6 (~${Math.round(Teff)} K)`;
+  if (Teff < 2940) return `M6–M5 (~${Math.round(Teff)} K)`;
+  if (Teff < 3050) return `M5 (~${Math.round(Teff)} K)`;
+  if (Teff < 3200) return `M4–M5 (~${Math.round(Teff)} K)`;
+  if (Teff < 3350) return `M4 (~${Math.round(Teff)} K)`;
+  if (Teff < 3500) return `M3–M4 (~${Math.round(Teff)} K)`;
+  if (Teff < 3650) return `M3 (~${Math.round(Teff)} K)`;
+  if (Teff < 3800) return `M2–M3 (~${Math.round(Teff)} K)`;
+  if (Teff < 3950) return `M2 (~${Math.round(Teff)} K)`;
+  if (Teff < 4100) return `M1–M2 (~${Math.round(Teff)} K)`;
+  if (Teff < 4200) return `M1 (~${Math.round(Teff)} K)`;
+  if (Teff < 4400) return `M0–M1 (~${Math.round(Teff)} K)`;
+  return `M0 or earlier (~${Math.round(Teff)} K)`;
+}
+
+// ── Habitable zone calculations (Kopparapu et al. 2013/2014) ─────────────
+// Uses polynomial coefficients for flux limits, then d = sqrt(L/S) in AU.
+// Zones: Recent Venus (inner hot edge), Runaway Greenhouse (HZ inner),
+//        Moist Greenhouse (mid-HZ), Maximum Greenhouse (HZ outer),
+//        Early Mars (outer frost-adjacent), and frost line (snow line).
+//
+// Kopparapu+2013 Table 3 coefficients for S_eff:
+// S_eff = S_sun + a*T* + b*T*^2 + c*T*^3 + d*T*^4  where T* = Teff - 5780
+// Limits (in order): Recent Venus, Runaway Greenhouse, Moist Greenhouse,
+//                    Maximum Greenhouse, Early Mars
+const KOP_COEFFS = {
+  //            S_sun      a           b            c             d
+  recentVenus: [1.7763,  1.4335e-4,  3.3954e-9, -7.6364e-12, -1.1950e-15],
+  runaway:     [1.0385,  1.2456e-4,  1.4612e-8, -7.6345e-12, -1.7511e-15],
+  moistGH:     [1.0146,  8.1884e-5,  1.9394e-9, -4.3618e-12, -6.8260e-16],
+  maxGH:       [0.3507,  5.9578e-5,  1.6707e-9, -3.0058e-12, -5.1925e-16],
+  earlyMars:   [0.3207,  5.4471e-5,  1.5275e-9, -2.1709e-12, -3.8282e-16],
+};
+
+function sEff(coeffs, Teff) {
+  const T = Teff - 5780;
+  return coeffs[0] + coeffs[1]*T + coeffs[2]*T**2 + coeffs[3]*T**3 + coeffs[4]*T**4;
+}
+
+// Distance for a given flux limit (AU): d = sqrt(L_bol / S_eff)
+function zoneAU(L_bol, Teff, coeffs) {
+  return Math.sqrt(L_bol / sEff(coeffs, Teff));
+}
+
+// Frost / snow line: d_frost ≈ 2.7 * sqrt(L_bol) AU  (Hayashi 1981 scaling)
+// More precise version: d = (L_bol/L_sun)^0.5 * 2.7 AU
+function frostLineAU(L_bol) {
+  return 2.7 * Math.sqrt(L_bol);
+}
+
+// Format AU distance
+function fmtAU(au) {
+  if (au < 0.01) return au.toExponential(3) + ' AU';
+  if (au < 0.1)  return au.toFixed(4) + ' AU';
+  if (au < 10)   return au.toFixed(3) + ' AU';
+  return au.toFixed(2) + ' AU';
+}
+
+// ── Build zone results HTML ────────────────────────────────────────────────
+function buildZoneHTML(L_bol, Teff, spectralOverride, inconsistNote) {
+  const rv  = zoneAU(L_bol, Teff, KOP_COEFFS.recentVenus);
+  const rw  = zoneAU(L_bol, Teff, KOP_COEFFS.runaway);
+  const mg  = zoneAU(L_bol, Teff, KOP_COEFFS.moistGH);
+  const mxg = zoneAU(L_bol, Teff, KOP_COEFFS.maxGH);
+  const em  = zoneAU(L_bol, Teff, KOP_COEFFS.earlyMars);
+  const fl  = frostLineAU(L_bol);
+
+  // "Too hot" zone: star surface → Recent Venus limit
+  // inner edge = undefined (stellar surface), outer = Recent Venus
+  // We'll show: inner = ~ stellar surface (informational), mid = midpoint, outer = Recent Venus
+  const hotOuter = rv;
+  const hotMid   = rv * 0.5; // midpoint approximation inward
+
+  // HZ: Runaway Greenhouse (inner) → Maximum Greenhouse (outer), mid = Moist Greenhouse
+  const hzInner = rw;
+  const hzMid   = mg;
+  const hzOuter = mxg;
+
+  // Frost line zone: Early Mars (inner) → frost line midpoint → outer (1.5x frost)
+  const frInner = em;
+  const frMid   = fl;
+  const frOuter = fl * 1.5;
+
+  let html = '';
+  if (inconsistNote) html += `<div class="warn-note">${inconsistNote}</div>`;
+
+  html += `<div class="zone-section">
+    <div class="zone-section-title">Stellar Zones</div>
+    <table class="zone-table">
+      <thead><tr>
+        <th>Zone</th><th>Inner edge</th><th>Middle</th><th>Outer edge</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td class="zone-hot">Too Hot</td>
+          <td class="zone-hot">—</td>
+          <td class="zone-hot">${fmtAU(hotMid)}</td>
+          <td class="zone-hot">${fmtAU(hotOuter)}</td>
+        </tr>
+        <tr>
+          <td class="zone-hz">Habitable</td>
+          <td class="zone-hz">${fmtAU(hzInner)}</td>
+          <td class="zone-hz">${fmtAU(hzMid)}</td>
+          <td class="zone-hz">${fmtAU(hzOuter)}</td>
+        </tr>
+        <tr>
+          <td class="zone-frost">Frost Line</td>
+          <td class="zone-frost">${fmtAU(frInner)}</td>
+          <td class="zone-frost">${fmtAU(frMid)}</td>
+          <td class="zone-frost">${fmtAU(frOuter)}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="font-size:11px;color:var(--faint);margin-top:2px;">
+      HZ boundaries: Kopparapu et al. 2013 &nbsp;·&nbsp; Frost line: Hayashi 1981 scaling &nbsp;·&nbsp; T<sub>eff</sub> used: ${Math.round(Teff)} K
+    </div>
+  </div>`;
+
+  return html;
+}
+
+function toggleCollapsible() {
+  const body    = document.getElementById('r-collapsible');
+  const chevron = document.getElementById('r-chevron');
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+function checkSolarLimit() {
+  const rawMass = parseFloat(document.getElementById('r-mass').value);
+  const unit    = document.getElementById('r-unit').value;
+  const warn    = document.getElementById('r-solar-warn');
+  if (!rawMass || isNaN(rawMass)) { warn.classList.remove('visible'); return; }
+  let me;
+  if      (unit === 'jupiter') me = rawMass * M_JUP_EARTH;
+  else if (unit === 'solar')   me = rawMass * M_SUN_EARTH;
+  else                         me = rawMass;
+  if (me > STAR_MAX_ME) warn.classList.add('visible');
+  else warn.classList.remove('visible');
+}
+
+function checkMetallicityLimit() {
+  const val  = parseFloat(document.getElementById('r-feh').value);
+  const warn = document.getElementById('r-feh-warn');
+  if (!isNaN(val) && val > 0.7) warn.classList.add('visible');
+  else warn.classList.remove('visible');
+}
+
+function generatePlanets() {
+  clearError('r');
+  document.getElementById('r-zones').innerHTML = '';
+  const rawMass = parseFloat(document.getElementById('r-mass').value);
+  const unit    = document.getElementById('r-unit').value;
+  const count   = parseInt(document.getElementById('r-count').value);
+  const styleIn = document.getElementById('r-style').value;
+  const sortIn  = document.getElementById('r-sort').value;
+  const fehRaw  = document.getElementById('r-feh').value;
+  const ageRaw  = document.getElementById('r-age').value;
+
+  // Stellar parameter inputs
+  const lumRaw    = document.getElementById('r-lum').value;
+  const lbolRaw   = document.getElementById('r-lbol').value;
+  const teffRaw   = document.getElementById('r-teff').value;
+  const radRaw    = document.getElementById('r-radius').value;
+  const radUnit   = document.getElementById('r-radius-unit').value;
+
+  if (!rawMass || rawMass <= 0) return showError('r', 'Please enter a valid parent body mass.');
+  if (!count   || count < 1)   return showError('r', 'Please enter a valid planet count (≥ 1).');
+
+  const fehVal = fehRaw !== '' ? parseFloat(fehRaw) : null;
+  if (fehVal !== null && fehVal > 0.7)  return showError('r', 'Metallicity exceeds +0.7 dex — above the supported maximum.');
+  if (fehVal !== null && fehVal < -2.0) return showError('r', 'Metallicity is below −2.0 dex — below the supported minimum.');
+
+  let parentMass;
+  if      (unit === 'jupiter') parentMass = rawMass * M_JUP_EARTH;
+  else if (unit === 'solar')   parentMass = rawMass * M_SUN_EARTH;
+  else                         parentMass = rawMass;
+
+  const bc = classifyBody(parentMass);
+  if (bc === "out_of_range") return showError('r', 'Mass exceeds 0.6 M☉ (M0 red dwarf limit). This tool supports brown dwarfs (13–80 M♃) and M-dwarf stars (up to 0.6 M☉).');
+  if (bc === "planet")       return showError('r', 'Parent body is too light to be a brown dwarf (< 13 M♃). Use the left panel for planets, or increase the mass.');
+
+  const FeH    = fehRaw !== '' ? parseFloat(fehRaw) : 0.0;
+  const ageGyr = ageRaw !== '' ? parseFloat(ageRaw) : null;
+
+  const style       = styleIn === "auto" ? getDefaultStyle(parentMass, FeH, ageGyr, null) : styleIn;
+  const ratio       = getMoonMassRatio(parentMass, style, FeH, ageGyr);
+  const totalBudget = parentMass * ratio;
+
+  let { masses } = distributeMasses(totalBudget, count, style, null, null);
+  if (sortIn === "descending") masses.sort((a,b) => b-a);
+  else if (sortIn === "ascending") masses.sort((a,b) => a-b);
+
+  let parentDisplay;
+  if (unit === 'solar')
+    parentDisplay = `${rawMass.toLocaleString(undefined,{maximumFractionDigits:6})} M☉ (${(parentMass/M_JUP_EARTH).toFixed(2)} M♃)`;
+  else if (unit === 'jupiter')
+    parentDisplay = `${rawMass.toFixed(4)} M♃ (${parentMass.toFixed(2)} M⊕)`;
+  else
+    parentDisplay = `${rawMass.toLocaleString(undefined,{maximumFractionDigits:4})} M⊕`;
+
+  // ── Resolve stellar parameters ──────────────────────────────────────────
+  const hasLum    = lumRaw  !== '' && !isNaN(parseFloat(lumRaw));
+  const hasLbol   = lbolRaw !== '' && !isNaN(parseFloat(lbolRaw));
+  const hasTeff   = teffRaw !== '' && !isNaN(parseFloat(teffRaw));
+  const hasRadius = radRaw  !== '' && !isNaN(parseFloat(radRaw));
+
+  const L_lum  = hasLum    ? parseFloat(lumRaw)  : null;
+  const L_bol  = hasLbol   ? parseFloat(lbolRaw) : null;
+  const T_in   = hasTeff   ? parseFloat(teffRaw) : null;
+  const R_in   = hasRadius ? toSolarRadii(parseFloat(radRaw), radUnit) : null;
+
+  // Resolve effective temperature (used for spectral type + zones)
+  // Priority: explicit Teff > derived from L_bol+R > derived from L+R
+  let resolvedTeff = null;
+  let resolvedR    = R_in;
+  let resolvedLbol = L_bol ?? L_lum; // fall back to L if no L_bol
+  let inconsistNote = null;
+
+  if (T_in) {
+    resolvedTeff = T_in;
+    // If we also have L and R, check consistency: expected T from L,R
+    if (resolvedLbol && R_in) {
+      const expectedT = teffFromLR(resolvedLbol, R_in);
+      const pctDiff   = Math.abs(expectedT - T_in) / T_in * 100;
+      if (pctDiff > 10) {
+        inconsistNote = `Note: The provided T_eff (${Math.round(T_in)} K) differs from the value implied by L_bol + R (${Math.round(expectedT)} K) by ${pctDiff.toFixed(0)}%. Using your T_eff for spectral type and zones.`;
+      }
+    }
+    // If T and L but no R, derive R
+    if (resolvedLbol && !R_in) resolvedR = radiusFromLT(resolvedLbol, T_in);
+  } else if (resolvedLbol && R_in) {
+    resolvedTeff = teffFromLR(resolvedLbol, R_in);
+  } else if (resolvedLbol) {
+    // Estimate Teff from bolometric luminosity using Stefan-Boltzmann
+    // with mass-based radius estimate for M dwarfs: R ≈ M^0.8 (solar units)
+    const mSun = parentMass / M_SUN_EARTH;
+    const Restim = Math.pow(mSun, 0.8);
+    resolvedTeff = teffFromLR(resolvedLbol, Restim);
+    resolvedR    = Restim;
+  }
+
+  // Spectral type: override with Teff-based if stellar params provided
+  const hasAnyStarParam = hasLum || hasLbol || hasTeff || hasRadius;
+  let spectralLabel;
+  if (hasAnyStarParam && resolvedTeff) {
+    spectralLabel = spectralTypeFromTeff(resolvedTeff);
+  } else {
+    spectralLabel = getSpectralType(parentMass) ?? "Unknown";
+  }
+
+  const meta = [
+    ["Parent Mass",          parentDisplay],
+    ["Star Type",            spectralLabel],
+    ["System Style",         styleLabels[style]],
+    ["Total Planet Budget",  `${formatMass(totalBudget)} M⊕`],
+    ["Mass Ratio",           `1 : ${Math.round(1/ratio).toLocaleString()}`],
+    ["Sort Order",           sortLabels[sortIn]],
+    ["Metallicity [Fe/H]",   fehRaw !== '' ? `${FeH >= 0 ? '+' : ''}${FeH.toFixed(2)} dex` : "0.00 dex (solar)"],
+    ["Stellar Age",          ageGyr !== null ? `${ageGyr.toFixed(1)} Gyr` : "Not specified"],
+    ...(resolvedTeff ? [["T_eff", `${Math.round(resolvedTeff).toLocaleString()} K`]] : []),
+    ...(resolvedR    ? [["Star Radius", `${resolvedR.toFixed(3)} R☉`]] : []),
+    ...(L_lum        ? [["Luminosity", `${L_lum.toExponential(3)} L☉`]] : []),
+    ...(L_bol        ? [["Bol. Luminosity", `${L_bol.toExponential(3)} L_bol,☉`]] : []),
+  ];
+
+  renderResults('r', masses, meta, "Planet", null);
+
+  // ── Render zones if we have enough data ──────────────────────────────────
+  const zonesEl = document.getElementById('r-zones');
+  const L_for_zones = L_bol ?? L_lum;
+  if (L_for_zones && resolvedTeff) {
+    zonesEl.innerHTML = buildZoneHTML(L_for_zones, resolvedTeff, spectralLabel, inconsistNote);
+  } else if (hasAnyStarParam) {
+    zonesEl.innerHTML = `<div class="warn-note">To calculate stellar zones, provide at least bolometric luminosity (L<sub>bol,☉</sub>) and T_eff, or luminosity + radius so T_eff can be derived.</div>`;
+  }
+}
+
+function clearPanel(prefix) {
+  clearError(prefix);
+  document.getElementById(`${prefix}-result`).classList.remove('visible');
+  document.querySelectorAll(`#${prefix === 'l' ? '.panel-left' : '.panel-right'} input, #${prefix === 'l' ? '.panel-left' : '.panel-right'} select`).forEach(el => {
+    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+    else el.value = '';
+  });
+}
+
+// Simpler clear using panel class
+document.querySelectorAll('.btn-clear').forEach((btn, i) => {
+  btn.onclick = () => {
+    const prefix = i === 0 ? 'l' : 'r';
+    clearError(prefix);
+    document.getElementById(`${prefix}-result`).classList.remove('visible');
+    if (prefix === 'r') document.getElementById('r-zones').innerHTML = '';
+    const panel = i === 0
+      ? document.querySelector('.panel-left')
+      : document.querySelector('.panel-right');
+    panel.querySelectorAll('input').forEach(el => {
+      if (el.type === 'checkbox') el.checked = false;
+      else el.value = '';
+    });
+    panel.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+    if (prefix === 'l') {
+      document.getElementById('l-mass-warn').classList.remove('visible');
+      document.getElementById('l-mass-warn').textContent = '';
+      document.getElementById('l-count-warn').classList.remove('visible');
+      document.getElementById('l-feh-warn').classList.remove('visible');
+      document.getElementById('l-generate-btn').disabled = false;
+      document.getElementById('l-binary').checked = false;
+      document.getElementById('l-binary-note').style.display = 'none';
+      document.getElementById('l-smass-label').textContent = 'Stellar Mass (M☉)';
+      document.getElementById('l-slum-label').textContent  = 'Luminosity (L☉)';
+      document.getElementById('l-sfeh-label').textContent  = 'Metallicity [Fe/H] (dex)';
+      document.getElementById('l-steff-label').innerHTML   = 'Effective Temperature T<sub>eff</sub> (K)';
+      const lBody = document.getElementById('l-collapsible');
+      const lChev = document.getElementById('l-chevron');
+      lBody.classList.remove('open');
+      lChev.classList.remove('open');
+    }
+  };
+});
+</script>
+</body>
+</html>
