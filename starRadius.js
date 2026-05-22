@@ -458,13 +458,13 @@ function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr) {
       `  Radius:              ${fmt(zams.R)} R_Sun  /  ${fmt(zams.R * R_SUN_KM)} km`,
     );
     console.log(`  Luminosity:          ${fmt(zams.L)} L_Sun`);
-    console.log(`  T_eff (ZAMS):        ${fmtTeff(zams.Teff)} K`);
+    console.log(`  T_eff (ZAMS, Mamajek 2022): ${fmtTeff(zams.Teff)} K`);
     console.log(`\n  -- Age-adjusted --`);
   }
   console.log(`Radius:                ${fmt(R)} R_Sun`);
   console.log(`                       ${fmt(R * R_SUN_KM)} km`);
   printLumBlock(L, Teff);
-  console.log(`T_eff (estimated):     ${fmtTeff(Teff)} K`);
+  console.log(`T_eff (S-B derived):   ${fmtTeff(Teff)} K`);
   console.log(`Mean density:          ${fmt(density)} g/cm³`);
   if (massSun > 150)
     console.log(
@@ -614,12 +614,12 @@ function printPMS(massSun, ageMyr) {
   console.log(`\n  -- ZAMS anchor (for reference) --`);
   console.log(`  ZAMS Radius:         ${fmt(R_ZAMS)} R_Sun`);
   console.log(`  ZAMS Luminosity:     ${fmt(L_ZAMS)} L_Sun`);
-  console.log(`  ZAMS T_eff:          ${fmtTeff(zams.Teff)} K`);
+  console.log(`  T_eff (ZAMS, Mamajek 2022): ${fmtTeff(zams.Teff)} K`);
   console.log(`\n  -- PMS values at ${fmt(ageMyr)} Myr --`);
   console.log(`Radius:                ${fmt(R)} R_Sun`);
   console.log(`                       ${fmt(R * R_SUN_KM)} km`);
   printLumBlock(L, Teff);
-  console.log(`T_eff (estimated):     ${fmtTeff(Teff)} K`);
+  console.log(`T_eff (S-B derived):   ${fmtTeff(Teff)} K`);
   console.log(`Mean density:          ${fmt(calcDensity(massSun, R))} g/cm³`);
   console.log(
     `\nNote: PMS radius/luminosity estimates use the Hayashi/Henyey track`,
@@ -814,9 +814,9 @@ function printPostMS(phase, massSun, FeH) {
   printLumBlock(est.L, est.Teff);
   console.log(`  (Typical L range:    ${p.L_range[0]}–${p.L_range[1]} L_Sun)`);
   console.log(
-    `T_eff (scaled):        ${fmtTeff(est.Teff)} K  [${p.Teff_range[0]}–${p.Teff_range[1]} K]`,
+    `T_eff (empirical):     ${fmtTeff(est.Teff)} K  [${p.Teff_range[0]}–${p.Teff_range[1]} K]`,
   );
-  console.log(`T_eff (S-B check):     ${fmtTeff(est.TeffSB)} K`);
+  console.log(`T_eff (S-B back-check, not for SE): ${fmtTeff(est.TeffSB)} K`);
   console.log(
     `Mean density:          ${fmt(calcDensity(massSun, est.R))} g/cm³`,
   );
@@ -960,9 +960,11 @@ function printWR(subtypeKey, massSun) {
     `  (Typical L range:    ${wt.L_range[0].toExponential(1)}–${wt.L_range[1].toExponential(1)} L_Sun)`,
   );
   console.log(
-    `T_eff (stellar core):  ${fmtTeff(Teff)} K  [${wt.Teff_range[0]}–${wt.Teff_range[1]} K]`,
+    `T_eff (stellar core, τ=20): ${fmtTeff(Teff)} K  [${wt.Teff_range[0]}–${wt.Teff_range[1]} K]`,
   );
-  console.log(`T_eff (S-B check):     ${fmtTeff(calcTeff(L, R))} K`);
+  console.log(
+    `T_eff (S-B back-check, not for SE): ${fmtTeff(calcTeff(L, R))} K`,
+  );
   console.log(`Mean density:          ${fmt(calcDensity(massSun, R))} g/cm³`);
   console.log(
     `\nCalibration:  Crowther (2007) ARA&A 45, 177; Hamann et al. (2019).`,
@@ -1043,7 +1045,7 @@ function printWD(massSun, ageGyr) {
   if (L !== null) {
     console.log(`Age:                   ${fmt(ageGyr)} Gyr`);
     printLumBlock(L, Teff);
-    console.log(`T_eff (estimated):     ${fmtTeff(Teff)} K`);
+    console.log(`T_eff (S-B derived):   ${fmtTeff(Teff)} K`);
     if (Teff > 75000)
       console.log(`WD type hint:          DO/DAO  (very hot, He/H atmosphere)`);
     else if (Teff > 45000)
@@ -1426,12 +1428,12 @@ function printBD(massJup, ageGyr) {
   console.log(
     `Radius:                ${fmt(R)} R_Sun  /  ${fmt(R * R_SUN_KM)} km`,
   );
-  printLumBlock(L, Teff);
+  printLumBlock(L, null); // BDs emit in IR/near-IR, not optical — Lum not meaningful
   console.log(
-    `T_eff (spectroscopic): ${fmtTeff(Teff_tr)} K  (Baraffe cooling track — used for classification)`,
+    `T_eff (spectroscopic, use for SE): ${fmtTeff(Teff_tr)} K  (Baraffe cooling track — used for classification)`,
   );
   console.log(
-    `T_eff (blackbody):     ${fmtTeff(Teff_SB)} K  (Stefan-Boltzmann; higher due to non-blackbody BD atmospheres)`,
+    `T_eff (blackbody S-B, not for SE): ${fmtTeff(Teff_SB)} K  (Stefan-Boltzmann; higher due to non-blackbody BD atmospheres)`,
   );
   console.log(
     `Mean density:          ${fmt(calcDensity(massJup * M_JUP_IN_MSUN, R))} g/cm³`,
