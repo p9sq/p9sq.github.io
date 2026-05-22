@@ -142,16 +142,15 @@ function calcLvisual(luminosityBol, teff) {
 // Print the standard luminosity block: bolometric + visual
 // teff is used to compute BC_V; pass null to skip visual luminosity
 function printLumBlock(luminosity, teff) {
-  console.log(`Luminosity (bol, L_Sun):  ${fmt(luminosity)}`);
-  console.log(`Luminosity (bol, watts):  ${fmt(luminosity * L_SUN)}`);
-  console.log(`Abs. bol. magnitude:      ${fmt(calcMbol(luminosity))}`);
   if (teff !== null && teff !== undefined) {
     const inRange = teff >= 2900 && teff <= 52000;
     const Lv = calcLvisual(luminosity, teff);
     console.log(
-      `Luminosity (visual, L_Sun): ${fmt(Lv)}${inRange ? "" : "  (est. — Teff outside BC_V valid range)"}`,
+      `Lum (L_Sun):              ${fmt(Lv)}${inRange ? "" : "  (est. — Teff outside BC_V valid range)"}`,
     );
   }
+  console.log(`LumBol (L_Sun):           ${fmt(luminosity)}`);
+  console.log(`Abs. bol. magnitude:      ${fmt(calcMbol(luminosity))}`);
 }
 
 // ============================================================
@@ -1092,7 +1091,65 @@ function nsRadius(massSun) {
   return 12.5 - 0.6 * (massSun - 1.4);
 }
 
-function printNS(massSun) {
+// Neutron star cooling model (Page et al. 2004; Yakovlev & Pethick 2004):
+// Two phases:
+//   Neutrino cooling (t < t_switch):  T_eff ∝ t^−0.47  (fast cooling via modified Urca)
+//   Photon cooling  (t > t_switch):   T_eff ∝ t^−0.23  (slower, photon-dominated)
+//   t_switch ≈ 100 kyr for standard cooling; anchor: T_eff(1 kyr) ≈ 1.0×10^6 K
+//   T_eff(100 kyr) ≈ 3.3×10^5 K  [neutrino→photon transition]
+//   T_eff(1 Myr)   ≈ 2.5×10^5 K  [photon phase]
+//   T_eff(1 Gyr)   ≈ 3×10^4 K    [very old isolated NS, near detection limit]
+// Minimum detectable Teff ~ 3×10^4 K (Chandra/XMM-Newton sensitivity limit).
+// Note: enhanced cooling (direct Urca) can cool NSs much faster than standard.
+function nsTeff(ageKyr) {
+  if (ageKyr <= 0) return null;
+  const t_switch = 100; // kyr
+  if (ageKyr < t_switch) {
+    // Neutrino cooling phase: anchor T(1 kyr) = 1.0e6 K, exponent −0.47
+    return 1.0e6 * Math.pow(ageKyr, -0.47);
+  } else {
+    // Photon cooling phase: continuous at t_switch, exponent −0.23
+    const T_switch = 1.0e6 * Math.pow(t_switch, -0.47);
+    return T_switch * Math.pow(ageKyr / t_switch, -0.23);
+  }
+}
+
+// NS spectral characterisation from surface Teff (Page et al. 2004 classification)
+// Returns { band, peakNm, obsType } describing the dominant emission and NS class.
+function nsSpectralType(teff, ageKyr) {
+  // Wien's displacement law: λ_max (nm) = 2.898e6 / T_eff
+  const peakNm = 2.898e6 / teff;
+
+  // Electromagnetic band from peak wavelength
+  let band;
+  if (peakNm < 0.01) band = "Hard X-ray / Gamma-ray  (< 0.01 nm)";
+  else if (peakNm < 0.1) band = "Hard X-ray  (0.01–0.1 nm)";
+  else if (peakNm < 1.0) band = "Soft X-ray  (0.1–1 nm)";
+  else if (peakNm < 10) band = "Soft X-ray / EUV  (1–10 nm)";
+  else if (peakNm < 100) band = "Extreme UV  (10–100 nm)";
+  else band = "Far UV / UV  (> 100 nm)";
+
+  // Observational NS type based on age and temperature
+  // (Kaspi & Beloborodov 2017; Potekhin et al. 2015)
+  let obsType;
+  if (ageKyr < 1 && teff > 3e6) {
+    obsType = "Central Compact Object (CCO) candidate — very young, hot NS";
+  } else if (ageKyr < 10 && teff > 1e6) {
+    obsType = "Rotation-Powered Pulsar (RPP) / young cooling NS";
+  } else if (ageKyr >= 10 && ageKyr < 2000 && teff > 5e5) {
+    obsType =
+      "X-ray Dim Isolated Neutron Star (XDINS) — thermally emitting, radio-quiet";
+  } else if (teff > 1e5) {
+    obsType = "Old isolated NS — very faint thermal X-ray emitter";
+  } else {
+    obsType =
+      "Cold NS — below typical X-ray detection limits; observable only as radio pulsar";
+  }
+
+  return { band, peakNm, obsType };
+}
+
+function printNS(massSun, ageKyr) {
   if (massSun < 1.1)
     console.log(
       `\nNote: NS mass < 1.1 M_Sun is below the theoretical minimum (electron-capture limit).`,
@@ -1111,18 +1168,46 @@ function printNS(massSun) {
   console.log(`Radius:                ${fmt(R_km)} km`);
   console.log(`                       ${fmt(R_Sun)} R_Sun`);
   console.log(`Mean density:          ${fmt(density)} g/cm³`);
+
+  if (ageKyr !== null) {
+    const Teff = nsTeff(ageKyr);
+    if (Teff !== null) {
+      const L =
+        (4 * Math.PI * Math.pow(R_km * 1000, 2) * SIGMA * Math.pow(Teff, 4)) /
+        L_SUN;
+      const phase = ageKyr < 100 ? "neutrino cooling" : "photon cooling";
+      const spec = nsSpectralType(Teff, ageKyr);
+      console.log(`\nAge:                   ${fmt(ageKyr)} kyr`);
+      console.log(`Cooling phase:         ${phase}`);
+      console.log(`T_eff (surface):       ${fmtTeff(Teff)} K`);
+      console.log(`Wien peak wavelength:  ${fmt(spec.peakNm)} nm`);
+      console.log(`Dominant emission:     ${spec.band}`);
+      console.log(`NS type:               ${spec.obsType}`);
+      printLumBlock(L, null); // NS radiates in X-rays — BC_V / visual Lum is not meaningful
+      if (Teff < 3e4)
+        console.log(
+          `Note: T_eff < 3×10⁴ K — likely below current X-ray detection limits.`,
+        );
+      console.log(
+        `\nCooling model:  Page et al. (2004); Yakovlev & Pethick (2004).`,
+      );
+      console.log(`                Standard (modified Urca) cooling assumed.`);
+      console.log(
+        `                Enhanced cooling (direct Urca, superfluidity) can differ significantly.`,
+      );
+    }
+  } else {
+    console.log(
+      `\n(No age entered — surface Teff and luminosity not calculated.)`,
+    );
+  }
+
   console.log(`\nCalibration:  Miller et al. (2021) NICER PSR J0740+6620;`);
   console.log(
     `              Riley et al. (2021); Choudhury et al. (2024) PSR J0437-4715.`,
   );
   console.log(
     `              EOS: stiff nuclear χEFT model; R uncertainty ±1 km.`,
-  );
-  console.log(
-    `Note: Neutron stars emit as X-ray pulsars, magnetars, or radio pulsars.`,
-  );
-  console.log(
-    `      Luminosity depends on spin-down power / accretion — not calculated here.`,
   );
 }
 
@@ -1811,8 +1896,20 @@ function wdMenu() {
 function nsMenu() {
   console.log("\n-- Neutron star --");
   askFloat("Enter NS mass (M_Sun, typical 1.1–2.35): ", 0.5, 3.5, (mass) => {
-    printNS(mass);
-    askRepeat();
+    ask(
+      "Enter age (kyr, e.g. 0.33 = Cas A, 1 = Crab, 340 = Vela) [Enter to skip]: ",
+      (ageInput) => {
+        const raw = ageInput.trim();
+        const age = raw === "" ? null : parseFloat(raw);
+        if (raw !== "" && (isNaN(age) || age <= 0)) {
+          console.log("Invalid age — skipping Teff calculation.");
+          printNS(mass, null);
+        } else {
+          printNS(mass, age);
+        }
+        askRepeat();
+      },
+    );
   });
 }
 
