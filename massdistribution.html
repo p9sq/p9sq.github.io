@@ -1425,18 +1425,20 @@
 
         // ── Gas giants (> 0.5 Mj): split by whether in paper's mass range ─────
         const N_all = 62 * Math.pow(Math.max(1e-6, R_disk), 0.93);
-        const f_mass = Math.pow(Math.max(0.3, mj) / 10, 0.15);
+        const f_mass = Math.pow(Math.max(0.5, mj) / 10, 0.15);
 
         if (style === "saturn") {
           const N_smalls = Math.round(Math.max(2, N_all * f_mass * 0.4));
           return Math.max(2, Math.min(20, N_smalls));
         }
 
-        // f_major (sub-Mars filter) only valid for paper's 2–10 Mj range
-        const inPaperMassRange = mj >= 2 && mj <= 10;
-        const f_major = inPaperMassRange
-          ? Math.exp(-0.15 * Math.max(0.5, distAU))
-          : 1.0;
+        // f_major filters sub-major-moon counts. Applied to all gas giants with a
+        // planet-mass-scaled exponent calibrated so that:
+        //   1 Mj at 5.2 AU → 4 moons (Jupiter / Galilean anchor)
+        //  10 Mj at 5.2 AU → ~6–8 moons (paper's SC cold disk results)
+        // α = 0.105 + 0.045 × log10(mj)  →  1 Mj: 0.105,  10 Mj: 0.150
+        const alpha_major = 0.105 + 0.045 * Math.log10(Math.max(0.5, mj));
+        const f_major = Math.exp(-alpha_major * Math.max(0.5, distAU));
         const N_major = N_all * f_major * f_mass;
 
         if (style === "hybrid")
@@ -1623,6 +1625,16 @@
           maxMoonMass,
           parentMass,
         );
+
+        // Safety net: enforce cap after distribution in case of floating-point drift
+        if (maxMoonMass != null && maxMoonMass > 0) {
+          const maxM = Math.max(...masses);
+          if (maxM > maxMoonMass * 1.0001) {
+            const scale = maxMoonMass / maxM;
+            masses = masses.map((m) => m * scale);
+          }
+        }
+
         if (sortIn === "descending") masses.sort((a, b) => b - a);
         else if (sortIn === "ascending") masses.sort((a, b) => a - b);
 
@@ -1666,7 +1678,12 @@
           ["Stellar Theft Loss", `~${theftPct}% removed`],
           ["Net Moon Budget", `${formatMass(totalBudget)} M⊕`],
           ...(maxMoonMass != null
-            ? [["Max Moon Mass", `${maxMoonMass.toFixed(5)} M⊕`]]
+            ? [
+                [
+                  "Max Moon Mass",
+                  `${formatMass(maxMoonMass)} M⊕ (planet-mass + distance scaled)`,
+                ],
+              ]
             : []),
           ...(isExtrapolated
             ? [
