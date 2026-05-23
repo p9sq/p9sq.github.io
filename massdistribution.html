@@ -514,6 +514,17 @@
       <div class="panel panel-left">
         <div class="panel-title">Moon Mass Distribution</div>
 
+        <!-- Planet presets -->
+        <div class="field">
+          <label>Planet Preset</label>
+          <select id="l-preset" onchange="applyPreset(this.value)">
+            <option value="">— Select a preset —</option>
+            <option value="jupiter">Jupiter (1.0 M♃, 5.2 AU)</option>
+            <option value="saturn">Saturn (0.2994 M♃, 9.58 AU)</option>
+            <option value="uranus">Uranus (14.536 M⊕, 19.2 AU)</option>
+          </select>
+        </div>
+
         <div class="field">
           <label>Parent Planet Mass</label>
           <div class="row-2">
@@ -525,7 +536,13 @@
               step="any"
               oninput="checkMassOverride()"
             />
-            <select id="l-unit" onchange="checkMassOverride()">
+            <select
+              id="l-unit"
+              onchange="
+                updateMassPlaceholder();
+                checkMassOverride();
+              "
+            >
               <option value="earth">Earth masses (M⊕)</option>
               <option value="jupiter">Jupiter masses (M♃)</option>
             </select>
@@ -566,16 +583,18 @@
           <label
             >Disk Mass Model
             <span style="font-weight: 400; color: var(--faint)"
-              >— for gas giants ≥ 2 M♃</span
+              >— for gas giants ≥ 0.5 M♃</span
             ></label
           >
           <select id="l-disk-model">
+            <option value="auto">
+              Auto (empirical for ≥ 2 M♃, canonical otherwise)
+            </option>
             <option value="empirical">
-              Empirical — 6.3 × 10⁻⁴ (Dencs &amp; Dobos 2025, allows Earth-mass
-              moons)
+              Empirical — 6.3 × 10⁻⁴ (Dencs &amp; Dobos 2025)
             </option>
             <option value="canonical">
-              Canonical — 10⁻⁴ (Canup &amp; Ward 2006, conservative lower bound)
+              Canonical — 10⁻⁴ (Canup &amp; Ward 2006)
             </option>
           </select>
         </div>
@@ -784,7 +803,13 @@
               step="any"
               oninput="checkSolarLimit()"
             />
-            <select id="r-unit" onchange="checkSolarLimit()">
+            <select
+              id="r-unit"
+              onchange="
+                updateRightMassPlaceholder();
+                checkSolarLimit();
+              "
+            >
               <option value="jupiter">Jupiter masses (M♃)</option>
               <option value="solar">Solar masses (M☉)</option>
               <option value="earth">Earth masses (M⊕)</option>
@@ -1275,6 +1300,105 @@
           massWarnVisible || countWarnVisible;
       }
 
+      // ── Mass placeholder update ────────────────────────────────────────────────
+      function updateMassPlaceholder() {
+        const unit = document.getElementById("l-unit").value;
+        const input = document.getElementById("l-mass");
+        input.placeholder = unit === "jupiter" ? "e.g. 1.0" : "e.g. 317.8";
+      }
+
+      function updateRightMassPlaceholder() {
+        const unit = document.getElementById("r-unit").value;
+        const input = document.getElementById("r-mass");
+        // All three units represent the same reference point: 40 M♃
+        // 40 M♃ × 317.832 M⊕/M♃ = 12713.28 M⊕
+        // 40 M♃ / 1047.56 M♃/M☉ = 0.03819 M☉  (1 M☉ = 1047.56 M♃)
+        if (unit === "jupiter") input.placeholder = "e.g. 40";
+        else if (unit === "solar") input.placeholder = "e.g. 0.0382";
+        else input.placeholder = "e.g. 12713";
+      }
+
+      // ── Planet presets ─────────────────────────────────────────────────────────
+      const PRESETS = {
+        jupiter: {
+          mass: 1.0,
+          unit: "jupiter",
+          dist: 5.2,
+          hill: 0.355,
+          smass: 1.0,
+          slum: 1.0,
+          sfeh: 0.0,
+          sage: 4.6,
+          steff: 5778,
+          label: "Jupiter",
+        },
+        saturn: {
+          mass: 0.2994,
+          unit: "jupiter",
+          dist: 9.58,
+          hill: 0.436,
+          smass: 1.0,
+          slum: 1.0,
+          sfeh: 0.0,
+          sage: 4.6,
+          steff: 5778,
+          label: "Saturn",
+        },
+        uranus: {
+          mass: 14.536,
+          unit: "earth",
+          dist: 19.2,
+          hill: 0.45,
+          smass: 1.0,
+          slum: 1.0,
+          sfeh: 0.0,
+          sage: 4.6,
+          steff: 5778,
+          label: "Uranus",
+        },
+      };
+
+      function applyPreset(name) {
+        const p = PRESETS[name];
+        if (!p) return; // handles the "— Select a preset —" empty option
+
+        // Planet fields
+        document.getElementById("l-mass").value = p.mass;
+        document.getElementById("l-unit").value = p.unit;
+        document.getElementById("l-dist").value = p.dist;
+        document.getElementById("l-hill").value = p.hill;
+        // Reset auto fields
+        document.getElementById("l-count").value = "";
+        document.getElementById("l-disk-model").value = "auto";
+        document.getElementById("l-style").value = "auto";
+        document.getElementById("l-sort").value = "descending";
+        document.getElementById("l-override").checked = false;
+
+        // Open stellar collapsible and fill Sun's values
+        const body = document.getElementById("l-collapsible");
+        const chevron = document.getElementById("l-chevron");
+        body.classList.add("open");
+        chevron.classList.add("open");
+        document.getElementById("l-binary").checked = false;
+        updateBinaryLabels();
+        document.getElementById("l-smass").value = p.smass;
+        document.getElementById("l-slum").value = p.slum;
+        document.getElementById("l-sfeh").value = p.sfeh;
+        document.getElementById("l-sage").value = p.sage;
+        document.getElementById("l-steff").value = p.steff;
+
+        // Clear any warnings and update placeholder
+        updateMassPlaceholder();
+        checkMassOverride();
+        document.getElementById("l-count-warn").classList.remove("visible");
+        document.getElementById("l-feh-warn").classList.remove("visible");
+        document.getElementById("l-binary-note").style.display = "none";
+        updateGenerateButton();
+
+        // Reset dropdown back to placeholder so it can be reselected
+        document.getElementById("l-preset").value = "";
+      }
+
       // ── Override checkbox handler ──────────────────────────────────────────────
       function checkMassOverride() {
         const raw = parseFloat(document.getElementById("l-mass").value);
@@ -1459,7 +1583,7 @@
         const isBinary = document.getElementById("l-binary").checked;
         const distRaw = document.getElementById("l-dist").value;
         const distAU = distRaw !== "" ? parseFloat(distRaw) : 2.0;
-        const diskModel = document.getElementById("l-disk-model").value;
+        const diskModelRaw = document.getElementById("l-disk-model").value;
 
         // Stellar inputs
         const sMassRaw = document.getElementById("l-smass").value;
@@ -1494,6 +1618,13 @@
 
         let parentMass = unit === "jupiter" ? rawMass * M_JUP_EARTH : rawMass;
         const mj = parentMass / M_JUP_EARTH;
+        // Resolve auto disk model now that mj is known
+        const diskModel =
+          diskModelRaw === "auto"
+            ? mj >= 2
+              ? "empirical"
+              : "canonical"
+            : diskModelRaw;
         const bc = classifyBody(parentMass);
 
         if (bc !== "planet") {
@@ -1697,8 +1828,8 @@
             "Disk/Planet Ratio",
             isGasGiant
               ? diskModel === "empirical"
-                ? "6.3 × 10⁻⁴ (empirical)"
-                : "1 × 10⁻⁴ (canonical)"
+                ? `6.3 × 10⁻⁴ (empirical${diskModelRaw === "auto" ? ", auto" : ""})`
+                : `1 × 10⁻⁴ (canonical${diskModelRaw === "auto" ? ", auto" : ""})`
               : `1 : ${Math.round(1 / diskRatio).toLocaleString()}`,
           ],
           ...(FeH !== 0.0 || sFehRaw !== ""
@@ -2164,6 +2295,8 @@
           panel
             .querySelectorAll("select")
             .forEach((el) => (el.selectedIndex = 0));
+          if (prefix === "l") updateMassPlaceholder();
+          if (prefix === "l") document.getElementById("l-preset").value = "";
           if (prefix === "l") {
             document.getElementById("l-mass-warn").classList.remove("visible");
             document.getElementById("l-mass-warn").textContent = "";
