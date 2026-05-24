@@ -499,8 +499,39 @@ function subtypeImpliedMass(classKey, subtypeVal) {
   return r ? r.M : null;
 }
 
-// MS lifetime: t_MS ≈ (M / L_ZAMS) × 10 Gyr
+// MS lifetime estimate.
+// For solar-type stars the simple fuel/burn-rate formula t = (M/L)×10 Gyr is
+// adequate, but it significantly underestimates lifetimes for massive stars
+// (e.g. gives ~0.9 Myr for 60 M_Sun vs the actual ~3 Myr) because:
+//  (a) massive stars consume a larger fraction of their hydrogen, and
+//  (b) the ZAMS luminosity used overestimates the time-averaged luminosity.
+//
+// We use a three-band piecewise calibration anchored to stellar-evolution models
+// (Schaller et al. 1992; Meynet & Maeder 2003; Bressan et al. 2012 PARSEC):
+//
+//   M ≥ 20 M_Sun  (O-type):   t = 0.116 × M^−0.89 Gyr
+//                              Calibrated: ~3 Myr @ 60 M_Sun, ~8 Myr @ 20 M_Sun
+//   8 ≤ M < 20    (upper B):  t = 1.088 × M^−1.64 Gyr
+//                              Continuous at M=20; ~25 Myr @ 10 M_Sun
+//   2 ≤ M < 8     (lower B/A):t = 6.508 × M^−2.5 Gyr
+//                              Continuous at M=8; ~120 Myr @ 5 M_Sun
+//   M < 2         (F/G/K/M):  t = (M/L) × 10 Gyr  (well-calibrated by Mamajek)
+//
+// All bands are continuous at their boundaries.
 function mainSequenceLifetime(massSun, luminosityZams) {
+  if (massSun >= 20) {
+    // O-type: Geneva/PARSEC empirical fit; ~3 Myr @ 60 M_Sun, ~8 Myr @ 20 M_Sun
+    return 0.116047 * Math.pow(massSun, -0.8928);
+  }
+  if (massSun >= 8) {
+    // Upper B-type: continuous with O band at M=20
+    return 1.088337 * Math.pow(massSun, -1.64);
+  }
+  if (massSun >= 2) {
+    // Lower B/A-type: continuous with upper B band at M=8
+    return 6.507601 * Math.pow(massSun, -2.5);
+  }
+  // F/G/K/M: fuel/burn-rate formula is well-calibrated from Mamajek table
   return (massSun / luminosityZams) * 10;
 }
 
@@ -857,10 +888,13 @@ function postMsEstimate(phase, massSun, FeH) {
         p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]) + 200 * feh;
       break;
     case "RGB":
-      R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], 1 - f * 0.3);
+      // More massive stars ascend the RGB to larger radii and higher luminosities.
+      // f = 0 at massMin (low mass), f → 1 at massMax (high mass), so R and L
+      // must increase with f.  The previous (1 - f*0.3) factor inverted this.
+      R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
       L =
         p.L_range[0] *
-        Math.pow(p.L_range[1] / p.L_range[0], 1 - f * 0.3) *
+        Math.pow(p.L_range[1] / p.L_range[0], f) *
         Math.pow(10, 0.19 * feh);
       Teff = 3700 + f * 400 + 180 * feh;
       break;
@@ -1083,6 +1117,15 @@ function printWR(subtypeKey, massSun) {
     `Note: WR "radius" is the hydrostatic core radius (τ_Ross = 20).`,
   );
   console.log(`      The wind pseudo-photosphere is substantially larger.`);
+  console.log(
+    `Note: The Teff–mass relationship within WR subtypes is not well-constrained`,
+  );
+  console.log(
+    `      observationally; the linear interpolation above carries larger`,
+  );
+  console.log(
+    `      uncertainties (~20–40%) than for main-sequence or post-MS stars.`,
+  );
 }
 
 // ============================================================
@@ -1312,7 +1355,13 @@ function printNS(massSun, ageKyr) {
       );
       console.log(`                Standard (modified Urca) cooling assumed.`);
       console.log(
-        `                Enhanced cooling (direct Urca, superfluidity) can differ significantly.`,
+        `                Note: standard cooling models themselves carry ~factor-of-2`,
+      );
+      console.log(
+        `                uncertainty in Teff; enhanced cooling (direct Urca,`,
+      );
+      console.log(
+        `                superfluidity, fast rotators) can cool NSs significantly faster.`,
       );
     }
   } else {
@@ -1481,7 +1530,9 @@ const BD_TEFF = {
 function bdRadius(massJup, ageGyr) {
   const t = Math.max(0.001, ageGyr);
   const r = 0.1008 * Math.pow(massJup / 40, -0.055) * Math.pow(t, -0.0229);
-  return Math.max(0.08, Math.min(0.13, r));
+  // Baraffe et al. (2003) COND tracks span ~0.08–0.15 R_Sun across the BD mass/age range.
+  // The previous upper clamp of 0.13 was too tight; young or high-mass BDs can reach ~0.15.
+  return Math.max(0.08, Math.min(0.15, r));
 }
 function bdRadiusToMass(radiusSun, ageGyr) {
   const t = Math.max(0.001, ageGyr);
@@ -1489,7 +1540,7 @@ function bdRadiusToMass(radiusSun, ageGyr) {
   return (
     40 *
     Math.exp(
-      -Math.log(Math.max(0.08 / 0.1008, Math.min(0.13 / 0.1008, rAdj))) / 0.055,
+      -Math.log(Math.max(0.08 / 0.1008, Math.min(0.15 / 0.1008, rAdj))) / 0.055,
     )
   );
 }
