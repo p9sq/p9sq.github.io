@@ -32,6 +32,7 @@ const SIGMA = 5.6704e-8; // W m⁻² K⁻⁴  Stefan-Boltzmann
 const G = 6.674e-11; // m³ kg⁻¹ s⁻²
 const C = 2.998e8; // m/s
 const M_JUP_IN_MSUN = 9.543e-4; // 1 M_Jupiter / M_Sun
+const R_EARTH_KM = 6371; // km  (mean volumetric radius)
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -269,6 +270,50 @@ const MS_TABLE = {
   M9: [2000, -4.6, 0.088, 0.079],
 };
 
+// ------------------------------------------------------------
+// BHAC15 near-H-burning-limit correction table
+// Baraffe et al. (2015), Table A.1, 10 Gyr isochrone, solar metallicity.
+// Used for stars 0.075–0.15 M_Sun where the Mamajek table anchors become
+// inaccurate because the mass-luminosity relation has a steep cliff near
+// the hydrogen-burning minimum mass (~0.075 M_Sun).
+// Columns: [M (M_Sun), Teff (K), logL (L_Sun), R (R_Sun)]
+// ------------------------------------------------------------
+const BHAC15_LOW_MASS = [
+  [0.075, 2650, -4.27, 0.09],
+  [0.08, 2750, -4.0, 0.096],
+  [0.085, 2820, -3.82, 0.101],
+  [0.09, 2900, -3.63, 0.107],
+  [0.1, 3000, -3.42, 0.117],
+  [0.11, 3100, -3.22, 0.128],
+  [0.12, 3190, -3.05, 0.138],
+  [0.13, 3270, -2.9, 0.148],
+  [0.15, 3380, -2.66, 0.165],
+];
+
+// Interpolate BHAC15 low-mass table for a given mass (M_Sun).
+// Returns { Teff, L, R } or null if out of range.
+function bhac15Lookup(massSun) {
+  const t = BHAC15_LOW_MASS;
+  if (massSun < t[0][0] || massSun > t[t.length - 1][0]) return null;
+  // Find bracketing entries
+  let lo = t[0],
+    hi = t[t.length - 1];
+  for (let i = 0; i < t.length - 1; i++) {
+    if (t[i][0] <= massSun && t[i + 1][0] >= massSun) {
+      lo = t[i];
+      hi = t[i + 1];
+      break;
+    }
+  }
+  const f = (massSun - lo[0]) / (hi[0] - lo[0]);
+  return {
+    Teff: lo[1] + f * (hi[1] - lo[1]),
+    L: Math.pow(10, lo[2] + f * (hi[2] - lo[2])),
+    R: lo[3] + f * (hi[3] - lo[3]),
+    M: massSun,
+  };
+}
+
 // Build an ordered list of keys for interpolation
 // Each entry: { key, classLetter, subtype, Teff, logL, R, M }
 const MS_SEQUENCE = (() => {
@@ -309,23 +354,61 @@ const MS_CLASS_KEYS = ["O", "B", "A", "F", "G", "K", "M"];
 // Lookup a spectral type by key, with linear interpolation for
 // half-integer subtypes not explicitly in the table (e.g. "G4.5").
 // Returns { Teff, L, R, M } or null if out of range.
-function msLookup(classKey, subtypeVal) {
-  // Try direct key first
+// msLookup: classKey + subtypeVal → {Teff, L, R, M}
+// Optional directMass: when the user has entered a mass directly, pass it here
+// so that BHAC15 uses the actual user mass rather than the mass implied by subtype.
+function msLookup(classKey, subtypeVal, directMass) {
+  // For very low mass stars (M-type near H-burning limit), prefer the
+  // BHAC15 table which correctly captures the steep luminosity drop.
   const directKey =
     classKey +
     (Number.isInteger(subtypeVal)
       ? String(subtypeVal)
       : subtypeVal.toFixed(1).replace(/\.0$/, ""));
+
+  // Determine the mass to use for BHAC15 — prefer the user-supplied mass
+  let baseM = directMass !== undefined ? directMass : null;
+  if (baseM === null) {
+    if (MS_TABLE[directKey]) baseM = MS_TABLE[directKey][3];
+    else {
+      const classEntries = MS_SEQUENCE.filter(
+        (e) => e.letter === classKey,
+      ).sort((a, b) => a.subtype - b.subtype);
+      if (classEntries.length > 0) {
+        let lo = null,
+          hi = null;
+        for (let i = 0; i < classEntries.length - 1; i++) {
+          if (
+            classEntries[i].subtype <= subtypeVal &&
+            classEntries[i + 1].subtype >= subtypeVal
+          ) {
+            lo = classEntries[i];
+            hi = classEntries[i + 1];
+            break;
+          }
+        }
+        if (lo && hi) {
+          const f = (subtypeVal - lo.subtype) / (hi.subtype - lo.subtype);
+          baseM = lo.M + f * (hi.M - lo.M);
+        }
+      }
+    }
+  }
+  // Use BHAC15 for stars ≤ 0.15 M_Sun
+  if (baseM !== null && baseM <= 0.15) {
+    const bhac = bhac15Lookup(Math.max(0.075, baseM));
+    if (bhac) return bhac;
+  }
+
+  // Standard Mamajek table lookup with interpolation
   if (MS_TABLE[directKey]) {
     const [Teff, logL, R, M] = MS_TABLE[directKey];
     return { Teff, L: Math.pow(10, logL), R, M };
   }
-  // Find adjacent entries in the sequence with the same class letter
   const classEntries = MS_SEQUENCE.filter((e) => e.letter === classKey).sort(
     (a, b) => a.subtype - b.subtype,
   );
   if (classEntries.length === 0) return null;
-  // Clamp to range
   if (subtypeVal <= classEntries[0].subtype) {
     const e = classEntries[0];
     return { Teff: e.Teff, L: e.L, R: e.R, M: e.M };
@@ -334,7 +417,6 @@ function msLookup(classKey, subtypeVal) {
     const e = classEntries[classEntries.length - 1];
     return { Teff: e.Teff, L: e.L, R: e.R, M: e.M };
   }
-  // Linear interpolation
   let lo = null,
     hi = null;
   for (let i = 0; i < classEntries.length - 1; i++) {
@@ -359,6 +441,23 @@ function msLookup(classKey, subtypeVal) {
 
 // Mass → nearest spectral type key (used for inverse / auto-subtype)
 function massToMsKey(massSun) {
+  // For low-mass stars use BHAC15 table
+  if (massSun <= 0.15) {
+    const bhac = bhac15Lookup(Math.max(0.075, Math.min(0.15, massSun)));
+    if (bhac) {
+      // Find nearest Mamajek entry by radius to get the spectral label
+      let best = MS_SEQUENCE[MS_SEQUENCE.length - 1];
+      let bestD = Math.abs(MS_SEQUENCE[MS_SEQUENCE.length - 1].R - bhac.R);
+      for (const e of MS_SEQUENCE) {
+        const d = Math.abs(e.R - bhac.R);
+        if (d < bestD) {
+          bestD = d;
+          best = e;
+        }
+      }
+      return best;
+    }
+  }
   let best = MS_SEQUENCE[0];
   let bestDist = Math.abs(MS_SEQUENCE[0].M - massSun);
   for (const e of MS_SEQUENCE) {
@@ -422,13 +521,15 @@ function ageAdjust(massSun, L_ZAMS, R_ZAMS, ageGyr) {
 }
 
 function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr) {
-  const zams = msLookup(classKey, subtypeVal);
-  if (!zams) {
-    console.log("Could not retrieve ZAMS values.");
-    return;
-  }
+  const zams = msLookup(classKey, subtypeVal, massSun);
 
-  const hasAge = ageGyr !== null;
+  // For low-mass stars ≤ 0.15 M_Sun, msLookup returns BHAC15 10 Gyr isochrone values
+  // which already account for the full evolutionary history. Applying the age-adjustment
+  // formula on top would double-count; instead we use the BHAC15 values directly and
+  // note that they are calibrated to a ~10 Gyr isochrone.
+  const useBHAC15 = massSun <= 0.15;
+
+  const hasAge = ageGyr !== null && !useBHAC15;
   let L, R, t_MS;
   if (hasAge) {
     const adj = ageAdjust(massSun, zams.L, zams.R, ageGyr);
@@ -441,7 +542,7 @@ function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr) {
     t_MS = mainSequenceLifetime(massSun, zams.L);
   }
 
-  const Teff = calcTeff(L, R);
+  const Teff = useBHAC15 ? zams.Teff : calcTeff(L, R); // BHAC15 uses model atmosphere Teff
   const density = calcDensity(massSun, R);
   const label = `${classKey}${subtypeStr}`;
 
@@ -449,7 +550,14 @@ function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr) {
   console.log(`Spectral class:        ${label}V`);
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
   console.log(`MS lifetime:           ${fmtLifetime(t_MS)}`);
-  if (hasAge) {
+  if (useBHAC15) {
+    console.log(
+      `\nNote: Mass ≤ 0.15 M_Sun — using BHAC15 (Baraffe et al. 2015) 10 Gyr isochrone values.`,
+    );
+    console.log(
+      `      Age adjustment not applied (BHAC15 already gives age-calibrated properties).`,
+    );
+  } else if (hasAge) {
     console.log(
       `Age:                   ${fmt(ageGyr)} Gyr  (${fmtPct((ageGyr / t_MS) * 100)}% through MS)`,
     );
@@ -464,7 +572,9 @@ function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr) {
   console.log(`Radius:                ${fmt(R)} R_Sun`);
   console.log(`                       ${fmt(R * R_SUN_KM)} km`);
   printLumBlock(L, Teff);
-  console.log(`T_eff (S-B derived):   ${fmtTeff(Teff)} K`);
+  console.log(
+    `T_eff ${useBHAC15 ? "(model atm., use for SE):" : "(S-B derived):        "} ${fmtTeff(Teff)} K`,
+  );
   console.log(`Mean density:          ${fmt(density)} g/cm³`);
   if (massSun > 150)
     console.log(
@@ -1042,8 +1152,12 @@ function printWD(massSun, ageGyr) {
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
   console.log(`Radius:                ${fmt(R)} R_Sun`);
   console.log(`                       ${fmt(R * R_SUN_KM)} km`);
+  console.log(
+    `                       ${fmt((R * R_SUN_KM) / R_EARTH_KM)} R_Earth  (context: WDs are roughly Earth-sized)`,
+  );
   if (L !== null) {
     console.log(`Age:                   ${fmt(ageGyr)} Gyr`);
+    // WDs are hot enough for BC_V to be meaningful (Teff typically 4000–100000 K)
     printLumBlock(L, Teff);
     console.log(`T_eff (S-B derived):   ${fmtTeff(Teff)} K`);
     if (Teff > 75000)
@@ -1169,6 +1283,9 @@ function printNS(massSun, ageKyr) {
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
   console.log(`Radius:                ${fmt(R_km)} km`);
   console.log(`                       ${fmt(R_Sun)} R_Sun`);
+  console.log(
+    `                       ${fmt(R_km / R_EARTH_KM)} R_Earth  (context: NSs are city-sized)`,
+  );
   console.log(`Mean density:          ${fmt(density)} g/cm³`);
 
   if (ageKyr !== null) {
@@ -1315,6 +1432,7 @@ function printBH(massSun, aStar) {
   console.log(`\n  -- Event Horizon --`);
   console.log(`Outer horizon r+:      ${fmt(kr.r_plus)} km`);
   console.log(`                       ${fmt(kr.r_plus / R_SUN_KM)} R_Sun`);
+  console.log(`                       ${fmt(kr.r_plus / R_EARTH_KM)} R_Earth`);
   if (!isSchw) {
     console.log(
       `  (Schwarzschild R_S = 2 R_g = ${fmt(2 * kr.Rg)} km for comparison)`,
@@ -1419,6 +1537,31 @@ function printBD(massJup, ageGyr) {
   const Teff_tr = bdTeff(massJup, ageGyr);
   const classKey = bdClassFromTeff(Teff_tr);
   const subtype = bdSubtypeFromTeff(Teff_tr);
+
+  // Empirical BC_V for BDs — Golimowski et al. (2004), Filippazzo et al. (2015)
+  // The Flower polynomial breaks down below ~2900 K so we use observed BD BC_V values:
+  //   L dwarfs (1300–2200 K): BC_V ≈ −4.5 to −8.0  (rapidly worsening)
+  //   T dwarfs (500–1300 K):  BC_V ≈ −8 to −15     (essentially no V-band flux)
+  //   Y dwarfs (<500 K):      BC_V < −15            (V-band flux unmeasurably small)
+  // Simple linear fit in Teff: BC_V ≈ −5.5 − 0.005 × (2200 − Teff)  for Teff < 2200
+  const BC_V_SUN = -0.072;
+  let Lv, lumNote;
+  if (Teff_tr >= 2900) {
+    Lv = calcLvisual(L, Teff_tr);
+    lumNote = "";
+  } else if (Teff_tr >= 1300) {
+    // L-dwarf empirical BC_V range
+    const bc_v = -5.5 - 0.005 * (2200 - Teff_tr);
+    Lv = L * Math.pow(10, (bc_v - BC_V_SUN) / 2.5);
+    lumNote = "  (est. — empirical L-dwarf BC_V; very uncertain)";
+  } else {
+    // T/Y dwarfs: essentially no V-band flux
+    const bc_v = -5.5 - 0.005 * (2200 - 1300) - 0.008 * (1300 - Teff_tr);
+    Lv = L * Math.pow(10, (bc_v - BC_V_SUN) / 2.5);
+    lumNote =
+      "  (est. — T/Y dwarf emits negligible V-band flux; this is a lower-limit estimate)";
+  }
+
   console.log(`\nObject type:           Brown dwarf`);
   console.log(`Spectral class:        ${classKey}${subtype}-type`);
   console.log(
@@ -1428,7 +1571,12 @@ function printBD(massJup, ageGyr) {
   console.log(
     `Radius:                ${fmt(R)} R_Sun  /  ${fmt(R * R_SUN_KM)} km`,
   );
-  printLumBlock(L, null); // BDs emit in IR/near-IR, not optical — Lum not meaningful
+  console.log(
+    `                       ${fmt((R * R_SUN_KM) / R_EARTH_KM)} R_Earth  (context: BDs are roughly Jupiter-sized)`,
+  );
+  console.log(`Lum (L_Sun):              ${fmt(Lv)}${lumNote}`);
+  console.log(`LumBol (L_Sun):           ${fmt(L)}`);
+  console.log(`Abs. bol. magnitude:      ${fmt(calcMbol(L))}`);
   console.log(
     `T_eff (spectroscopic, use for SE): ${fmtTeff(Teff_tr)} K  (Baraffe cooling track — used for classification)`,
   );
