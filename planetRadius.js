@@ -38,6 +38,11 @@ const COMPOSITIONS = {
     scale: 1.2335,
     exponent: 0.2948,
   },
+  predIcy: {
+    label: "Predominantly icy (Tethys/Dione/Rhea-like)",
+    scale: 1.1013,
+    exponent: 0.2854,
+  },
   rockyIcy: {
     label: "Rocky-icy body (Europa/Triton-like)",
     scale: 0.5838,
@@ -69,6 +74,7 @@ const TYPE_KEYS = [
   "rocky",
   "water",
   "icyBody",
+  "predIcy",
   "rockyIcy",
   "carbonia",
   "miniNeptune",
@@ -190,8 +196,7 @@ function massToRadius(key, mass) {
         // HAT-P-2b (8.45 M_Jup, ~10.19 R_E) — a well-characterised massive hot Jupiter.
         r = comp.scale * Math.pow(mass / M_JUP, -0.0347);
       }
-      r = Math.max(7.5, Math.min(999999, r));
-      // r = Math.max(7.5, Math.min(13.0, r));
+      r = Math.max(7.5, Math.min(13.0, r));
       break;
 
     default:
@@ -293,15 +298,16 @@ function printMenu() {
   console.log("2) Rocky         (Earth-like, silicate mantle)");
   console.log("3) Water/ocean   (ice-rich super-Earth, ocean world)");
   console.log("4) Icy body      (Pluto/Titan/Ganymede-like, ice-dominated)");
-  console.log("5) Rocky-icy     (Europa/Triton-like, rock core + ice shell)");
-  console.log("6) Carbonia      (carbon-rich, SiC/diamond interior)");
-  console.log("7) Mini-Neptune  (K2-18b-like, H/He envelope)");
-  console.log("8) Ice giant     (Uranus/Neptune-like)");
-  console.log("9) Gas giant     (Saturn/Jupiter-like)");
+  console.log("5) Predominantly icy (Tethys/Dione/Rhea-like, ice-dominated)");
+  console.log("6) Rocky-icy     (Europa/Triton-like, rock core + ice shell)");
+  console.log("7) Carbonia      (carbon-rich, SiC/diamond interior)");
+  console.log("8) Mini-Neptune  (K2-18b-like, H/He envelope)");
+  console.log("9) Ice giant     (Uranus/Neptune-like)");
+  console.log("10) Gas giant    (Saturn/Jupiter-like)");
   console.log(
-    "10) Hot Jupiter  (irradiation-inflated, orbiting close to star)",
+    "11) Hot Jupiter  (irradiation-inflated, orbiting close to star)",
   );
-  console.log("11) Chthonian    (exposed core of stripped gas/ice giant)");
+  console.log("12) Chthonian    (exposed core of stripped gas/ice giant)");
 }
 
 function askRepeat() {
@@ -379,42 +385,27 @@ function printChthonianResult(mass, radiusEarth, radiusKm, dens, stellar) {
   console.log(
     "\nType:             Chthonian planet (stripped gas/ice giant core)",
   );
-  console.log("Estimated radius: " + radiusKm + " km");
-  console.log("In Earth radii:   " + radiusEarth + " R_Earth");
-  console.log("Mean density:     " + dens + " g/cm^3");
-
-  /** console.log("Estimated radius: " + radiusKm.toFixed(2) + " km");
+  console.log("Estimated radius: " + radiusKm.toFixed(2) + " km");
   console.log("In Earth radii:   " + radiusEarth.toFixed(4) + " R_Earth");
-  console.log("Mean density:     " + dens.toFixed(4) + " g/cm^3"); **/
-
+  console.log("Mean density:     " + dens.toFixed(4) + " g/cm^3");
   console.log(
-    "Note: density     ~5.4-5.5 g/cm^3 reflects residual compression from former envelope.",
+    "Note: density ~5.4-5.5 g/cm^3 reflects residual compression from former envelope.",
   );
   if (stellar) {
     console.log("\nStellar irradiation context:");
     console.log(
-      "- Incident flux:    " +
-        stellar.flux / 1e6 +
-        " MW/m^2  (" +
-        stellar.flux / S_EARTH +
-        " S_Earth)",
-    );
-
-    /** console.log(
       "  Incident flux:    " +
         (stellar.flux / 1e6).toFixed(4) +
         " MW/m^2  (" +
         (stellar.flux / S_EARTH).toFixed(1) +
         " S_Earth)",
-    ); **/
-
-    console.log("- Equilibrium temp: " + stellar.Teq + " K");
-    // console.log("  Equilibrium temp: " + stellar.Teq.toFixed(1) + " K");
+    );
+    console.log("  Equilibrium temp: " + stellar.Teq.toFixed(1) + " K");
     if (stellar.Teq > 2000) {
       console.log("  Surface likely molten (magma ocean conditions).");
     } else if (stellar.Teq > 1000) {
       console.log(
-        "- Extreme irradiation — bare rock surface, no atmosphere expected.",
+        "  Extreme irradiation — bare rock surface, no atmosphere expected.",
       );
     }
   }
@@ -435,7 +426,7 @@ function askHotJupiterInputs() {
     const massJup = mass / M_JUP;
     if (massJup < 0.1 || massJup > 13) {
       console.log(
-        `\n!  ${massJup.toFixed(3)} M_Jupiter is outside the hot Jupiter range (0.1-13 Mj).`,
+        `\n⚠️  ${massJup.toFixed(3)} M_Jupiter is outside the hot Jupiter range (0.1–13 Mj).`,
       );
       return askRepeat();
     }
@@ -483,11 +474,9 @@ function askHotJupiterInputs() {
                   return askRepeat();
                 }
                 const L_solar = calcLFromTR(T_eff, R_star);
-                console.log("  -> Derived luminosity: " + L_solar + " L_Sun");
-
-                /** console.log(
+                console.log(
                   "  -> Derived luminosity: " + L_solar.toFixed(4) + " L_Sun",
-                ); **/
+                );
                 proceedWithL(L_solar);
               },
             );
@@ -528,37 +517,24 @@ function computeAndPrintHotJupiter(mass, L_solar, a_AU, A) {
   const rFinal = Math.min(rInflatedRaw, MAX_R_EARTH);
   const radiusKm = rFinal * EARTH_RADIUS_KM;
   const density = calcDensity(mass, rFinal);
-  const inflPct = inflationFraction * 100;
-  // const inflPct = (inflationFraction * 100).toFixed(1);
+  const inflPct = (inflationFraction * 100).toFixed(1);
 
   console.log(
-    `\nType:               Hot Jupiter (irradiation-inflated gas giant)`,
+    `\nType:             Hot Jupiter (irradiation-inflated gas giant)`,
   );
   console.log(`Stellar luminosity: ${L_solar} L_Sun`);
-  console.log(`Orbital distance:   ${a_AU} AU`);
-  console.log(`Bond albedo:        ${A}`);
-  const incidentFlux = calcFluxFromL(L_solar, a_AU);
-  console.log(`Equilibrium temp:   ${Teq} K`);
-  console.log(
-    `Incident flux:      ${incidentFlux / 1e6} MW/m²  (${incidentFlux / S_EARTH} S_Earth)`,
-  );
-
-  /** console.log(`Stellar luminosity: ${L_solar} L_Sun`);
   console.log(`Orbital distance:   ${a_AU} AU`);
   console.log(`Bond albedo:        ${A.toFixed(2)}`);
   const incidentFlux = calcFluxFromL(L_solar, a_AU);
   console.log(`Equilibrium temp:   ${Teq.toFixed(1)} K`);
   console.log(
     `Incident flux:      ${(incidentFlux / 1e6).toFixed(4)} MW/m²  (${(incidentFlux / S_EARTH).toFixed(1)} S_Earth)`,
-  ); **/
+  );
 
   if (Teq < 1000) {
-    console.log(`\n!  Teq = ${Teq} K is below the 1000 K inflation threshold.`);
-
-    /** console.log(
-      `\n!  Teq = ${Teq.toFixed(1)} K is below the 1000 K inflation threshold.`,
-    ); **/
-
+    console.log(
+      `\n⚠️  Teq = ${Teq.toFixed(1)} K is below the 1000 K inflation threshold.`,
+    );
     console.log(`   This planet would behave as a non-inflated gas giant.`);
     console.log(
       `   Consider using the Gas giant type instead, or move it closer to its star.`,
@@ -571,29 +547,17 @@ function computeAndPrintHotJupiter(mass, L_solar, a_AU, A) {
 
   if (rInflatedRaw > MAX_R_EARTH) {
     console.log(
-      `\nNote: Raw inflation gave ${rInflatedRaw * EARTH_RADIUS_KM} km — capped at 2.0 Rj physical limit.`,
-    );
-
-    /** console.log(
       `\nNote: Raw inflation gave ${(rInflatedRaw * EARTH_RADIUS_KM).toFixed(0)} km — capped at 2.0 Rj physical limit.`,
-    ); **/
+    );
   }
 
   console.log(
-    `\nCold baseline:    ${rBase * EARTH_RADIUS_KM} km  /  ${rBase} R_Earth`,
-  );
-  console.log(`Inflated radius:  ${radiusKm} km`);
-  console.log(`In Earth radii:   ${rFinal} R_Earth`);
-  console.log(`In Jupiter radii: ${rFinal / R_JUP_RE} R_Jupiter`);
-  console.log(`Mean density:     ${density} g/cm^3`);
-
-  /** console.log(
     `\nCold baseline:    ${(rBase * EARTH_RADIUS_KM).toFixed(2)} km  /  ${rBase.toFixed(4)} R_Earth`,
   );
   console.log(`Inflated radius:  ${radiusKm.toFixed(2)} km`);
   console.log(`In Earth radii:   ${rFinal.toFixed(4)} R_Earth`);
   console.log(`In Jupiter radii: ${(rFinal / R_JUP_RE).toFixed(4)} R_Jupiter`);
-  console.log(`Mean density:     ${density.toFixed(4)} g/cm^3`); **/
+  console.log(`Mean density:     ${density.toFixed(4)} g/cm^3`);
 
   askRepeat();
 }
@@ -649,7 +613,7 @@ function startCalculation() {
 
             if (radiusEarth === null) {
               console.log(
-                `\n!  Mass ${mass} M_Earth is outside the valid range for Rocky-icy.`,
+                `\n⚠️  Mass ${mass} M_Earth is outside the valid range for Rocky-icy.`,
               );
               console.log(
                 `   This model is only calibrated up to 0.02 M_Earth (Europa/Triton scale).`,
@@ -664,13 +628,9 @@ function startCalculation() {
             const density = calcDensity(mass, radiusEarth);
 
             console.log(`\nType:             ${comp.label}`);
-            console.log(`Estimated radius: ${radiusKm} km`);
-            console.log(`In Earth radii:   ${radiusEarth} R_Earth`);
-            console.log(`Mean density:     ${density} g/cm^3`);
-
-            /** console.log(`Estimated radius: ${radiusKm.toFixed(2)} km`);
+            console.log(`Estimated radius: ${radiusKm.toFixed(2)} km`);
             console.log(`In Earth radii:   ${radiusEarth.toFixed(4)} R_Earth`);
-            console.log(`Mean density:     ${density.toFixed(4)} g/cm^3`); **/
+            console.log(`Mean density:     ${density.toFixed(4)} g/cm^3`);
 
             askRepeat();
           });
