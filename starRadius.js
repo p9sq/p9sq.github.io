@@ -1257,16 +1257,26 @@ function printWD(massSun, ageGyr) {
 //   PSR J0437-4715: M = 1.42 M_Sun, R = 11.36 km  (Choudhury et al. 2024)
 // Multi-messenger consensus (NICER + GW + nuclear χEFT):
 //   R_1.4 = 12.33 +0.86/−0.80 km  (Dittmann et al. 2024, ApJL)
-//   R is nearly flat across 1.0–2.0 M_Sun; slight decrease at high mass.
+//   R is nearly flat across 1.0–2.0 M_Sun; only slight variation.
 // Maximum mass: ~2.35 M_Sun (PSR J0952-0607; Romani et al. 2022).
-// We use the linear fit R = 12.33 − 0.5×(M−1.4) km, anchored to the
-// Dittmann et al. (2024) multi-messenger median and clipped to ≥ 10 km.
-// Individual NICER measurements (especially J0437 at 11.36 km) lie within
-// the ±1 km EOS uncertainty band of this fit.
+// We use a three-segment piecewise formula anchored to Dittmann et al. (2024):
+//   M ≤ 1.4:  R = 12.33 + 0.10×(1.4−M) km   (slight rise toward lower mass)
+//   1.4–1.8:  R = 12.33 − 0.15×(M−1.4) km   (gentle decrease)
+//   M > 1.8:  R = 12.27 − 0.10×(M−1.8) km   (nearly flat — stiff EOS regime)
+// All segments clipped to ≥ 10.5 km. Errors vs NICER: J0030 −0.11 km, J0740 −0.15 km.
 
 function nsRadius(massSun) {
-  // km; anchored to Dittmann et al. (2024) R_1.4 = 12.33 km; clipped to ≥ 10 km
-  return Math.max(10.0, 12.33 - 0.5 * (massSun - 1.4));
+  // Three-segment empirical fit anchored to NICER + multi-messenger constraints:
+  //   M ≤ 1.4:  slight increase toward lower mass (softer EOS at low M)
+  //   1.4–1.8:  gentle decrease (−0.15 km/M_Sun)
+  //   M > 1.8:  nearly flat (−0.10 km/M_Sun) — stiff EOS observed by NICER
+  // Anchored to Dittmann et al. (2024) R_1.4 = 12.33 km; clipped to ≥ 10.5 km.
+  // Errors vs NICER measurements: J0030 (−0.11 km), J0740 (−0.15 km). J0437
+  // (11.36 km) lies 1 km below the multi-messenger consensus and is within
+  // the ±1–2 km EOS scatter band; it is not used to anchor the formula.
+  if (massSun <= 1.4) return Math.max(10.5, 12.33 + 0.1 * (1.4 - massSun));
+  if (massSun <= 1.8) return Math.max(10.5, 12.33 - 0.15 * (massSun - 1.4));
+  return Math.max(10.5, 12.27 - 0.1 * (massSun - 1.8));
 }
 
 // Neutron star cooling model (Page et al. 2004; Yakovlev & Pethick 2004):
@@ -1397,7 +1407,10 @@ function printNS(massSun, ageKyr) {
     `              Dittmann et al. (2024) multi-messenger R_1.4 = 12.33 km.`,
   );
   console.log(
-    `              EOS: stiff nuclear χEFT model; R uncertainty ±1–2 km (68% CI).`,
+    `              Three-segment fit: nearly flat above 1.8 M_Sun (stiff EOS).`,
+  );
+  console.log(
+    `              EOS uncertainty: ±1–2 km (68% CI) across the full mass range.`,
   );
 }
 
