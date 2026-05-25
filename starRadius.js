@@ -1227,7 +1227,22 @@ function printWD(massSun, ageGyr) {
     `\nCalibration:  Nauenberg (1972); verified by Tremblay et al. (2017) Gaia DR1.`,
   );
   console.log(
-    `Note: composition (DA/DB/DC) and hydrogen layer mass affect radius by 1–15%.`,
+    `Note: This is the zero-temperature Chandrasekhar formula. Hot WDs (Teff > 20000 K)`,
+  );
+  console.log(
+    `      have radii ~5–15% larger than computed here due to finite-temperature`,
+  );
+  console.log(
+    `      corrections to the electron degeneracy pressure (e.g. Sirius B: formula`,
+  );
+  console.log(
+    `      gives 0.0077 R_Sun vs observed 0.0086 R_Sun). Accuracy is best for`,
+  );
+  console.log(
+    `      cool WDs (Teff < 15000 K) where the zero-T approximation holds well.`,
+  );
+  console.log(
+    `      Composition (DA/DB/DC) and hydrogen layer mass also affect radius by 1–5%.`,
   );
   if (massSun > 1.3)
     console.log(
@@ -1236,18 +1251,22 @@ function printWD(massSun, ageGyr) {
 }
 
 // ---------- NEUTRON STARS ----------
-// Observational constraints from NICER:
-//   PSR J0030+0451: M = 1.34 M_Sun, R = 12.71 km  (Miller et al. 2019)
+// Observational constraints from NICER (all radii at 68% CI, ~±1–2 km):
+//   PSR J0030+0451: M = 1.34 M_Sun, R ≈ 12.45 km  (Miller et al. 2021 re-analysis)
 //   PSR J0740+6620: M = 2.08 M_Sun, R = 12.39 km  (Miller et al. 2021)
 //   PSR J0437-4715: M = 1.42 M_Sun, R = 11.36 km  (Choudhury et al. 2024)
-// Consensus: R ≈ 11–13 km nearly mass-independent for 1.2–2.0 M_Sun.
+// Multi-messenger consensus (NICER + GW + nuclear χEFT):
+//   R_1.4 = 12.33 +0.86/−0.80 km  (Dittmann et al. 2024, ApJL)
+//   R is nearly flat across 1.0–2.0 M_Sun; slight decrease at high mass.
 // Maximum mass: ~2.35 M_Sun (PSR J0952-0607; Romani et al. 2022).
-// Below we use the empirical "stiff EOS" fit R = 12.5 - 0.6*(M-1.4) km,
-// consistent with NICER constraints and nuclear χEFT calculations.
+// We use the linear fit R = 12.33 − 0.5×(M−1.4) km, anchored to the
+// Dittmann et al. (2024) multi-messenger median and clipped to ≥ 10 km.
+// Individual NICER measurements (especially J0437 at 11.36 km) lie within
+// the ±1 km EOS uncertainty band of this fit.
 
 function nsRadius(massSun) {
-  // km, empirical fit within NICER constraints
-  return 12.5 - 0.6 * (massSun - 1.4);
+  // km; anchored to Dittmann et al. (2024) R_1.4 = 12.33 km; clipped to ≥ 10 km
+  return Math.max(10.0, 12.33 - 0.5 * (massSun - 1.4));
 }
 
 // Neutron star cooling model (Page et al. 2004; Yakovlev & Pethick 2004):
@@ -1372,10 +1391,13 @@ function printNS(massSun, ageKyr) {
 
   console.log(`\nCalibration:  Miller et al. (2021) NICER PSR J0740+6620;`);
   console.log(
-    `              Riley et al. (2021); Choudhury et al. (2024) PSR J0437-4715.`,
+    `              Riley et al. (2021); Choudhury et al. (2024) PSR J0437-4715;`,
   );
   console.log(
-    `              EOS: stiff nuclear χEFT model; R uncertainty ±1 km.`,
+    `              Dittmann et al. (2024) multi-messenger R_1.4 = 12.33 km.`,
+  );
+  console.log(
+    `              EOS: stiff nuclear χEFT model; R uncertainty ±1–2 km (68% CI).`,
   );
 }
 
