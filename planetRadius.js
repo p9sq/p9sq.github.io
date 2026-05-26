@@ -3,7 +3,7 @@
 
 const readline = require("readline");
 
-const EARTH_RADIUS_KM = 6371;
+const EARTH_RADIUS_KM = 6371.14;
 const M_JUP = 317.8; // Earth masses
 const R_JUP_RE = 10.9733; // Jupiter mean radius in R_Earth
 const AU_M = 1.496e11; // 1 AU in metres
@@ -299,12 +299,16 @@ function radiusToMass(key, radiusEarth) {
 
 // ---------------------------------------------------------------------------
 // Shared density calculation
+// Matches Space Engine's density display: scales Earth's mean density by
+// the ratio of mass to volume in Earth units (R_Earth = 6378.14 km).
 // ---------------------------------------------------------------------------
 function calcDensity(massEarth, radiusEarth) {
   const radiusKm = radiusEarth * EARTH_RADIUS_KM;
-  const volume = (4 / 3) * Math.PI * Math.pow(radiusKm * 1e5, 3); // cm^3
-  const massG = massEarth * 5.972e27; // grams
-  return massG / volume;
+  const radiusEarths = radiusKm / 6378.14;
+  const EARTH_DENSITY = 5.5136; // g/cm^3, Earth's mean density
+  return parseFloat(
+    (EARTH_DENSITY * (massEarth / Math.pow(radiusEarths, 3))).toFixed(3),
+  );
 }
 
 // ---------------------------------------------------------------------------
