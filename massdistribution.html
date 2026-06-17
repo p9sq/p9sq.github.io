@@ -816,17 +816,22 @@
             </select>
           </div>
           <div class="inline-warn" id="r-solar-warn">
-            Mass exceeds 0.6 M☉ — above the M0 red dwarf limit. Please enter a
-            value within range.
+            Mass exceeds 4 M☉ — above the supported limit (early A-type star).
+            Please enter a value within range.
           </div>
         </div>
 
         <div class="field">
-          <label>Number of Planets</label>
+          <label
+            >Number of Planets
+            <span style="font-weight: 400; color: var(--faint)"
+              >— leave blank to auto-generate</span
+            ></label
+          >
           <input
             type="number"
             id="r-count"
-            placeholder="e.g. 7"
+            placeholder="Auto (based on stellar inputs)"
             min="1"
             step="1"
           />
@@ -845,6 +850,14 @@
             <option value="galilean">
               Galilean-like (several comparable masses)
             </option>
+            <optgroup label="Uneven">
+              <option value="gradient">
+                Gradient (Kepler-90-like, mass increases with index)
+              </option>
+              <option value="disordered">
+                Disordered (Solar System-like, bimodal spread)
+              </option>
+            </optgroup>
           </select>
         </div>
 
@@ -980,7 +993,8 @@
       const M_SUN_EARTH = 332946.0;
       const BD_MIN_ME = 13 * M_JUP_EARTH;
       const BD_MAX_ME = 80 * M_JUP_EARTH;
-      const STAR_MAX_ME = 0.6 * M_SUN_EARTH;
+      const STAR_MAX_ME = 4.0 * M_SUN_EARTH; // expanded to F/A stars (~4 M☉)
+      const STAR_WARN_ME = 2.0 * M_SUN_EARTH; // soft warning above 2 M☉
       const LUNAR_MASS_EARTH = 0.012293627139077726;
       const THRESHOLD_GAS_GIANT = 50;
       const THRESHOLD_ICE_GIANT = 10;
@@ -996,7 +1010,7 @@
       function classifyBody(me) {
         if (me < BD_MIN_ME) return "planet";
         if (me <= BD_MAX_ME) return "brown_dwarf";
-        if (me <= STAR_MAX_ME) return "red_dwarf";
+        if (me <= STAR_MAX_ME) return "star";
         return "out_of_range";
       }
 
@@ -1015,7 +1029,15 @@
         if (mSun < 0.15) return "Red dwarf (M7–M5, ~0.10–0.15 M☉)";
         if (mSun < 0.25) return "Red dwarf (M5–M3, ~0.15–0.25 M☉)";
         if (mSun < 0.4) return "Red dwarf (M3–M1, ~0.25–0.40 M☉)";
-        return "Red dwarf (M1–M0, ~0.40–0.60 M☉)";
+        if (mSun < 0.6) return "Red dwarf (M1–M0, ~0.40–0.60 M☉)";
+        if (mSun < 0.8) return "K-type star (K5–K7, ~0.60–0.80 M☉)";
+        if (mSun < 0.9) return "K-type star (K3–K5, ~0.80–0.90 M☉)";
+        if (mSun < 1.05) return "G-type star (G2–K2, ~0.90–1.05 M☉)";
+        if (mSun < 1.3) return "G-type star (G0–G2, ~1.05–1.30 M☉)";
+        if (mSun < 1.6) return "F-type star (F5–G0, ~1.30–1.60 M☉)";
+        if (mSun < 2.1) return "F-type star (F0–F5, ~1.60–2.10 M☉)";
+        if (mSun < 3.0) return "A-type star (A5–F0, ~2.10–3.00 M☉)";
+        return `A-type star (~${mSun.toFixed(1)} M☉)`;
       }
 
       function getPlanetType(me, style) {
@@ -1030,13 +1052,21 @@
 
       function getMoonMassRatio(me, style, FeH, ageGyr) {
         const bc = classifyBody(me);
-        if (bc === "brown_dwarf" || bc === "red_dwarf") {
-          const baseRatio = bc === "red_dwarf" ? 1 / 6000 : 1 / 10000;
-          const f_met = Math.pow(10, 0.5 * (FeH ?? 0.0));
+        if (bc === "brown_dwarf" || bc === "red_dwarf" || bc === "star") {
           const mSun = me / M_SUN_EARTH;
+          let baseRatio;
+          if (bc === "brown_dwarf") baseRatio = 1 / 10000;
+          else if (mSun < 0.6)
+            baseRatio = 1 / 6000; // M dwarf
+          else if (mSun < 1.1)
+            baseRatio = 1 / 4000; // K/G
+          else baseRatio = 1 / 3000; // F/A
+          const f_met = Math.pow(10, 0.5 * (FeH ?? 0.0));
           const M_ref =
-            bc === "red_dwarf" ? 0.15 : (40 * M_JUP_EARTH) / M_SUN_EARTH;
-          const f_mass = Math.pow(mSun / M_ref, 0.7);
+            bc === "brown_dwarf"
+              ? (40 * M_JUP_EARTH) / M_SUN_EARTH
+              : Math.max(0.08, mSun);
+          const f_mass = Math.pow(Math.max(0.08, mSun) / M_ref, 0.7);
           return Math.max(
             1 / 50000,
             Math.min(1 / 800, baseRatio * f_met * f_mass),
@@ -1069,25 +1099,58 @@
         return Math.max(0.2, Math.min(0.95, fBase * f_planet));
       }
 
-      function getDefaultStyle(me, FeH, ageGyr, distAU) {
+      function getDefaultStyle(me, FeH, ageGyr, distAU, starMassSolar) {
         const bc = classifyBody(me);
-        if (bc === "brown_dwarf" || bc === "red_dwarf") {
-          const metalRich = (FeH ?? 0) > 0.2;
-          const metalPoor = (FeH ?? 0) < -0.2;
+        const feh = FeH ?? 0.0;
+
+        // ── Brown dwarfs / red dwarfs / stars (right panel) ───────────────────
+        // Auto style is driven by:
+        //   metallicity: more metals → more/larger planets → Galilean
+        //   stellar mass: higher mass → shorter disk lifetime → fewer giants
+        //   age: older → more dynamical evolution → disordered systems
+        if (bc === "brown_dwarf" || bc === "red_dwarf" || bc === "star") {
+          const mSun = me / M_SUN_EARTH;
+          const highMet = feh > 0.2;
+          const lowMet = feh < -0.2;
+          const veryLow = feh < -0.5;
+          const highMass = mSun > 1.5; // F/A stars: shorter disk, more radiation
+          const midMass = mSun > 0.6; // K/G stars
           const old = ageGyr !== null && ageGyr > 8;
           const young = ageGyr !== null && ageGyr < 1;
-          if (metalPoor || old) return "galilean";
-          if (metalRich && young) return "saturn";
-          if (metalRich) return "hybrid";
+
+          // Very old systems have had time for dynamical scattering → disordered
+          if (old && midMass) return "disordered";
+          // High-mass stars: disk photoevaporated quickly → fewer, unequal planets
+          if (highMass && highMet) return "gradient"; // enough metals for mass gradient
+          if (highMass) return "hybrid"; // disk evaporates before Galilean can form
+          // Metal-rich K/G/M: core accretion favoured → multiple comparable planets
+          if (highMet && !highMass) return "galilean";
+          // Metal-poor: fewer solids → one or two larger bodies + smalls
+          if (veryLow) return "saturn";
+          if (lowMet) return "hybrid";
+          // Young metal-rich: gradient systems (inner small, outer large gas giants)
+          if (young && highMet) return "gradient";
+          // Solar-like default
           return "galilean";
         }
+
+        // ── Left panel (planet hosting moons) ────────────────────────────────
         const mj = me / M_JUP_EARTH;
         if (mj < 0.1) return "hybrid"; // ice giant / sub-Neptune
         if (mj <= 0.5) return "hybrid"; // sub-Jupiter / Saturn-mass
         return "galilean"; // gas giant > 0.5 Mj
       }
 
-      // ── Galilean log-uniform spread (now superseded by per-class spread in distributeMasses) ──
+      // ── Box-Muller normal random number ───────────────────────────────────────
+      function randn() {
+        let u = 0,
+          v = 0;
+        while (u === 0) u = Math.random();
+        while (v === 0) v = Math.random();
+        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+      }
+
+      // ── Galilean log-uniform spread ──────────────────────────────────────────
       function galileanLogRange(distAU, spreadRatio) {
         const R =
           spreadRatio ?? 3.0 + Math.min(1.0, (Math.max(0.5, distAU) - 1) / 4);
@@ -1155,6 +1218,49 @@
           const [lMin, lMax] = galileanLogRange(distAU, spreadRatio);
           for (let i = 0; i < actualCount; i++)
             raw.push(Math.exp(lMin + Math.random() * (lMax - lMin)));
+        } else if (style === "gradient") {
+          // Kepler-90-like: power-law mass gradient, inner planets smaller,
+          // outer planets larger. Mass ∝ (rank/N)^β where β ~ 1.5–2.5.
+          // Randomise β each generation for variety.
+          // Calibration: Kepler-90 spans ~2.7–203 M⊕ over 8 planets (~75× spread).
+          // We target a spread of 20–100× depending on count.
+          const beta = 1.5 + Math.random() * 1.0; // 1.5–2.5
+          for (let i = 0; i < actualCount; i++) {
+            // rank from 1 (smallest, inner) to N (largest, outer)
+            const rank = i + 1;
+            const frac = rank / actualCount;
+            // Add mild stochastic noise (±15%) so it's not perfectly monotonic
+            const noise = 0.85 + Math.random() * 0.3;
+            raw.push(Math.pow(frac, beta) * noise);
+          }
+          // raw is already ordered smallest→largest (inner→outer);
+          // normalise then return — caller will sort per user preference
+        } else if (style === "disordered") {
+          // Solar System-like: bimodal log-normal distribution.
+          // Small population: log-normal centred on ~1–5 M⊕ (rocky/icy planets)
+          // Large population: log-normal centred on ~30–300 M⊕ (gas/ice giants)
+          // Gap between populations is randomised.
+          // Roughly half the planets in each group (with noise).
+          const nLarge = Math.max(
+            1,
+            Math.round(actualCount * (0.3 + Math.random() * 0.25)),
+          );
+          const nSmall = actualCount - nLarge;
+          // Small: log-normal, μ = log(1–5 M⊕), σ = 0.5 dex
+          const muSmall = Math.log(1.0 + Math.random() * 4.0);
+          const sigSmall = 0.4 + Math.random() * 0.2;
+          for (let i = 0; i < nSmall; i++)
+            raw.push(Math.exp(muSmall + sigSmall * randn()));
+          // Large: log-normal, μ = log(30–300 M⊕), σ = 0.6 dex
+          const muLarge = Math.log(30 + Math.random() * 270);
+          const sigLarge = 0.4 + Math.random() * 0.3;
+          for (let i = 0; i < nLarge; i++)
+            raw.push(Math.exp(muLarge + sigLarge * randn()));
+          // Shuffle so order is truly disordered
+          for (let i = raw.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [raw[i], raw[j]] = [raw[j], raw[i]];
+          }
         } else {
           // hybrid
           if (actualCount === 1) {
@@ -1192,6 +1298,8 @@
         saturn: "Saturn-like",
         hybrid: "Hybrid",
         galilean: "Galilean-like",
+        gradient: "Gradient (Kepler-90-like)",
+        disordered: "Disordered (Solar System-like)",
       };
       const sortLabels = {
         descending: "Largest → Smallest",
@@ -1862,14 +1970,25 @@
         const warn = document.getElementById("r-solar-warn");
         if (!rawMass || isNaN(rawMass)) {
           warn.classList.remove("visible");
+          warn.textContent = "";
           return;
         }
         let me;
         if (unit === "jupiter") me = rawMass * M_JUP_EARTH;
         else if (unit === "solar") me = rawMass * M_SUN_EARTH;
         else me = rawMass;
-        if (me > STAR_MAX_ME) warn.classList.add("visible");
-        else warn.classList.remove("visible");
+        if (me > STAR_MAX_ME) {
+          warn.textContent =
+            "Mass exceeds 4 M☉ — above the supported limit. Please enter a value within range.";
+          warn.classList.add("visible");
+        } else if (me > STAR_WARN_ME) {
+          warn.textContent =
+            "Note: above ~2 M☉ (A/F-type stars) habitable zone formulas are less reliable and disk lifetimes are shorter. Results are approximate.";
+          warn.classList.add("visible");
+        } else {
+          warn.classList.remove("visible");
+          warn.textContent = "";
+        }
       }
 
       function checkMetallicityLimit() {
@@ -1939,7 +2058,21 @@
         if (Teff < 4100) return `M1–M2 (~${Math.round(Teff)} K)`;
         if (Teff < 4200) return `M1 (~${Math.round(Teff)} K)`;
         if (Teff < 4400) return `M0–M1 (~${Math.round(Teff)} K)`;
-        return `M0 or earlier (~${Math.round(Teff)} K)`;
+        if (Teff < 4700) return `K7–K5 (~${Math.round(Teff)} K)`;
+        if (Teff < 5000) return `K5–K3 (~${Math.round(Teff)} K)`;
+        if (Teff < 5300) return `K3–K1 (~${Math.round(Teff)} K)`;
+        if (Teff < 5600) return `K1–G8 (~${Math.round(Teff)} K)`;
+        if (Teff < 5800) return `G8–G5 (~${Math.round(Teff)} K)`;
+        if (Teff < 6000) return `G5–G2 (~${Math.round(Teff)} K)`;
+        if (Teff < 6200) return `G2–G0 (~${Math.round(Teff)} K)`;
+        if (Teff < 6400) return `F8–G0 (~${Math.round(Teff)} K)`;
+        if (Teff < 6700) return `F5–F8 (~${Math.round(Teff)} K)`;
+        if (Teff < 7000) return `F2–F5 (~${Math.round(Teff)} K)`;
+        if (Teff < 7500) return `F0–F2 (~${Math.round(Teff)} K)`;
+        if (Teff < 8000) return `A7–F0 (~${Math.round(Teff)} K)`;
+        if (Teff < 9000) return `A3–A7 (~${Math.round(Teff)} K)`;
+        if (Teff < 10000) return `A0–A3 (~${Math.round(Teff)} K)`;
+        return `B/A-type (~${Math.round(Teff)} K)`;
       }
 
       // ── Habitable zone calculations (Kopparapu et al. 2013/2014) ─────────────
@@ -2062,22 +2195,6 @@
         chevron.classList.toggle("open");
       }
 
-      function checkSolarLimit() {
-        const rawMass = parseFloat(document.getElementById("r-mass").value);
-        const unit = document.getElementById("r-unit").value;
-        const warn = document.getElementById("r-solar-warn");
-        if (!rawMass || isNaN(rawMass)) {
-          warn.classList.remove("visible");
-          return;
-        }
-        let me;
-        if (unit === "jupiter") me = rawMass * M_JUP_EARTH;
-        else if (unit === "solar") me = rawMass * M_SUN_EARTH;
-        else me = rawMass;
-        if (me > STAR_MAX_ME) warn.classList.add("visible");
-        else warn.classList.remove("visible");
-      }
-
       function checkMetallicityLimit() {
         const val = parseFloat(document.getElementById("r-feh").value);
         const warn = document.getElementById("r-feh-warn");
@@ -2085,12 +2202,97 @@
         else warn.classList.remove("visible");
       }
 
+      // ── Auto planet count ──────────────────────────────────────────────────────
+      // Calibrated to Kepler/RV occurrence rates and theoretical expectations.
+      // Base counts by stellar class:
+      //   Brown dwarf:  1–3   (poorly constrained, low disk mass)
+      //   M dwarf:      3–7   (TRAPPIST-1 style, compact multis common)
+      //   K dwarf:      2–5   (slightly fewer than M, wider orbits)
+      //   G dwarf:      2–6   (Solar System analogue)
+      //   F dwarf:      1–4   (shorter disk lifetime ~1–3 Myr)
+      //   A dwarf:      1–3   (very short disk, strong radiation)
+      // Corrections:
+      //   Metallicity: N × 10^(0.7 × [Fe/H])  (Fischer & Valenti 2005 inspired)
+      //   Age:         mild decay for old systems, mild boost for young
+      //   Style:       Galilean → +1–2, Saturn-like → −1, others neutral
+      function autoPlanetCount(parentMass, FeH, ageGyr, style) {
+        const mSun = parentMass / M_SUN_EARTH;
+        const bc = classifyBody(parentMass);
+
+        // Base count range [min, max] by stellar class
+        let baseMin, baseMax;
+        if (bc === "brown_dwarf") {
+          baseMin = 1;
+          baseMax = 3;
+        } else if (mSun < 0.4) {
+          // Late M dwarf
+          baseMin = 3;
+          baseMax = 7;
+        } else if (mSun < 0.6) {
+          // Early M dwarf
+          baseMin = 3;
+          baseMax = 6;
+        } else if (mSun < 0.9) {
+          // K dwarf
+          baseMin = 2;
+          baseMax = 5;
+        } else if (mSun < 1.1) {
+          // G dwarf
+          baseMin = 2;
+          baseMax = 6;
+        } else if (mSun < 1.6) {
+          // F dwarf
+          baseMin = 1;
+          baseMax = 4;
+        } else {
+          // A dwarf
+          baseMin = 1;
+          baseMax = 3;
+        }
+
+        // Random base within range
+        const base = baseMin + Math.random() * (baseMax - baseMin);
+
+        // Metallicity correction: metal-rich stars form more planets
+        const f_met = Math.pow(10, 0.7 * (FeH ?? 0.0));
+
+        // Age correction: younger → slightly more (haven't been dynamically scattered)
+        //   f_age: 0.1 Gyr→1.25, 1 Gyr→1.10, 5 Gyr→1.00, 10 Gyr→0.85
+        let f_age = 1.0;
+        if (ageGyr != null) {
+          f_age = Math.max(0.7, Math.min(1.3, 1.15 - 0.035 * ageGyr));
+        }
+
+        // Style correction
+        let f_style = 1.0;
+        if (style === "galilean") f_style = 1.3; // several comparable bodies
+        if (style === "saturn") f_style = 0.7; // one dominant + a few smalls
+        if (style === "gradient") f_style = 1.1; // Kepler-90 has 8 planets
+        if (style === "disordered") f_style = 1.1; // Solar System has 8
+
+        const N = Math.round(base * f_met * f_age * f_style);
+
+        // Hard caps by stellar class
+        const maxN =
+          bc === "brown_dwarf"
+            ? 4
+            : mSun < 0.6
+              ? 9
+              : mSun < 1.1
+                ? 8
+                : mSun < 1.6
+                  ? 6
+                  : 5;
+
+        return Math.max(1, Math.min(maxN, N));
+      }
+
       function generatePlanets() {
         clearError("r");
         document.getElementById("r-zones").innerHTML = "";
         const rawMass = parseFloat(document.getElementById("r-mass").value);
         const unit = document.getElementById("r-unit").value;
-        const count = parseInt(document.getElementById("r-count").value);
+        const countRaw = document.getElementById("r-count").value;
         const styleIn = document.getElementById("r-style").value;
         const sortIn = document.getElementById("r-sort").value;
         const fehRaw = document.getElementById("r-feh").value;
@@ -2105,8 +2307,6 @@
 
         if (!rawMass || rawMass <= 0)
           return showError("r", "Please enter a valid parent body mass.");
-        if (!count || count < 1)
-          return showError("r", "Please enter a valid planet count (≥ 1).");
 
         const fehVal = fehRaw !== "" ? parseFloat(fehRaw) : null;
         if (fehVal !== null && fehVal > 0.7)
@@ -2129,7 +2329,7 @@
         if (bc === "out_of_range")
           return showError(
             "r",
-            "Mass exceeds 0.6 M☉ (M0 red dwarf limit). This tool supports brown dwarfs (13–80 M♃) and M-dwarf stars (up to 0.6 M☉).",
+            "Mass exceeds 4 M☉ — above the supported limit. This tool supports brown dwarfs (13–80 M♃), red dwarfs, and stars up to ~4 M☉ (early A-type).",
           );
         if (bc === "planet")
           return showError(
@@ -2142,15 +2342,70 @@
 
         const style =
           styleIn === "auto"
-            ? getDefaultStyle(parentMass, FeH, ageGyr, null)
+            ? getDefaultStyle(parentMass, FeH, ageGyr, null, null)
             : styleIn;
-        const ratio = getMoonMassRatio(parentMass, style, FeH, ageGyr);
-        const totalBudget = parentMass * ratio;
+
+        // Resolve planet count — auto if blank
+        const countIsAuto = countRaw === "" || countRaw == null;
+        let count;
+        if (countIsAuto) {
+          count = autoPlanetCount(parentMass, FeH, ageGyr, style);
+        } else {
+          count = parseInt(countRaw);
+          if (!count || count < 1)
+            return showError("r", "Please enter a valid planet count (≥ 1).");
+        }
+
+        // ── Circumstellar planet mass budget ──────────────────────────────────
+        // Uses empirical total planet mass scaling fitted to observed planetary
+        // system demographics, NOT the circumplanetary moon disk ratio.
+        //
+        // Reference total planet mass by stellar mass (M_ref):
+        //   Brown dwarf (0.04 M☉): ~5–15 M⊕   (mostly sub-Neptunes)
+        //   Late M dwarf (0.2 M☉): ~8–30 M⊕   (TRAPPIST-1: 7.5 M⊕ total)
+        //   Early M dwarf (0.5 M☉): ~20–80 M⊕
+        //   K dwarf (0.8 M☉): ~80–300 M⊕
+        //   G dwarf (1.0 M☉): ~300–600 M⊕     (Solar System: ~447 M⊕)
+        //   F dwarf (1.4 M☉): ~400–900 M⊕
+        //   A dwarf (2.0 M☉): ~600–1500 M⊕
+        //
+        // Piecewise power law:
+        //   Sub-solar (< 1 M☉): M_ref = 15 × (mSun/0.3)^1.2  M⊕
+        //   Super-solar (≥ 1 M☉): M_ref = 450 × mSun^1.0  M⊕
+        //
+        // Corrections:
+        //   Metallicity: × 10^(0.8 × [Fe/H])
+        //   Age: × exp(-age / 15)   (mild — disk is long gone, this reflects
+        //        dynamical erosion and atmospheric loss over time)
+        //   Stochastic scatter: × U(0.5, 2.0) for system-to-system variance
+        const mSun_r = parentMass / M_SUN_EARTH;
+        let M_ref;
+        if (mSun_r < 1.0) {
+          // Sub-solar: gentle power law, gas giants rare around M dwarfs
+          M_ref = 15 * Math.pow(Math.max(0.01, mSun_r) / 0.3, 1.2);
+        } else {
+          // Super-solar: linear-ish scaling, gas giants become common
+          M_ref = 450 * mSun_r;
+        }
+
+        // Metallicity correction (Fischer & Valenti 2005 inspired)
+        const f_met_r = Math.pow(10, 0.8 * FeH);
+        // Age correction (mild dynamical erosion)
+        const f_age_r = ageGyr != null ? Math.exp(-ageGyr / 15) : 1.0;
+        // Stochastic scatter representing system-to-system variance
+        const f_scatter = 0.5 + Math.random() * 1.5;
+
+        const totalBudget = M_ref * f_met_r * f_age_r * f_scatter;
+
+        // Display the disk budget parameters in meta
+        const diskBudgetDisplay = `${formatMass(totalBudget)} M⊕`;
+        const diskRatioDisplay = `~1 : ${Math.round(M_SUN_EARTH / (totalBudget / mSun_r)).toLocaleString()} (circumstellar)`;
 
         let { masses } = distributeMasses(
           totalBudget,
           count,
           style,
+          null,
           null,
           null,
         );
@@ -2222,8 +2477,12 @@
           ["Parent Mass", parentDisplay],
           ["Star Type", spectralLabel],
           ["System Style", styleLabels[style]],
-          ["Total Planet Budget", `${formatMass(totalBudget)} M⊕`],
-          ["Mass Ratio", `1 : ${Math.round(1 / ratio).toLocaleString()}`],
+          [
+            "Planet Count",
+            countIsAuto ? `${count} (auto-generated)` : `${count} (user-set)`,
+          ],
+          ["Total Planet Budget", diskBudgetDisplay],
+          ["Budget/Star Ratio", diskRatioDisplay],
           ["Sort Order", sortLabels[sortIn]],
           [
             "Metallicity [Fe/H]",
