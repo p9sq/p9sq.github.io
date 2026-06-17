@@ -1361,6 +1361,8 @@
         metaEl.innerHTML = meta.map(([l, v]) => metaCard(l, v)).join("");
         hdrEl.textContent = `${bodyLabel} Masses`;
 
+        const MJ_THRESHOLD = 0.2 * M_JUP_EARTH; // 63.566 M⊕
+
         const maxMass = Math.max(...masses);
         listEl.innerHTML = masses
           .map((m, i) => {
@@ -1374,9 +1376,16 @@
               const cat = classifyMoonHabitability(m, distAU);
               habFlag = habFlagHTML(cat);
             }
+            // For planets: show in M♃ if ≥ 0.2 M♃, otherwise M⊕
+            let massDisplay;
+            if (bodyLabel === "Planet" && m >= MJ_THRESHOLD) {
+              massDisplay = `${formatMass(m / M_JUP_EARTH)} M♃`;
+            } else {
+              massDisplay = `${formatMass(m)} M⊕`;
+            }
             return `<li class="body-item">
       <span class="body-num">#${i + 1}</span>
-      <span class="body-mass">${formatMass(m)} M⊕</span>
+      <span class="body-mass">${massDisplay}</span>
       ${lunaFlag}${habFlag}
       <div class="body-bar-wrap"><div class="body-bar" style="width:${pct.toFixed(1)}%"></div></div>
     </li>`;
