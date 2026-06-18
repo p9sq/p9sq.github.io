@@ -390,7 +390,7 @@ const CATALOGUED_SYSTEMS = {
   },
 };
 
-// ── PROMISING WORLDS (TERRANIA 2.0 CANDIDATES) ──────────────
+// ── PROMISING WORLDS (ARVENTIA 2.0 CANDIDATES) ──────────────
 const PROMISING_WORLDS = {
   Earth: {
     systemName: "Solar System",

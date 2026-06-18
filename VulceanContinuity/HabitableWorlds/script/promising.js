@@ -1,4 +1,4 @@
-// Promising worlds (Terrania 2.0 candidates) page
+// Promising worlds (Arventia 2.0 candidates) page
 // 1 parsec = 3.26156 light-years
 const PC_TO_LY = 3.26156;
 // 1 Earth radius = 6371 km
