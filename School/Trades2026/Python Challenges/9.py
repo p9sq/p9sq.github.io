@@ -8,7 +8,7 @@ if number > 1:
         if number % i == 0:
             print("Not Prime")
             break
-        else:
-            print("Prime")
     else:
-        print("Not Prime")
+        print("Prime")
+else:
+    print("Not Prime")

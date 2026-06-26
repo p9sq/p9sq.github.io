@@ -1,5 +1,5 @@
 # Challenge 15: Print Fibonacci Series
-num_terms = int(input("Enter the number of terms:"))
+num_terms = int(input("Enter the number of terms: "))
 
 first_term = 0
 second_term = 1

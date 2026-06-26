@@ -7,5 +7,5 @@ def fibonacci_series(num_terms):
         first_term = second_term
         second_term = next_term
 
-num_terms = int(input("Please input the number of terms:"))
+num_terms = int(input("Please input the number of terms: "))
 fibonacci_series(num_terms)
