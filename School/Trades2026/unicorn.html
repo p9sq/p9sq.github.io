@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Unicorn Dreamworld</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Intentionally using multiple fonts and some outdated/incorrect structure choices for student correction -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #fff5ff;
+      --bg-2: #fde2ff;
+      --text: #34124f;
+      --pink: #ff59b2;
+      --violet: #8c52ff;
+      --gold: #ffcc4d;
+      --mint: #b7ffe3;
+      --white: rgba(255,255,255,.72);
+      --line: rgba(99, 47, 146, .18);
+      --shadow: 0 20px 60px rgba(111, 57, 166, .16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.9), transparent 20%),
+        radial-gradient(circle at 80% 10%, rgba(255, 204, 77, .35), transparent 16%),
+        radial-gradient(circle at 70% 70%, rgba(140, 82, 255, .18), transparent 22%),
+        linear-gradient(180deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      font-family: "Quicksand", sans-serif;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .65;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.9) 1.2px, transparent 1.2px),
+        radial-gradient(circle, rgba(255,255,255,.65) 1px, transparent 1px);
+      background-size: 80px 80px, 120px 120px;
+      background-position: 0 0, 30px 40px;
+      mix-blend-mode: screen;
+    }
+
+    .page {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: center;
+      padding: 22px 0;
+    }
+
+    .brand {
+      font-family: "Unbounded", cursive;
+      font-size: clamp(1.1rem, 2vw, 1.5rem);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .brand span {
+      color: var(--pink);
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: var(--text);
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.45);
+      backdrop-filter: blur(10px);
+      transition: .25s ease;
+      font-weight: 700;
+    }
+
+    .nav a:hover {
+      transform: translateY(-2px);
+      background: white;
+      color: var(--violet);
+      box-shadow: 0 12px 30px rgba(140,82,255,.15);
+    }
+
+    .hero {
+      min-height: 88vh;
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      align-items: center;
+      gap: clamp(24px, 4vw, 60px);
+      padding: 28px 0 40px;
+    }
+
+    .hero-copy,
+    .hero-art,
+    .story,
+    .gallery,
+    .facts,
+    .footer-box {
+      opacity: 0;
+      transform: translateY(22px);
+      animation: reveal .9s cubic-bezier(.2,.65,.2,1) forwards;
+    }
+
+    .hero-copy { animation-delay: .05s; }
+    .hero-art { animation-delay: .18s; }
+    .story { animation-delay: .35s; }
+    .gallery { animation-delay: .5s; }
+    .facts { animation-delay: .65s; }
+    .footer-box { animation-delay: .8s; }
+
+    @keyframes reveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.58);
+      border: 1px solid rgba(140,82,255,.15);
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pink), var(--gold));
+      box-shadow: 0 0 0 6px rgba(255, 89, 178, .09);
+    }
+
+    h1, h2, h3 {
+      font-family: "Unbounded", cursive;
+      line-height: .95;
+      margin: 0 0 16px;
+    }
+
+    h1 {
+      font-size: clamp(3rem, 8vw, 7.2rem);
+      letter-spacing: -.05em;
+      margin-top: 18px;
+      text-wrap: balance;
+    }
+
+    .hero-copy p {
+      font-size: clamp(1rem, 1.5vw, 1.18rem);
+      line-height: 1.8;
+      max-width: 58ch;
+      margin: 0 0 24px;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      border: none;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border-radius: 999px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+    }
+
+    .btn.primary {
+      color: white;
+      background: linear-gradient(135deg, var(--pink), var(--violet));
+      box-shadow: 0 18px 38px rgba(140,82,255,.3);
+    }
+
+    .btn.secondary {
+      color: var(--text);
+      background: rgba(255,255,255,.65);
+      border: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+
+    .btn:hover {
+      transform: translateY(-3px) scale(1.02);
+    }
+
+    .btn:active {
+      transform: translateY(0) scale(.98);
+    }
+
+    .hero-art {
+      position: relative;
+      min-height: 560px;
+      display: grid;
+      place-items: center;
+    }
+
+    .blob {
+      position: absolute;
+      inset: 7% 4% 9% 8%;
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.8), transparent 16%),
+        linear-gradient(135deg, rgba(255,255,255,.75), rgba(255,255,255,.25));
+      border: 1px solid rgba(255,255,255,.65);
+      border-radius: 34% 66% 62% 38% / 35% 38% 62% 65%;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      animation: floaty 6.5s ease-in-out infinite;
+    }
+
+    @keyframes floaty {
+      0%,100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-12px) rotate(-1deg); }
+    }
+
+    .unicorn-illustration {
+      width: min(520px, 100%);
+      aspect-ratio: 1 / 1;
+      position: relative;
+      z-index: 2;
+      filter: drop-shadow(0 24px 40px rgba(104, 52, 155, .15));
+    }
+
+    .sparkle {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,0));
+      animation: twinkle 2.6s ease-in-out infinite;
+    }
+
+    .sparkle.one { width: 20px; height: 20px; top: 14%; left: 18%; }
+    .sparkle.two { width: 28px; height: 28px; top: 22%; right: 10%; animation-delay: .5s; }
+    .sparkle.three { width: 16px; height: 16px; bottom: 20%; left: 10%; animation-delay: .9s; }
+    .sparkle.four { width: 24px; height: 24px; bottom: 13%; right: 16%; animation-delay: 1.2s; }
+
+    @keyframes twinkle {
+      0%,100% { transform: scale(.8); opacity: .45; }
+      50% { transform: scale(1.25); opacity: 1; }
+    }
+
+    section {
+      padding: 64px 0;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 28px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.55);
+      border: 1px solid rgba(255,255,255,.7);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      padding: clamp(20px, 3vw, 34px);
+    }
+
+    .panel h2 {
+      font-size: clamp(2rem, 4vw, 3.6rem);
+      margin-bottom: 18px;
+      letter-spacing: -.04em;
+    }
+
+    .panel p {
+      line-height: 1.85;
+      margin: 0 0 16px;
+      font-size: 1.03rem;
+    }
+
+    .quote {
+      font-size: clamp(1.3rem, 2vw, 1.8rem);
+      line-height: 1.4;
+      font-weight: 700;
+      color: var(--violet);
+    }
+
+    .gallery-wrap {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 20px;
+      align-items: stretch;
+    }
+
+    .big-image,
+    .stack-image {
+      position: relative;
+      overflow: hidden;
+      border-radius: 28px;
+      min-height: 260px;
+      border: 1px solid rgba(255,255,255,.75);
+      box-shadow: var(--shadow);
+      background: rgba(255,255,255,.45);
+      backdrop-filter: blur(10px);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    .big-image:hover,
+    .stack-image:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 24px 50px rgba(111,57,166,.22);
+    }
+
+    .stack {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .caption {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      z-index: 2;
+      background: rgba(255,255,255,.78);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 800;
+      border: 1px solid rgba(140,82,255,.12);
+      backdrop-filter: blur(10px);
+    }
+
+    .facts-layout {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .fact {
+      padding: 24px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.45));
+      border: 1px solid rgba(255,255,255,.8);
+      box-shadow: var(--shadow);
+      min-height: 220px;
+    }
+
+    .fact h3 {
+      font-size: 1.1rem;
+      line-height: 1.2;
+      margin-bottom: 14px;
+    }
+
+    .fact p {
+      margin: 0;
+      line-height: 1.8;
+    }
+
+    .footer-box {
+      padding-bottom: 60px;
+    }
+
+    .footer-panel {
+      border-radius: 28px;
+      padding: 28px;
+      background: linear-gradient(135deg, rgba(140,82,255,.14), rgba(255,89,178,.14), rgba(255,204,77,.18));
+      border: 1px solid rgba(255,255,255,.8);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .footer-panel p {
+      margin: 0;
+      line-height: 1.7;
+      font-weight: 700;
+    }
+
+    .reveal-on-scroll {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity .75s ease, transform .75s ease;
+    }
+
+    .reveal-on-scroll.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .split,
+      .gallery-wrap,
+      .facts-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-art {
+        min-height: 420px;
+      }
+
+      .stack {
+        grid-template-rows: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .hero {
+        min-height: auto;
+        padding-top: 10px;
+      }
+
+      .panel,
+      .fact,
+      .footer-panel {
+        border-radius: 22px;
+      }
+    }
+  </style>
+</head>
+
+<!-- Intentionally invalid/incorrect markup below for students to fix:
+     - duplicate id values
+     - obsolete attributes
+     - image alt issues
+     - improper nesting
+     - invalid element placement
+     - presentational attributes
+     - missing lang attribute on html
+-->
+<body bgcolor="white">
+  <div class="stars"></div>
+
+  <center>
+    <div class="page">
+      <nav class="topbar" id="top">
+        <div class="brand">Moon<span>Horn</span></div>
+        <div class="nav">
+          <a href="#about">About</a>
+          <a href="#gallery">Images</a>
+          <a href="#facts">Facts</a>
+          <a href="#top">Top</a>
+        </div>
+      </nav>
+    </div>
+  </center>
+
+  <main class="page">
+    <section class="hero" id="about">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="dot"></span> Enchanted creatures of legend</div>
+        <h1>Unicorns are pure magic and a little bit chaos</h1>
+        <p>
+          Unicorns have galloped through myths, fairy tales, and dream journals for centuries. They symbolize wonder, purity, mystery, and the sort of sparkling confidence that says:
+          yes, my horse has a horn and also probably controls moonlight.
+        </p>
+        <p>
+          This page is full of dreamy visuals, colorful backgrounds, and a few “images” of unicorns made with inline SVG so students can explore and improve the markup later.
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#gallery">See Unicorn Images</a>
+          <button class="btn secondary" onclick="sparkleMode()">More Sparkles</button>
+        </div>
+      </div>
+
+      <div class="hero-art" id="gallery">
+        <div class="blob"></div>
+        <div class="sparkle one"></div>
+        <div class="sparkle two"></div>
+        <div class="sparkle three"></div>
+        <div class="sparkle four"></div>
+
+        <svg class="unicorn-illustration" viewBox="0 0 600 600">
+          <defs>
+            <linearGradient id="maneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ff59b2"/>
+              <stop offset="50%" stop-color="#8c52ff"/>
+              <stop offset="100%" stop-color="#ffcc4d"/>
+            </linearGradient>
+            <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#f4e9ff"/>
+            </linearGradient>
+          </defs>
+
+          <ellipse cx="320" cy="400" rx="130" ry="95" fill="url(#bodyGrad)" stroke="#d8c1f8" stroke-width="4"></ellipse>
+          <circle cx="265" cy="255" r="90" fill="url(#bodyGrad)" stroke="#d8c1f8" stroke-width="4"></circle>
+          <path d="M210 210 C185 155, 230 110, 300 135 C335 148, 350 180, 338 220 Z" fill="url(#maneGrad)"></path>
+          <path d="M320 175 L382 85 L350 190 Z" fill="#ffcc4d" stroke="#d8a400" stroke-width="4"></path>
+          <path d="M345 150 L392 98" stroke="#fff6b0" stroke-width="5"></path>
+          <circle cx="235" cy="250" r="8" fill="#34124f"></circle>
+          <path d="M205 282 Q230 300 260 285" fill="none" stroke="#34124f" stroke-width="4" stroke-linecap="round"></path>
+          <path d="M385 370 C470 395, 490 470, 430 505 C390 525, 320 490, 335 435 Z" fill="url(#maneGrad)" opacity=".95"></path>
+          <rect x="220" y="465" width="20" height="90" rx="10" fill="#fff"></rect>
+          <rect x="270" y="475" width="20" height="80" rx="10" fill="#fff"></rect>
+          <rect x="345" y="475" width="20" height="80" rx="10" fill="#fff"></rect>
+          <rect x="395" y="465" width="20" height="90" rx="10" fill="#fff"></rect>
+          <path d="M175 390 Q120 430 150 470" fill="none" stroke="url(#maneGrad)" stroke-width="18" stroke-linecap="round"></path>
+          <circle cx="410" cy="165" r="7" fill="#fff9c4"></circle>
+          <circle cx="430" cy="130" r="5" fill="#fff9c4"></circle>
+          <circle cx="452" cy="172" r="6" fill="#fff9c4"></circle>
+        </svg>
+      </div>
+    </section>
+
+    <section class="story reveal-on-scroll">
+      <div class="split">
+        <div class="panel">
+          <h2>The legend</h2>
+          <p>
+            In many stories, unicorns live in secret forests where the rivers glow and the flowers are suspiciously perfect. They are often described as shy, graceful, and impossible to catch.
+          </p>
+          <p>
+            Some tales say a unicorn’s horn can heal sickness. Others say unicorns only appear to those with kind hearts, excellent manners, and perhaps a pocket full of glitter.
+          </p>
+        </div>
+
+        <div class="panel">
+          <p class="quote">
+            “A unicorn is what happens when elegance, imagination, and one very dramatic hairstyle come together.”
+          </p>
+          <p>
+            Even today, unicorns remain popular in books, games, decorations, and fantasy art. Their image is cheerful and playful, but also tied to old mythology from Europe and Asia.
+          </p>
+          <p>
+            If students are reviewing HTML, this page is also a fun starting point for finding problems and repairing the code to make it more valid and accessible.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="gallery reveal-on-scroll" id="gallery">
+      <div class="panel" style="margin-bottom:20px">
+        <h2>Unicorn images</h2>
+        <p>
+          Below are several unicorn-themed images created with inline SVG and CSS backgrounds instead of external image links.
+        </p>
+      </div>
+
+      <div class="gallery-wrap">
+        <div class="big-image">
+          <div class="caption">Rainbow Unicorn</div>
+          <img src="data:image/svg+xml;utf8,
+          <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 520'>
+            <defs>
+              <linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'>
+                <stop offset='0%' stop-color='%23ffe7fb'/>
+                <stop offset='100%' stop-color='%23e9dcff'/>
+              </linearGradient>
+              <linearGradient id='mane' x1='0' y1='0' x2='1' y2='1'>
+                <stop offset='0%' stop-color='%23ff59b2'/>
+                <stop offset='50%' stop-color='%238c52ff'/>
+                <stop offset='100%' stop-color='%23ffcc4d'/>
+              </linearGradient>
+            </defs>
+            <rect width='800' height='520' fill='url(%23bg)'/>
+            <path d='M0 410 C160 300, 280 500, 430 390 S670 250, 800 350 L800 520 L0 520 Z' fill='%23b7ffe3' opacity='.7'/>
+            <ellipse cx='420' cy='295' rx='120' ry='80' fill='white' stroke='%23d8c1f8' stroke-width='4'/>
+            <circle cx='355' cy='190' r='78' fill='white' stroke='%23d8c1f8' stroke-width='4'/>
+            <path d='M320 145 C300 95, 350 60, 410 92 C450 112, 448 155, 432 188 Z' fill='url(%23mane)'/>
+            <path d='M410 110 L470 40 L444 132 Z' fill='%23ffcc4d' stroke='%23d8a400' stroke-width='4'/>
+            <circle cx='333' cy='191' r='7' fill='%2334124f'/>
+            <path d='M315 220 Q336 236 362 225' fill='none' stroke='%2334124f' stroke-width='4' stroke-linecap='round'/>
+            <path d='M486 274 C560 294, 602 370, 560 424 C525 467, 450 433, 450 366 Z' fill='url(%23mane)'/>
+            <rect x='343' y='362' width='15' height='95' rx='8' fill='white'/>
+            <rect x='383' y='372' width='15' height='85' rx='8' fill='white'/>
+            <rect x='446' y='372' width='15' height='85' rx='8' fill='white'/>
+            <rect x='486' y='362' width='15' height='95' rx='8' fill='white'/>
+          </svg>" width="100%" height="100%" border="0">
+        </div>
+
+        <div class="stack">
+          <div class="stack-image">
+            <div class="caption">Forest Unicorn</div>
+            <img src="data:image/svg+xml;utf8,
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 380'>
+              <rect width='800' height='380' fill='%23effff8'/>
+              <circle cx='660' cy='70' r='42' fill='%23fff3b5'/>
+              <rect y='280' width='800' height='100' fill='%23bdeecf'/>
+              <path d='M80 300 Q130 170 180 300 Z' fill='%2374c69d'/>
+              <path d='M150 300 Q210 130 270 300 Z' fill='%2352b788'/>
+              <path d='M620 300 Q680 140 740 300 Z' fill='%2352b788'/>
+              <ellipse cx='390' cy='240' rx='80' ry='52' fill='white' stroke='%23d8c1f8' stroke-width='4'/>
+              <circle cx='345' cy='170' r='54' fill='white' stroke='%23d8c1f8' stroke-width='4'/>
+              <path d='M320 135 C300 100, 340 70, 390 95 C420 110, 425 132, 418 162 Z' fill='%23ff9bd2'/>
+              <path d='M388 103 L427 55 L413 117 Z' fill='%23ffcc4d' stroke='%23d8a400' stroke-width='3'/>
+              <circle cx='330' cy='172' r='5' fill='%2334124f'/>
+            </svg>">
+          </div>
+
+          <div class="stack-image">
+            <div class="caption">Sleeping Unicorn</div>
+            <img src="data:image/svg+xml;utf8,
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 380'>
+              <defs>
+                <linearGradient id='night' x1='0' y1='0' x2='1' y2='1'>
+                  <stop offset='0%' stop-color='%232c1c4f'/>
+                  <stop offset='100%' stop-color='%235b3b89'/>
+                </linearGradient>
+              </defs>
+              <rect width='800' height='380' fill='url(%23night)'/>
+              <circle cx='680' cy='80' r='40' fill='%23fff1a8'/>
+              <ellipse cx='410' cy='248' rx='120' ry='58' fill='white'/>
+              <circle cx='325' cy='223' r='42' fill='white'/>
+              <path d='M300 205 C285 170, 320 160, 362 184 C376 192, 380 207, 374 222 Z' fill='%23ff59b2'/>
+              <path d='M360 185 L388 140 L379 190 Z' fill='%23ffcc4d'/>
+              <path d='M313 225 Q326 230 340 225' fill='none' stroke='%2334124f' stroke-width='3' stroke-linecap='round'/>
+              <path d='M0 290 C130 250, 220 320, 350 286 S620 250, 800 310 L800 380 L0 380 Z' fill='%239d7bd8'/>
+            </svg>" alt="">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="facts reveal-on-scroll" id="facts">
+      <div class="panel" style="margin-bottom:20px">
+        <h2>Quick unicorn facts</h2>
+      </div>
+
+      <div class="facts-layout">
+        <div class="fact" id="dup">
+          <h3>Mythical origins</h3>
+          <p>
+            Unicorn-like creatures appear in very old writings and artworks. Different cultures imagined them in different ways, but the single horn remained the unforgettable feature.
+          </p>
+        </div>
+
+        <div class="fact" id="dup">
+          <h3>Symbolism</h3>
+          <p>
+            Unicorns are often linked with innocence, healing, rarity, and beauty. In modern design, they also represent fun, fantasy, and unapologetic color.
+          </p>
+        </div>
+
+        <div class="fact">
+          <h3>Why people love them</h3>
+          <p>
+            They mix horse energy, magical powers, and bright rainbow styling into one creature. Honestly, that is a very strong brand identity.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="footer-box reveal-on-scroll">
+      <div class="footer-panel">
+        <p>
+          Unicorn Dreamworld • A whimsical student practice page with intentionally fixable HTML issues.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer align="center">
+    <p><b>Made for classroom editing practice</b></p>
+  </footer>
+
+  <script>
+    function sparkleMode() {
+      const body = document.body;
+      for (let i = 0; i < 18; i++) {
+        const s = document.createElement('span');
+        s.style.position = 'fixed';
+        s.style.left = Math.random() * window.innerWidth + 'px';
+        s.style.top = Math.random() * window.innerHeight + 'px';
+        s.style.width = s.style.height = (8 + Math.random() * 18) + 'px';
+        s.style.borderRadius = '50%';
+        s.style.pointerEvents = 'none';
+        s.style.background = 'radial-gradient(circle, rgba(255,255,255,1), rgba(255,255,255,0))';
+        s.style.zIndex = '9999';
+        s.style.opacity = '0.95';
+        s.style.transition = 'transform 900ms ease, opacity 900ms ease';
+        body.appendChild(s);
+
+        requestAnimationFrame(() => {
+          s.style.transform = 'translateY(-40px) scale(1.8)';
+          s.style.opacity = '0';
+        });
+
+        setTimeout(() => s.remove(), 1000);
+      }
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+  </script>
+
+  <p><div>this paragraph contains a div which is not valid html, left on purpose.</div></p>
+</body>
+</html>
