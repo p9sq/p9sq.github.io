@@ -1,0 +1,242 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap");
+
+:root {
+  --bg: #f4f6f9;
+  --bg2: #eef0f5;
+  --surface: #ffffff;
+  --surface2: #f8f9fc;
+
+  --border: #d1d8e8;
+  --border-strong: #aab4cc;
+
+  --accent: #1a3a6b;
+  --accent-mid: #2755a0;
+  --accent-light: #e8eef8;
+  --accent-text: #ffffff;
+
+  --green: #1a7a45;
+  --green-dim: #e6f4ed;
+  --green-border: #a8d5bc;
+  --yellow: #8a6500;
+  --yellow-dim: #fef8e6;
+  --yellow-border: #e8cf7a;
+  --orange: #b84800;
+  --orange-dim: #fdf0e6;
+  --orange-border: #f0b888;
+  --red: #a01a1a;
+  --red-dim: #fbeaea;
+  --red-border: #e8aaaa;
+
+  --text: #0f1c2e;
+  --text-mid: #3d5070;
+  --text-dim: #6b7fa0;
+  --text-dimmer: #9aaac0;
+
+  --font-ui: "Inter", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", "Courier New", monospace;
+  --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+
+  --nav-h: 58px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --shadow-sm:
+    0 1px 3px rgba(15, 28, 46, 0.08), 0 1px 2px rgba(15, 28, 46, 0.04);
+  --shadow-md:
+    0 4px 12px rgba(15, 28, 46, 0.1), 0 2px 4px rgba(15, 28, 46, 0.06);
+  --shadow-lg:
+    0 12px 32px rgba(15, 28, 46, 0.12), 0 4px 8px rgba(15, 28, 46, 0.06);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-ui);
+}
+
+title-label {
+  font-family: var(--font-data);
+}
+
+.header {
+  text-align: center;
+  background: linear-gradient(160deg, var(--accent) 0%, #0f2a55 100%);
+  color: white;
+  padding: 50px;
+}
+
+.header h1 {
+  font-family: var(--font-label);
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 0.1rem;
+  flex: 1;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0 2rem;
+  height: var(--nav-h);
+  background: var(--accent);
+  border-bottom: 3px solid var(--accent-mid);
+  box-shadow: var(--shadow-mid);
+}
+
+.navbar a {
+  color: white;
+  padding: 10px;
+}
+
+.nav-status {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  color: #7ecfa8;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.card-num {
+  font-family: var(--font-label);
+}
+
+.stats {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  text-align: center;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.stats td,
+th {
+  border: 1px solid var(--text-dim);
+  padding: 8px;
+  background-color: var(--text-mid);
+}
+
+.btns,
+.btns a {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 10px;
+  color: white;
+}
+
+.about-section {
+  padding: 4rem 2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.about-card {
+  background: var(--surface);
+  padding: 2rem 1.75rem;
+}
+
+.about-card-highlight {
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  border-right: 3px solid var(--accent);
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  max-width: 1200px;
+  margin: 0 auto;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+#copyright {
+  text-align: right;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+
+.quicklinks-section {
+  padding: 3.5rem 2rem 5rem;
+  background: var(--bg);
+}
+
+.ql-label {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  color: var(--text-dimmer);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.quicklinks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ql-card {
+  display: block;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--border-lg);
+  padding: 1.75rem;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+
+.ql-card-num {
+  font-family: var(--font-label);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--border-strong);
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.ql-card-title {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 0;
+}
+
+.ql-card-desc {
+  font-size: 0.84rem;
+  color: var(--text-mid);
+  line-height: 1.65;
+}
