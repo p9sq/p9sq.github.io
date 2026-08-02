@@ -489,6 +489,66 @@
         background: var(--border);
       }
 
+      /* ── Mode toggle ── */
+      .mode-toggle {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 4px;
+      }
+      .mode-toggle button {
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        padding: 7px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .mode-toggle button:hover {
+        color: var(--text);
+      }
+      .panel-left .mode-toggle button.active {
+        background: var(--accent-l);
+        color: #0a1030;
+      }
+
+      /* Mode-scoped visibility: fields tagged data-mode-only are hidden by
+         default and only shown when the panel carries the matching
+         mode-basic / mode-advanced class. */
+      [data-mode-only] {
+        display: none;
+      }
+      .mode-basic [data-mode-only="basic"] {
+        display: flex;
+      }
+      .mode-advanced [data-mode-only="advanced"] {
+        display: flex;
+      }
+      .mode-basic [data-mode-only="basic"].row-2,
+      .mode-basic [data-mode-only="basic"].row-3 {
+        display: grid;
+      }
+      .mode-advanced [data-mode-only="advanced"].row-2,
+      .mode-advanced [data-mode-only="advanced"].row-3 {
+        display: grid;
+      }
+      /* Non-field wrapper divs (e.g. the collapsible section) should stack
+         as a normal block, not become a flex row like .field elements. */
+      .mode-basic [data-mode-only="basic"].mode-block,
+      .mode-advanced [data-mode-only="advanced"].mode-block {
+        display: block;
+      }
+
       @media (max-width: 700px) {
         .panels {
           flex-direction: column;
@@ -511,11 +571,33 @@
 
     <div class="panels">
       <!-- ══════════════ LEFT — Moon Mass Distribution ══════════════ -->
-      <div class="panel panel-left">
+      <div class="panel panel-left mode-basic" id="panel-left">
         <div class="panel-title">Moon Mass Distribution</div>
 
-        <!-- Planet presets -->
+        <!-- Mode toggle -->
         <div class="field">
+          <label>Mode</label>
+          <div class="mode-toggle" id="l-mode-toggle">
+            <button
+              type="button"
+              id="l-mode-basic-btn"
+              class="active"
+              onclick="setLeftMode('basic')"
+            >
+              Basic
+            </button>
+            <button
+              type="button"
+              id="l-mode-advanced-btn"
+              onclick="setLeftMode('advanced')"
+            >
+              Advanced
+            </button>
+          </div>
+        </div>
+
+        <!-- Planet presets -->
+        <div class="field" data-mode-only="advanced">
           <label>Planet Preset</label>
           <select id="l-preset" onchange="applyPreset(this.value)">
             <option value="">— Select a preset —</option>
@@ -525,7 +607,52 @@
           </select>
         </div>
 
-        <div class="field">
+        <!-- Basic: mooncount -->
+        <div class="field" data-mode-only="basic">
+          <label>Number of Moons</label>
+          <input
+            type="number"
+            id="l-basic-count"
+            placeholder="e.g. 4"
+            min="1"
+            step="1"
+            oninput="checkBasicCountDecimal()"
+          />
+          <div class="inline-warn" id="l-basic-count-warn">
+            Moon count must be a whole number — decimals are not allowed.
+          </div>
+        </div>
+
+        <!-- Basic: parentmass -->
+        <div class="field" data-mode-only="basic">
+          <label>Parent Body Mass (M⊕)</label>
+          <input
+            type="number"
+            id="l-basic-mass"
+            placeholder="e.g. 317.8"
+            min="0.0001"
+            step="any"
+          />
+        </div>
+
+        <!-- Basic: moonmassratio -->
+        <div class="field" data-mode-only="basic">
+          <label
+            >Moon Mass Ratio Denominator
+            <span style="font-weight: 400; color: var(--faint)"
+              >— e.g. 3500 for a 1:3,500 ratio</span
+            ></label
+          >
+          <input
+            type="number"
+            id="l-basic-ratio"
+            placeholder="e.g. 3500"
+            min="1"
+            step="any"
+          />
+        </div>
+
+        <div class="field" data-mode-only="advanced">
           <label>Parent Planet Mass</label>
           <div class="row-2">
             <input
@@ -562,7 +689,7 @@
           ></div>
         </div>
 
-        <div class="field">
+        <div class="field" data-mode-only="advanced">
           <label
             >Stellar Distance (AU)
             <span style="font-weight: 400; color: var(--faint)"
@@ -579,7 +706,7 @@
           />
         </div>
 
-        <div class="field">
+        <div class="field" data-mode-only="advanced">
           <label
             >Disk Mass Model
             <span style="font-weight: 400; color: var(--faint)"
@@ -599,7 +726,7 @@
           </select>
         </div>
 
-        <div class="row-2">
+        <div class="row-2" data-mode-only="advanced">
           <div class="field">
             <label
               >Number of Moons
@@ -636,7 +763,22 @@
           </div>
         </div>
 
-        <div class="field">
+        <div class="field" data-mode-only="basic">
+          <label>Distribution Style</label>
+          <select id="l-basic-style">
+            <option value="saturn">
+              Saturn-like (one dominant moon, many small)
+            </option>
+            <option value="hybrid" selected>
+              Hybrid (one large moon, graduated smaller ones)
+            </option>
+            <option value="galilean">
+              Galilean-like (several comparably-massed moons)
+            </option>
+          </select>
+        </div>
+
+        <div class="field" data-mode-only="advanced">
           <label>Distribution Style</label>
           <select id="l-style">
             <option value="auto">Auto-select</option>
@@ -652,7 +794,16 @@
           </select>
         </div>
 
-        <div class="field">
+        <div class="field" data-mode-only="basic">
+          <label>Sort Order</label>
+          <select id="l-basic-sort">
+            <option value="descending">Descending (largest → smallest)</option>
+            <option value="ascending">Ascending (smallest → largest)</option>
+            <option value="random">Random (no sorting)</option>
+          </select>
+        </div>
+
+        <div class="field" data-mode-only="advanced">
           <label>Sort Order</label>
           <select id="l-sort">
             <option value="descending">Descending (largest → smallest)</option>
@@ -661,8 +812,30 @@
           </select>
         </div>
 
+        <!-- Basic: randomspread — only meaningful for Galilean-like style -->
+        <div
+          class="field"
+          data-mode-only="basic"
+          id="l-basic-spread-field"
+          style="display: none"
+        >
+          <label
+            >Target Spread (Galilean-like)
+            <span style="font-weight: 400; color: var(--faint)"
+              >— largest:smallest ratio, default 4.5</span
+            ></label
+          >
+          <input
+            type="number"
+            id="l-basic-spread"
+            placeholder="4.5"
+            min="1.01"
+            step="any"
+          />
+        </div>
+
         <!-- Collapsible stellar parameters (left panel) -->
-        <div>
+        <div data-mode-only="advanced" class="mode-block">
           <div class="collapsible-header" onclick="toggleCollapsibleLeft()">
             <span>Stellar Parameters (optional)</span>
             <span class="collapsible-chevron" id="l-chevron">▼</span>
@@ -765,7 +938,7 @@
         <button
           class="btn btn-left"
           id="l-generate-btn"
-          onclick="generateMoons()"
+          onclick="generateMoonsDispatch()"
         >
           Generate Moon Distribution
         </button>
@@ -1687,7 +1860,203 @@
         return Math.max(1, Math.min(8, Math.round(N_major)));
       }
 
-      // ── Moon panel ──────────────────────────────────────────────────────────────
+      // ── Mode toggle (left panel) ───────────────────────────────────────────────
+      function setLeftMode(mode) {
+        const panel = document.getElementById("panel-left");
+        panel.classList.toggle("mode-basic", mode === "basic");
+        panel.classList.toggle("mode-advanced", mode === "advanced");
+        document
+          .getElementById("l-mode-basic-btn")
+          .classList.toggle("active", mode === "basic");
+        document
+          .getElementById("l-mode-advanced-btn")
+          .classList.toggle("active", mode === "advanced");
+        clearError("l");
+        document.getElementById("l-result").classList.remove("visible");
+        updateBasicSpreadVisibility();
+      }
+
+      function generateMoonsDispatch() {
+        const isBasic = document
+          .getElementById("panel-left")
+          .classList.contains("mode-basic");
+        if (isBasic) generateMoonsBasic();
+        else generateMoons();
+      }
+
+      // ── Basic mode input handlers ──────────────────────────────────────────────
+      function checkBasicCountDecimal() {
+        const val = document.getElementById("l-basic-count").value;
+        const warn = document.getElementById("l-basic-count-warn");
+        if (val !== "" && val !== null && !Number.isInteger(parseFloat(val))) {
+          warn.classList.add("visible");
+        } else {
+          warn.classList.remove("visible");
+        }
+      }
+
+      function updateBasicSpreadVisibility() {
+        const styleEl = document.getElementById("l-basic-style");
+        const field = document.getElementById("l-basic-spread-field");
+        if (!styleEl || !field) return;
+        field.style.display = styleEl.value === "galilean" ? "flex" : "none";
+      }
+      document
+        .getElementById("l-basic-style")
+        .addEventListener("change", updateBasicSpreadVisibility);
+
+      // ── Basic mode: calibrate log-uniform sampling width for a target spread ──
+      // Mirrors calibrateLogUniformWidth() in the standalone /massdistribution
+      // Discord bot script exactly — bisects the log-width so the AVERAGE
+      // realized (largest/smallest) ratio across draws matches the requested
+      // target spread.
+      function calibrateLogUniformWidthBasic(moonCount, targetSpread) {
+        if (moonCount <= 1) return 0;
+        let loW = 0.01;
+        let hiW = 12.0;
+        const ITERATIONS = 14;
+        const TRIALS = 120;
+        for (let iter = 0; iter < ITERATIONS; iter++) {
+          const midW = (loW + hiW) / 2;
+          const logLo = -midW / 2;
+          const logHi = midW / 2;
+          let total = 0;
+          for (let t = 0; t < TRIALS; t++) {
+            let max = -Infinity;
+            let min = Infinity;
+            for (let i = 0; i < moonCount; i++) {
+              const v = Math.exp(logLo + Math.random() * (logHi - logLo));
+              if (v > max) max = v;
+              if (v < min) min = v;
+            }
+            total += max / min;
+          }
+          const avgSpread = total / TRIALS;
+          if (avgSpread < targetSpread) {
+            loW = midW;
+          } else {
+            hiW = midW;
+          }
+        }
+        return (loW + hiW) / 2;
+      }
+
+      // ── Basic mode: moon panel ─────────────────────────────────────────────────
+      // Reproduces the standalone /massdistribution Discord bot script exactly:
+      // same inputs (moon count, parent mass, moon mass ratio denominator, style,
+      // sort order, random spread), same distribution math per style, same
+      // normalisation. Deliberately independent of distributeMasses() /
+      // generateMoons() above, since the Advanced Galilean-like style uses a
+      // different (distance/planet-class-aware) spread model than this bot script.
+      function generateMoonsBasic() {
+        clearError("l");
+
+        const countRaw = document.getElementById("l-basic-count").value;
+        const parentMass = parseFloat(
+          document.getElementById("l-basic-mass").value,
+        );
+        const ratioDenominator = parseFloat(
+          document.getElementById("l-basic-ratio").value,
+        );
+        const style = document.getElementById("l-basic-style").value;
+        const sortOrder = document.getElementById("l-basic-sort").value;
+        const spreadRaw = document.getElementById("l-basic-spread").value;
+        const randomSpread = spreadRaw !== "" ? parseFloat(spreadRaw) : 4.5;
+
+        const moonCount = parseInt(countRaw);
+        if (!moonCount || moonCount < 1 || !Number.isInteger(parseFloat(countRaw)))
+          return showError("l", "Please enter a valid moon count (≥ 1, whole number).");
+        if (!parentMass || parentMass <= 0)
+          return showError("l", "Please enter a valid parent body mass.");
+        if (!ratioDenominator || ratioDenominator < 1)
+          return showError(
+            "l",
+            "Please enter a valid moon mass ratio denominator (≥ 1).",
+          );
+        if (style === "galilean" && (isNaN(randomSpread) || randomSpread < 1.01))
+          return showError(
+            "l",
+            "Please enter a valid target spread (≥ 1.01) for Galilean-like style.",
+          );
+
+        const ratio = 1 / ratioDenominator;
+        const totalMoonMass = parentMass * ratio;
+
+        // ── Generate raw (un-normalised) mass weights per style ────────────────
+        let rawMasses = [];
+
+        if (style === "saturn") {
+          if (moonCount === 1) {
+            rawMasses.push(totalMoonMass);
+          } else {
+            const dominantFraction = 0.55 + Math.random() * 0.15;
+            rawMasses.push(totalMoonMass * dominantFraction);
+            for (let i = 1; i < moonCount; i++) {
+              const maxKm = Math.max(200, 800 - (i - 1) * 100);
+              const km = 200 + Math.random() * (maxKm - 200);
+              rawMasses.push(icyRadiusKmToMass(km));
+            }
+          }
+        } else if (style === "galilean") {
+          const width = calibrateLogUniformWidthBasic(moonCount, randomSpread);
+          const LOG_MIN = -width / 2,
+            LOG_MAX = width / 2;
+          for (let i = 0; i < moonCount; i++) {
+            rawMasses.push(
+              Math.exp(LOG_MIN + Math.random() * (LOG_MAX - LOG_MIN)),
+            );
+          }
+        } else {
+          // hybrid
+          if (moonCount === 1) {
+            rawMasses.push(1.0);
+          } else {
+            const dominantFraction = 0.35 + Math.random() * 0.15;
+            rawMasses.push(dominantFraction);
+            const remainingFraction = 1 - dominantFraction;
+            for (let i = 1; i < moonCount; i++) {
+              const decay = Math.pow(0.75, i);
+              rawMasses.push(
+                remainingFraction * decay * (0.7 + Math.random() * 0.6),
+              );
+            }
+          }
+        }
+
+        // ── Normalise so the budget is hit exactly ──────────────────────────────
+        let moonMasses;
+        if (style === "saturn") {
+          moonMasses = rawMasses;
+        } else {
+          const rawSum = rawMasses.reduce((a, b) => a + b, 0);
+          moonMasses = rawMasses.map((m) => (m / rawSum) * totalMoonMass);
+        }
+
+        // ── Apply sort order ─────────────────────────────────────────────────
+        if (sortOrder === "descending") {
+          moonMasses.sort((a, b) => b - a);
+        } else if (sortOrder === "ascending") {
+          moonMasses.sort((a, b) => a - b);
+        }
+
+        const meta = [
+          [
+            "Parent Mass",
+            `${parentMass.toLocaleString(undefined, { maximumFractionDigits: 4 })} M⊕`,
+          ],
+          ["Moon Mass Ratio", `1 : ${ratioDenominator.toLocaleString()}`],
+          ["Total Moon Mass Budget", `${formatMass(totalMoonMass)} M⊕`],
+          ["System Style", styleLabels[style]],
+          ...(style === "galilean"
+            ? [["Target Spread", `${randomSpread}:1`]]
+            : []),
+          ["Sort Order", sortLabels[sortOrder]],
+        ];
+
+        renderResults("l", moonMasses, meta, "Moon", null);
+      }
+
+      // ── Moon panel (Advanced) ──────────────────────────────────────────────────
       function generateMoons() {
         clearError("l");
         const rawMass = parseFloat(document.getElementById("l-mass").value);
@@ -2585,6 +2954,12 @@
             const lChev = document.getElementById("l-chevron");
             lBody.classList.remove("open");
             lChev.classList.remove("open");
+            document
+              .getElementById("l-basic-count-warn")
+              .classList.remove("visible");
+            document.getElementById("l-basic-style").value = "hybrid";
+            document.getElementById("l-basic-sort").value = "descending";
+            updateBasicSpreadVisibility();
           }
         };
       });
