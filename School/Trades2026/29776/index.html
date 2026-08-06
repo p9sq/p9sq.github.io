@@ -3,68 +3,102 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Exoplanet Corporation: Planetary Archive</title>
-    <link rel="stylesheet" href="css/main.css" />
-    <script type="module" src="script/main.js" defer></script>
+    <meta
+      name="description"
+      content="Planetary Archive is the Exoplanet Corporation's public catalogue of surveyed star systems, Arventia 2.0 habitability candidates, and terraformed worlds."
+    />
+    <title>Planetary Archive — Exoplanet Corporation</title>
+    <link rel="stylesheet" href="style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
-  <body>
-    <nav class="navbar">
-      <ul class="nav-links">
-        <li>
-          <a href="index.html">Home</a>
-        </li>
-        <li>
-          <a href="catalogued.html">Catalogued Systems</a>
-        </li>
-        <li>
-          <a href="promising.html">Arventia 2.0 Candidates</a>
-        </li>
-        <li>
-          <a href="terraformed.html">Terraformed Worlds</a>
-        </li>
-      </ul>
-      <div class="nav-status">
-        <span>ARCHIVE LIVE</span>
+  <body class="page-index">
+    <!-- BACKGROUND GRID -->
+    <div class="bg-grid"></div>
+    <div class="bg-vignette"></div>
+    <canvas id="starfield"></canvas>
+
+    <!-- NAV -->
+    <header class="site-header">
+      <nav class="nav">
+        <a href="index.html" class="nav-logo">
+          <span class="nav-logo-icon">⬡</span>
+          <div>
+            <div class="nav-logo-main">
+              <span class="nav-logo-full">PLANETARY ARCHIVE</span
+              ><span class="nav-logo-short">P. ARCHIVE</span>
+            </div>
+            <div class="nav-logo-sub">Exoplanet Corporation · AIRA</div>
+          </div>
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html" class="active">Home</a></li>
+          <li><a href="catalogued.html">Catalogued Systems</a></li>
+          <li><a href="promising.html">Arventia 2.0 Candidates</a></li>
+          <li><a href="terraformed.html">Terraformed Worlds</a></li>
+        </ul>
+        <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="nav-status">
+          <span class="status-dot"></span>
+          <span>ARCHIVE LIVE</span>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="hero-eyebrow">
+        Exoplanet Corporation · Arventian Interplanetary Research Authority
       </div>
-    </nav>
-    <section class="header">
-      <p class="title-label">
-        Exoplanet Corporation - Arventian Interplanetary Research Authority
-      </p>
-      <h1>PLANETARY ARCHIVE</h1>
-      <p>
+      <h1 class="hero-title">
+        <span class="hero-title-line1">PLANETARY</span>
+        <span class="hero-title-line2">ARCHIVE</span>
+      </h1>
+      <p class="hero-subtitle">
         The definitive catalogue of known planetary systems, habitability
-        candidates, and colonised worlds beyond the Phebe System.
+        candidates,<br />
+        and colonised worlds beyond the Phebe System.
       </p>
-      <br />
-      <table class="stats">
-        <tr>
-          <th>Catalogued Systems</th>
-          <th>Arventia 2.0 Candidates</th>
-          <th>Terraformed Worlds</th>
-        </tr>
-        <tr>
-          <td id="catalogued-count">0</td>
-          <td id="candidates-count">0</td>
-          <td id="terraformed-count">0</td>
-        </tr>
-      </table>
-      <br />
-      <div class="btns">
-        <a href="catalogued.html">Browse Catalogue</a>
-        <a href="promising.html">Arventia 2.0 Mission</a>
+      <div class="hero-stats">
+        <div class="hero-stat" id="stat-systems">
+          <div class="hero-stat-num" data-target="0" id="num-systems">0</div>
+          <div class="hero-stat-label">Catalogued Systems</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat" id="stat-candidates">
+          <div class="hero-stat-num" data-target="0" id="num-candidates">0</div>
+          <div class="hero-stat-label">A-2.0 Candidates</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat" id="stat-terraformed">
+          <div class="hero-stat-num" data-target="0" id="num-terraformed">
+            0
+          </div>
+          <div class="hero-stat-label">Terraformed Worlds</div>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <a href="catalogued.html" class="btn btn-primary">Browse Catalogue</a>
+        <a href="promising.html" class="btn btn-ghost">Arventia 2.0 Mission</a>
       </div>
     </section>
+
+    <!-- SECTION: ABOUT AIRA & EXOCORP -->
     <section class="about-section">
       <div class="about-grid">
-        <div class="about-card">
-          <p>ABOUT AIRA</p>
-          <h4>Arventian Interplanetary Research Authority</h4>
+        <article class="about-card">
+          <div class="about-card-icon">◈</div>
+          <div class="about-card-label">ABOUT AIRA</div>
+          <h2 class="about-card-title">
+            Arventian Interplanetary Research Authority
+          </h2>
           <p>
             AIRA is Arventia's foremost scientific institution, charged with the
             exploration and study of the cosmos beyond the Phebe System. Its
@@ -74,84 +108,151 @@
             Arventian space age, AIRA has remained at the forefront of
             interstellar discovery for over a millennium.
           </p>
-        </div>
-        <div class="about-card about-card-highlight">
-          <p>ABOUT EXOPLANET CORPORATION</p>
-          <h4>Exoplanet Corporation</h4>
+          <ul class="about-card-list">
+            <li>Deep-space telescope networks</li>
+            <li>Advanced propulsion research</li>
+            <li>Long-baseline observatories</li>
+            <li>Crewed exploration programmes</li>
+          </ul>
+        </article>
+        <article class="about-card about-card-highlight">
+          <div class="about-card-icon">◆</div>
+          <div class="about-card-label">ABOUT EXOPLANET CORPORATION</div>
+          <h2 class="about-card-title">Exoplanet Corporation</h2>
           <p>
             A semi-independent subsidiary of AIRA, the Exoplanet Corporation
             operates gravitational-lensing observatories stationed hundreds of
             AU from the Phebe System's barycentre, achieving kilometre-scale
             resolution of distant planetary systems. Its singular mission:
-            locate a second Arventia — a world capable of supporting Arventian
-            civilisation — before crewed interstellar travel matures into
-            widespread practice. The Planetary Archive is the Exoplanet
-            Corporation's public-facing catalogue of all known exoplanetary
-            systems and colonisation candidates.
+            locate a second Arventia, a world capable of supporting Arventian
+            civilisation, before crewed interstellar travel matures into
+            widespread practice.
           </p>
-        </div>
-        <div class="about-card">
-          <p>THE ARVENTIA 2.0 MISSION</p>
-          <h4>Finding a Second Home</h4>
+          <p>
+            The Planetary Archive is the Exoplanet Corporation's public-facing
+            catalogue of all known exoplanetary systems and colonisation
+            candidates. For real exoplanet data, see the
+            <a
+              href="https://exoplanetarchive.ipac.caltech.edu/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >NASA Exoplanet Archive</a
+            >.
+          </p>
+        </article>
+        <article class="about-card">
+          <div class="about-card-icon">◉</div>
+          <div class="about-card-label">THE TERRANIA 2.0 MISSION</div>
+          <h2 class="about-card-title">Finding a Second Home</h2>
           <p>
             With interstellar travel approaching feasibility, the search for a
             world that can serve as a second cradle for Arventian life has never
             been more urgent. The Arventia 2.0 programme catalogues promising
             planetary candidates by habitability index, atmospheric composition,
-            and biosignature potential — ranking the most viable destinations
+            and biosignature potential. It ranks the most viable destinations
             for future colonisation efforts.
           </p>
-        </div>
+        </article>
       </div>
     </section>
+
+    <!-- SECTION: GALLERY -->
+    <section class="gallery-section">
+      <div class="ql-label">FROM THE ARCHIVE</div>
+      <div class="gallery-grid">
+        <figure class="gallery-item">
+          <img
+            src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&q=80"
+            alt="A spiral galaxy against a dark starfield, viewed through a deep-space telescope"
+            loading="lazy"
+          />
+          <figcaption>
+            Long-baseline observation of a distant spiral system.
+            <span class="gallery-credit">Credit: Unsplash</span>
+          </figcaption>
+        </figure>
+        <figure class="gallery-item">
+          <img
+            src="https://images.unsplash.com/photo-1614642264762-d0a3b8bf3700?w=800&q=80"
+            alt="A rocky exoplanet with a thin atmosphere, lit by a distant star"
+            loading="lazy"
+          />
+          <figcaption>
+            An early-catalogue candidate world under spectroscopic review.
+            <span class="gallery-credit">Credit: Unsplash</span>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- SECTION: QUICK LINKS -->
     <section class="quicklinks-section">
       <div class="ql-label">ARCHIVE SECTIONS</div>
       <div class="quicklinks-grid">
-        <a href="catalogued.html">
-          <div class="ql-card">
-            <div class="ql-card-num">01</div>
-            <div class="ql-card-title">Catalogued Systems</div>
-            <div class="ql-card-desc">
-              Full listing of all surveyed planetary systems in the Exoplanet
-              Corporation's database, including discovery metadata, system
-              architecture, and life status.
-            </div>
+        <a href="catalogued.html" class="ql-card">
+          <div class="ql-card-num">01</div>
+          <div class="ql-card-title">Catalogued Systems</div>
+          <div class="ql-card-desc">
+            Full listing of all surveyed planetary systems in the Exoplanet
+            Corporation's database, including discovery metadata, system
+            architecture, and life status.
           </div>
+          <div class="ql-card-arrow">→</div>
         </a>
-        <a href="promising.html">
-          <div class="ql-card">
-            <div class="ql-card-num">02</div>
-            <div class="ql-card-title">Arventia 2.0 Candidates</div>
-            <div class="ql-card-desc">
-              Shortlisted worlds assessed for habitability, atmospheric
-              suitability, and potential to host or support Arventian life,
-              ranked by the Exoplanet Corporation's scoring models.
-            </div>
+        <a href="promising.html" class="ql-card">
+          <div class="ql-card-num">02</div>
+          <div class="ql-card-title">Arventia 2.0 Candidates</div>
+          <div class="ql-card-desc">
+            Shortlisted worlds assessed for habitability, atmospheric
+            suitability, and potential to host or support Arventian life, ranked
+            by the Exoplanet Corporation's scoring models.
           </div>
+          <div class="ql-card-arrow">→</div>
         </a>
-        <a href="terraformed.html">
-          <div class="ql-card">
-            <div class="ql-card-num">03</div>
-            <div class="ql-card-title">Terraformed Worlds</div>
-            <div class="ql-card-desc">
-              A record of planets and moons that have undergone full or partial
-              terraforming operations, with current biosphere and life-origin
-              data.
-            </div>
+        <a href="terraformed.html" class="ql-card">
+          <div class="ql-card-num">03</div>
+          <div class="ql-card-title">Terraformed Worlds</div>
+          <div class="ql-card-desc">
+            A record of planets and moons that have undergone full or partial
+            terraforming operations, with current biosphere and life-origin
+            data.
           </div>
+          <div class="ql-card-arrow">→</div>
         </a>
       </div>
     </section>
+
+    </main>
+
+    <!-- FOOTER -->
     <footer class="footer">
-      <h4>PLANETARY ARCHIVE</h4>
-      <p>
-        Exoplanet Corporation · An AIRA Subsidiary All data is subject to
-        classification review. Certain systems are omitted by directive of the
-        Arventian government.
-      </p>
-      <p id="copyright">
-        &copy; 3000 Arventian Standard · Exoplanet Corporation
-      </p>
+      <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
+      <div class="footer-info">
+        Exoplanet Corporation · An AIRA Subsidiary<br />
+        All data is subject to classification review. Certain systems are
+        omitted by directive of the Arventian government.
+      </div>
+      <div class="footer-copy">
+        © 3000 Arventian Standard · Exoplanet Corporation
+      </div>
     </footer>
+
+    <script src="script/starfield.js"></script>
+    <script src="script/data.js"></script>
+    <script src="script/main.js"></script>
+    <script>
+      const btn = document.getElementById("navHamburger");
+      const links = document.querySelector(".nav-links");
+      btn.addEventListener("click", function () {
+        btn.classList.toggle("open");
+        links.classList.toggle("open");
+      });
+      links.querySelectorAll("a").forEach(function (a) {
+        a.addEventListener("click", function () {
+          btn.classList.remove("open");
+          links.classList.remove("open");
+        });
+      });
+    </script>
   </body>
 </html>

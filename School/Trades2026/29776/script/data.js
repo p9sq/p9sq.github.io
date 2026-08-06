@@ -1,4 +1,4 @@
-export const CATALOGUED_SYSTEMS = {
+const CATALOGUED_SYSTEMS = {
   "MYSTIC-1": {
     thumbnail: "img/catalogued/1.png",
     designation: "RS 8513-928-8-5906587-272",
@@ -385,7 +385,7 @@ export const CATALOGUED_SYSTEMS = {
   },
 };
 
-export const PROMISING_WORLDS = {
+const PROMISING_WORLDS = {
   Earth: {
     systemName: "Solar System",
     systemType: "Single",
@@ -1365,7 +1365,7 @@ export const PROMISING_WORLDS = {
   },
 };
 
-export const TERRAFORMED_WORLDS = {
+const TERRAFORMED_WORLDS = {
   Pholion: {
     altName: "Boreas I",
     systemName: "Nexus System",
