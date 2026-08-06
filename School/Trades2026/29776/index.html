@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Planetary Archive is the Exoplanet Corporation's public catalogue of surveyed star systems, Arventia 2.0 habitability candidates, and terraformed worlds."
+      content="Planetary Archive catalogues every surveyed star system, Arventia 2.0 habitability candidate, and terraformed world for the Exoplanet Corporation."
     />
-    <title>Planetary Archive — Exoplanet Corporation</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Planetary Archive - Exoplanet Corporation</title>
+    <link rel="stylesheet" href="css/main.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap"
@@ -40,7 +40,11 @@
           <li><a href="promising.html">Arventia 2.0 Candidates</a></li>
           <li><a href="terraformed.html">Terraformed Worlds</a></li>
         </ul>
-        <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+        <button
+          class="nav-hamburger"
+          id="navHamburger"
+          aria-label="Toggle menu"
+        >
           <span></span><span></span><span></span>
         </button>
         <div class="nav-status">
@@ -51,177 +55,177 @@
     </header>
 
     <main>
-
-    <!-- HERO -->
-    <section class="hero">
-      <div class="hero-eyebrow">
-        Exoplanet Corporation · Arventian Interplanetary Research Authority
-      </div>
-      <h1 class="hero-title">
-        <span class="hero-title-line1">PLANETARY</span>
-        <span class="hero-title-line2">ARCHIVE</span>
-      </h1>
-      <p class="hero-subtitle">
-        The definitive catalogue of known planetary systems, habitability
-        candidates,<br />
-        and colonised worlds beyond the Phebe System.
-      </p>
-      <div class="hero-stats">
-        <div class="hero-stat" id="stat-systems">
-          <div class="hero-stat-num" data-target="0" id="num-systems">0</div>
-          <div class="hero-stat-label">Catalogued Systems</div>
+      <!-- HERO -->
+      <section class="hero">
+        <div class="hero-eyebrow">
+          Exoplanet Corporation · Arventian Interplanetary Research Authority
         </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat" id="stat-candidates">
-          <div class="hero-stat-num" data-target="0" id="num-candidates">0</div>
-          <div class="hero-stat-label">A-2.0 Candidates</div>
+        <h1 class="hero-title">
+          <span class="hero-title-line1">PLANETARY</span>
+          <span class="hero-title-line2">ARCHIVE</span>
+        </h1>
+        <p class="hero-subtitle">
+          Browse every known planetary system, habitability candidate,<br />
+          and colonised world beyond the Phebe System.
+        </p>
+        <div class="hero-stats">
+          <div class="hero-stat" id="stat-systems">
+            <div class="hero-stat-num" data-target="0" id="num-systems">0</div>
+            <div class="hero-stat-label">Catalogued Systems</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat" id="stat-candidates">
+            <div class="hero-stat-num" data-target="0" id="num-candidates">
+              0
+            </div>
+            <div class="hero-stat-label">A-2.0 Candidates</div>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat" id="stat-terraformed">
+            <div class="hero-stat-num" data-target="0" id="num-terraformed">
+              0
+            </div>
+            <div class="hero-stat-label">Terraformed Worlds</div>
+          </div>
         </div>
-        <div class="hero-stat-divider"></div>
-        <div class="hero-stat" id="stat-terraformed">
-          <div class="hero-stat-num" data-target="0" id="num-terraformed">
-            0
-          </div>
-          <div class="hero-stat-label">Terraformed Worlds</div>
+        <div class="hero-cta">
+          <a href="catalogued.html" class="btn btn-primary">Browse Catalogue</a>
+          <a href="promising.html" class="btn btn-ghost"
+            >Arventia 2.0 Mission</a
+          >
         </div>
-      </div>
-      <div class="hero-cta">
-        <a href="catalogued.html" class="btn btn-primary">Browse Catalogue</a>
-        <a href="promising.html" class="btn btn-ghost">Arventia 2.0 Mission</a>
-      </div>
-    </section>
+      </section>
 
-    <!-- SECTION: ABOUT AIRA & EXOCORP -->
-    <section class="about-section">
-      <div class="about-grid">
-        <article class="about-card">
-          <div class="about-card-icon">◈</div>
-          <div class="about-card-label">ABOUT AIRA</div>
-          <h2 class="about-card-title">
-            Arventian Interplanetary Research Authority
-          </h2>
-          <p>
-            AIRA is Arventia's foremost scientific institution, charged with the
-            exploration and study of the cosmos beyond the Phebe System. Its
-            public mandate spans deep-space telescope networks, advanced
-            propulsion research, long-baseline observatories, and crewed
-            exploration programmes. Founded in the early centuries of the
-            Arventian space age, AIRA has remained at the forefront of
-            interstellar discovery for over a millennium.
-          </p>
-          <ul class="about-card-list">
-            <li>Deep-space telescope networks</li>
-            <li>Advanced propulsion research</li>
-            <li>Long-baseline observatories</li>
-            <li>Crewed exploration programmes</li>
-          </ul>
-        </article>
-        <article class="about-card about-card-highlight">
-          <div class="about-card-icon">◆</div>
-          <div class="about-card-label">ABOUT EXOPLANET CORPORATION</div>
-          <h2 class="about-card-title">Exoplanet Corporation</h2>
-          <p>
-            A semi-independent subsidiary of AIRA, the Exoplanet Corporation
-            operates gravitational-lensing observatories stationed hundreds of
-            AU from the Phebe System's barycentre, achieving kilometre-scale
-            resolution of distant planetary systems. Its singular mission:
-            locate a second Arventia, a world capable of supporting Arventian
-            civilisation, before crewed interstellar travel matures into
-            widespread practice.
-          </p>
-          <p>
-            The Planetary Archive is the Exoplanet Corporation's public-facing
-            catalogue of all known exoplanetary systems and colonisation
-            candidates. For real exoplanet data, see the
-            <a
-              href="https://exoplanetarchive.ipac.caltech.edu/"
-              target="_blank"
-              rel="noopener noreferrer"
-              >NASA Exoplanet Archive</a
-            >.
-          </p>
-        </article>
-        <article class="about-card">
-          <div class="about-card-icon">◉</div>
-          <div class="about-card-label">THE TERRANIA 2.0 MISSION</div>
-          <h2 class="about-card-title">Finding a Second Home</h2>
-          <p>
-            With interstellar travel approaching feasibility, the search for a
-            world that can serve as a second cradle for Arventian life has never
-            been more urgent. The Arventia 2.0 programme catalogues promising
-            planetary candidates by habitability index, atmospheric composition,
-            and biosignature potential. It ranks the most viable destinations
-            for future colonisation efforts.
-          </p>
-        </article>
-      </div>
-    </section>
+      <!-- SECTION: ABOUT AIRA & EXOCORP -->
+      <section class="about-section">
+        <div class="about-grid">
+          <article class="about-card">
+            <div class="about-card-icon">◈</div>
+            <div class="about-card-label">ABOUT AIRA</div>
+            <h2 class="about-card-title">
+              Arventian Interplanetary Research Authority
+            </h2>
+            <p>
+              AIRA leads Arventia's science and exploration beyond the Phebe
+              System. AIRA runs deep-space telescope networks, propulsion
+              research, long-baseline observatories, and crewed exploration
+              programmes. AIRA started in the early centuries of the Arventian
+              space age and has led interstellar discovery for over a thousand
+              years.
+            </p>
+            <ul class="about-card-list">
+              <li>Deep-space telescope networks</li>
+              <li>Advanced propulsion research</li>
+              <li>Long-baseline observatories</li>
+              <li>Crewed exploration programmes</li>
+            </ul>
+          </article>
+          <article class="about-card about-card-highlight">
+            <div class="about-card-icon">◆</div>
+            <div class="about-card-label">ABOUT EXOPLANET CORPORATION</div>
+            <h2 class="about-card-title">Exoplanet Corporation</h2>
+            <p>
+              The Exoplanet Corporation is a semi-independent subsidiary of
+              AIRA. The Corporation operates gravitational-lensing observatories
+              hundreds of AU from the Phebe System's barycentre. These
+              observatories reach kilometre-scale resolution on distant
+              planetary systems. The Corporation's mission is simple: find a
+              second Arventia, a world able to support Arventian life, before
+              crewed interstellar travel becomes common.
+            </p>
+            <p>
+              The Planetary Archive is the Exoplanet Corporation's public
+              catalogue of every known exoplanetary system and colonisation
+              candidate. Check real exoplanet data at the
+              <a
+                href="https://exoplanetarchive.ipac.caltech.edu/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >NASA Exoplanet Archive</a
+              >.
+            </p>
+          </article>
+          <article class="about-card">
+            <div class="about-card-icon">◉</div>
+            <div class="about-card-label">THE ARVENTIA 2.0 MISSION</div>
+            <h2 class="about-card-title">Finding a Second Home</h2>
+            <p>
+              Interstellar travel is getting closer. Arventia needs a second
+              home for the Arventian people. The Arventia 2.0 programme tracks
+              promising planetary candidates by habitability index, atmospheric
+              composition, and biosignature potential. The programme ranks these
+              candidates by how viable they are for future colonisation.
+            </p>
+          </article>
+        </div>
+      </section>
 
-    <!-- SECTION: GALLERY -->
-    <section class="gallery-section">
-      <div class="ql-label">FROM THE ARCHIVE</div>
-      <div class="gallery-grid">
-        <figure class="gallery-item">
-          <img
-            src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&q=80"
-            alt="A spiral galaxy against a dark starfield, viewed through a deep-space telescope"
-            loading="lazy"
-          />
-          <figcaption>
-            Long-baseline observation of a distant spiral system.
-            <span class="gallery-credit">Credit: Unsplash</span>
-          </figcaption>
-        </figure>
-        <figure class="gallery-item">
-          <img
-            src="https://images.unsplash.com/photo-1614642264762-d0a3b8bf3700?w=800&q=80"
-            alt="A rocky exoplanet with a thin atmosphere, lit by a distant star"
-            loading="lazy"
-          />
-          <figcaption>
-            An early-catalogue candidate world under spectroscopic review.
-            <span class="gallery-credit">Credit: Unsplash</span>
-          </figcaption>
-        </figure>
-      </div>
-    </section>
+      <!-- SECTION: GALLERY -->
+      <section class="gallery-section">
+        <div class="ql-label">FROM THE ARCHIVE</div>
+        <div class="gallery-grid">
+          <figure class="gallery-item">
+            <img
+              src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=800&q=80"
+              alt="A spiral galaxy against a dark starfield, viewed through a deep-space telescope"
+              loading="lazy"
+            />
+            <figcaption>
+              A long-baseline scan captures this distant spiral system.
+              <span class="gallery-credit">Credit: Unsplash</span>
+            </figcaption>
+          </figure>
+          <figure class="gallery-item">
+            <img
+              src="https://images.unsplash.com/photo-1614642264762-d0a3b8bf3700?w=800&q=80"
+              alt="A rocky exoplanet with a thin atmosphere, lit by a distant star"
+              loading="lazy"
+            />
+            <figcaption>
+              The catalogue added this candidate world recently. The team is
+              reviewing the world by spectroscopy.
+              <span class="gallery-credit">Credit: Unsplash</span>
+            </figcaption>
+          </figure>
+        </div>
+      </section>
 
-    <!-- SECTION: QUICK LINKS -->
-    <section class="quicklinks-section">
-      <div class="ql-label">ARCHIVE SECTIONS</div>
-      <div class="quicklinks-grid">
-        <a href="catalogued.html" class="ql-card">
-          <div class="ql-card-num">01</div>
-          <div class="ql-card-title">Catalogued Systems</div>
-          <div class="ql-card-desc">
-            Full listing of all surveyed planetary systems in the Exoplanet
-            Corporation's database, including discovery metadata, system
-            architecture, and life status.
-          </div>
-          <div class="ql-card-arrow">→</div>
-        </a>
-        <a href="promising.html" class="ql-card">
-          <div class="ql-card-num">02</div>
-          <div class="ql-card-title">Arventia 2.0 Candidates</div>
-          <div class="ql-card-desc">
-            Shortlisted worlds assessed for habitability, atmospheric
-            suitability, and potential to host or support Arventian life, ranked
-            by the Exoplanet Corporation's scoring models.
-          </div>
-          <div class="ql-card-arrow">→</div>
-        </a>
-        <a href="terraformed.html" class="ql-card">
-          <div class="ql-card-num">03</div>
-          <div class="ql-card-title">Terraformed Worlds</div>
-          <div class="ql-card-desc">
-            A record of planets and moons that have undergone full or partial
-            terraforming operations, with current biosphere and life-origin
-            data.
-          </div>
-          <div class="ql-card-arrow">→</div>
-        </a>
-      </div>
-    </section>
-
+      <!-- SECTION: QUICK LINKS -->
+      <section class="quicklinks-section">
+        <div class="ql-label">ARCHIVE SECTIONS</div>
+        <div class="quicklinks-grid">
+          <a href="catalogued.html" class="ql-card">
+            <div class="ql-card-num">01</div>
+            <div class="ql-card-title">Catalogued Systems</div>
+            <div class="ql-card-desc">
+              Browse every surveyed planetary system in the Exoplanet
+              Corporation's database. Each entry includes discovery metadata,
+              system architecture, and life status.
+            </div>
+            <div class="ql-card-arrow">→</div>
+          </a>
+          <a href="promising.html" class="ql-card">
+            <div class="ql-card-num">02</div>
+            <div class="ql-card-title">Arventia 2.0 Candidates</div>
+            <div class="ql-card-desc">
+              See worlds shortlisted for habitability, atmospheric suitability,
+              and potential to support Arventian life. The Exoplanet
+              Corporation's scoring models rank each one.
+            </div>
+            <div class="ql-card-arrow">→</div>
+          </a>
+          <a href="terraformed.html" class="ql-card">
+            <div class="ql-card-num">03</div>
+            <div class="ql-card-title">Terraformed Worlds</div>
+            <div class="ql-card-desc">
+              Track planets and moons the Corporation has fully or partially
+              terraformed. Each record includes current biosphere and
+              life-origin data.
+            </div>
+            <div class="ql-card-arrow">→</div>
+          </a>
+        </div>
+      </section>
     </main>
 
     <!-- FOOTER -->
@@ -229,8 +233,8 @@
       <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
       <div class="footer-info">
         Exoplanet Corporation · An AIRA Subsidiary<br />
-        All data is subject to classification review. Certain systems are
-        omitted by directive of the Arventian government.
+        The Arventian government reviews all data for classification. The
+        government omits certain systems by directive.
       </div>
       <div class="footer-copy">
         © 3000 Arventian Standard · Exoplanet Corporation

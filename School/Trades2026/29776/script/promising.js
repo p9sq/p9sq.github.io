@@ -42,14 +42,18 @@ function spectralColor(sc) {
 }
 
 function lifeBadge(exists) {
-  if (exists === true) return '<span class="badge badge-life">● LIFE CONFIRMED</span>';
-  if (exists === "pending") return '<span class="badge badge-pending">◌ LIFE PENDING</span>';
+  if (exists === true)
+    return '<span class="badge badge-life">● LIFE CONFIRMED</span>';
+  if (exists === "pending")
+    return '<span class="badge badge-pending">◌ LIFE PENDING</span>';
   return '<span class="badge badge-nolife">✕ NO LIFE</span>';
 }
 
 function lifeStatusText(exists) {
-  if (exists === true) return '<span style="color:var(--green)">CONFIRMED</span>';
-  if (exists === "pending") return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
+  if (exists === true)
+    return '<span style="color:var(--green)">CONFIRMED</span>';
+  if (exists === "pending")
+    return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
   return '<span style="color:#f87171">NOT DETECTED</span>';
 }
 
@@ -79,14 +83,22 @@ function makeCard(name, world) {
 
   var imgHtml;
   if (world.thumbnail) {
-    imgHtml = '<img class="planet-card-img" src="' + world.thumbnail + '" alt="' + name + '" onerror="this.style.display=\'none\'">';
+    imgHtml =
+      '<img class="planet-card-img" src="' +
+      world.thumbnail +
+      '" alt="' +
+      name +
+      '" onerror="this.style.display=\'none\'">';
   } else {
     imgHtml = '<div class="planet-card-img-placeholder">🌍</div>';
   }
 
   var altNameHtml = "";
   if (world.type === "Moon" && world.altName) {
-    altNameHtml = ' <span style="color:var(--text-dimmer);font-size:0.75em;font-weight:400">/ ' + world.altName + "</span>";
+    altNameHtml =
+      ' <span style="color:var(--text-dimmer);font-size:0.75em;font-weight:400">/ ' +
+      world.altName +
+      "</span>";
   }
 
   var moonOfHtml = "";
@@ -198,10 +210,14 @@ function applySort(entries, sortVal) {
 
   switch (sortVal) {
     case "dist-asc":
-      sorted.sort((a, b) => num(a[1].distToSun, true) - num(b[1].distToSun, true));
+      sorted.sort(
+        (a, b) => num(a[1].distToSun, true) - num(b[1].distToSun, true),
+      );
       break;
     case "dist-desc":
-      sorted.sort((a, b) => num(b[1].distToSun, false) - num(a[1].distToSun, false));
+      sorted.sort(
+        (a, b) => num(b[1].distToSun, false) - num(a[1].distToSun, false),
+      );
       break;
     case "radius-asc":
       sorted.sort((a, b) => {
@@ -232,10 +248,14 @@ function applySort(entries, sortVal) {
       });
       break;
     case "density-asc":
-      sorted.sort((a, b) => num(getDensity(a[1]), true) - num(getDensity(b[1]), true));
+      sorted.sort(
+        (a, b) => num(getDensity(a[1]), true) - num(getDensity(b[1]), true),
+      );
       break;
     case "density-desc":
-      sorted.sort((a, b) => num(getDensity(b[1]), false) - num(getDensity(a[1]), false));
+      sorted.sort(
+        (a, b) => num(getDensity(b[1]), false) - num(getDensity(a[1]), false),
+      );
       break;
     case "alpha-asc":
       sorted.sort((a, b) => a[0].localeCompare(b[0]));
@@ -265,7 +285,8 @@ function filterAndRender() {
       !query ||
       name.toLowerCase().indexOf(query) !== -1 ||
       (world.systemName || "").toLowerCase().indexOf(query) !== -1 ||
-      (world.life && world.life.type || "").toLowerCase().indexOf(query) !== -1;
+      ((world.life && world.life.type) || "").toLowerCase().indexOf(query) !==
+        -1;
 
     var matchType = !typeFilter || world.type === typeFilter;
 
@@ -293,10 +314,18 @@ function filterAndRender() {
 window.addEventListener("DOMContentLoaded", () => {
   filterAndRender();
 
-  document.getElementById("searchBox").addEventListener("input", filterAndRender);
-  document.getElementById("filterType").addEventListener("change", filterAndRender);
-  document.getElementById("filterLife").addEventListener("change", filterAndRender);
-  document.getElementById("sortSelect").addEventListener("change", filterAndRender);
+  document
+    .getElementById("searchBox")
+    .addEventListener("input", filterAndRender);
+  document
+    .getElementById("filterType")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("filterLife")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("sortSelect")
+    .addEventListener("change", filterAndRender);
 
   document.getElementById("modalClose").addEventListener("click", function () {
     document.getElementById("modal").classList.remove("open");

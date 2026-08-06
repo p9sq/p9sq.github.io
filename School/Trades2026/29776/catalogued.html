@@ -7,8 +7,8 @@
       name="description"
       content="Browse every planetary system in the Exoplanet Corporation's archive, with discovery data, stellar class, and life status."
     />
-    <title>Catalogued Systems — Planetary Archive</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>Catalogued Systems - Planetary Archive</title>
+    <link rel="stylesheet" href="css/main.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap"
@@ -34,11 +34,17 @@
         </a>
         <ul class="nav-links">
           <li><a href="index.html">Home</a></li>
-          <li><a href="catalogued.html" class="active">Catalogued Systems</a></li>
+          <li>
+            <a href="catalogued.html" class="active">Catalogued Systems</a>
+          </li>
           <li><a href="promising.html">Arventia 2.0 Candidates</a></li>
           <li><a href="terraformed.html">Terraformed Worlds</a></li>
         </ul>
-        <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+        <button
+          class="nav-hamburger"
+          id="navHamburger"
+          aria-label="Toggle menu"
+        >
           <span></span><span></span><span></span>
         </button>
         <div class="nav-status">
@@ -49,76 +55,74 @@
     </header>
 
     <main>
-
-    <div class="page-hero">
-      <div class="page-hero-eyebrow">ARCHIVE · SECTION 01</div>
-      <h1 class="page-hero-title">Catalogued Systems</h1>
-      <p class="page-hero-desc">
-        All surveyed planetary systems registered in the Exoplanet Corporation
-        database. Data includes discovery metadata, system architecture, stellar
-        classification, and confirmed life status.
-      </p>
-    </div>
-
-    <div class="catalogue-controls">
-      <input
-        type="text"
-        class="search-box"
-        id="searchBox"
-        placeholder="Search systems, designations, pioneers…"
-      />
-      <div class="filter-row">
-        <select class="filter-select" id="filterType">
-          <option value="">All System Types</option>
-          <option value="Single">Single</option>
-          <option value="Binary">Binary</option>
-          <option value="Trinary">Trinary</option>
-          <option value="Quaternary">Quaternary</option>
-        </select>
-        <select class="filter-select" id="filterLife">
-          <option value="">All Life Status</option>
-          <option value="true">Life Confirmed</option>
-          <option value="false">No Life</option>
-          <option value="pending">Pending Review</option>
-        </select>
-        <select class="filter-select" id="sortSelect">
-          <option value="dist-asc" selected>Distance: Closest First</option>
-          <option value="dist-desc">Distance: Furthest First</option>
-          <option value="alpha-asc">Name: A → Z</option>
-          <option value="alpha-desc">Name: Z → A</option>
-        </select>
-        <div class="results-count" id="resultsCount">— systems</div>
+      <div class="page-hero">
+        <div class="page-hero-eyebrow">ARCHIVE · SECTION 01</div>
+        <h1 class="page-hero-title">Catalogued Systems</h1>
+        <p class="page-hero-desc">
+          Every surveyed planetary system in the Exoplanet Corporation database
+          sits here. Each entry includes discovery metadata, system
+          architecture, stellar classification, and confirmed life status.
+        </p>
       </div>
-    </div>
 
-    <div class="table-wrapper">
-      <table class="data-table" id="catalogueTable">
-        <thead>
-          <tr>
-            <th></th>
-            <th>DESIGNATION</th>
-            <th>NAME</th>
-            <th>TYPE</th>
-            <th>SPECTRAL</th>
-            <th>DIST (ly)</th>
-            <th>PLANETS</th>
-            <th>MOONS</th>
-            <th>DISC. DATE</th>
-            <th>PIONEER</th>
-            <th>LIFE</th>
-          </tr>
-        </thead>
-        <tbody id="catalogueBody"></tbody>
-      </table>
-    </div>
-
-    <div class="modal-overlay" id="modal">
-      <div class="modal-box" id="modalBox">
-        <button class="modal-close" id="modalClose">✕</button>
-        <div id="modalContent"></div>
+      <div class="catalogue-controls">
+        <input
+          type="text"
+          class="search-box"
+          id="searchBox"
+          placeholder="Search systems, designations, pioneers…"
+        />
+        <div class="filter-row">
+          <select class="filter-select" id="filterType">
+            <option value="">All System Types</option>
+            <option value="Single">Single</option>
+            <option value="Binary">Binary</option>
+            <option value="Trinary">Trinary</option>
+            <option value="Quaternary">Quaternary</option>
+          </select>
+          <select class="filter-select" id="filterLife">
+            <option value="">All Life Status</option>
+            <option value="true">Life Confirmed</option>
+            <option value="false">No Life</option>
+            <option value="pending">Pending Review</option>
+          </select>
+          <select class="filter-select" id="sortSelect">
+            <option value="dist-asc" selected>Distance: Closest First</option>
+            <option value="dist-desc">Distance: Furthest First</option>
+            <option value="alpha-asc">Name: A → Z</option>
+            <option value="alpha-desc">Name: Z → A</option>
+          </select>
+          <div class="results-count" id="resultsCount">— systems</div>
+        </div>
       </div>
-    </div>
 
+      <div class="table-wrapper">
+        <table class="data-table" id="catalogueTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>DESIGNATION</th>
+              <th>NAME</th>
+              <th>TYPE</th>
+              <th>SPECTRAL</th>
+              <th>DIST (ly)</th>
+              <th>PLANETS</th>
+              <th>MOONS</th>
+              <th>DISC. DATE</th>
+              <th>PIONEER</th>
+              <th>LIFE</th>
+            </tr>
+          </thead>
+          <tbody id="catalogueBody"></tbody>
+        </table>
+      </div>
+
+      <div class="modal-overlay" id="modal">
+        <div class="modal-box" id="modalBox">
+          <button class="modal-close" id="modalClose">✕</button>
+          <div id="modalContent"></div>
+        </div>
+      </div>
     </main>
 
     <footer class="footer">

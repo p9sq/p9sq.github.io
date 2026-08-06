@@ -43,13 +43,16 @@ function spectralColor(sc) {
 
 function lifeBadge(exists) {
   if (exists === true) return '<span class="badge badge-life">● LIFE</span>';
-  if (exists === "pending") return '<span class="badge badge-pending">◌ PENDING</span>';
+  if (exists === "pending")
+    return '<span class="badge badge-pending">◌ PENDING</span>';
   return "";
 }
 
 function lifeStatusText(exists) {
-  if (exists === true) return '<span style="color:var(--green)">CONFIRMED</span>';
-  if (exists === "pending") return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
+  if (exists === true)
+    return '<span style="color:var(--green)">CONFIRMED</span>';
+  if (exists === "pending")
+    return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
   return '<span style="color:#f87171">ABSENT</span>';
 }
 
@@ -78,14 +81,22 @@ function makeCard(name, world) {
 
   var imgHtml;
   if (world.thumbnail) {
-    imgHtml = '<img class="planet-card-img" src="' + world.thumbnail + '" alt="' + name + '" onerror="this.style.display=\'none\'">';
+    imgHtml =
+      '<img class="planet-card-img" src="' +
+      world.thumbnail +
+      '" alt="' +
+      name +
+      '" onerror="this.style.display=\'none\'">';
   } else {
     imgHtml = '<div class="planet-card-img-placeholder">🌱</div>';
   }
 
   var altNameHtml = "";
   if (world.type === "Moon" && world.altName) {
-    altNameHtml = ' <span style="color:var(--text-dimmer);font-size:0.75em;font-weight:400">/ ' + world.altName + "</span>";
+    altNameHtml =
+      ' <span style="color:var(--text-dimmer);font-size:0.75em;font-weight:400">/ ' +
+      world.altName +
+      "</span>";
   }
 
   var moonOfHtml = "";
@@ -108,8 +119,8 @@ function makeCard(name, world) {
         <div class="planet-card-row"><span class="planet-card-row-label">SMA</span><span class="planet-card-row-val">${sma != null ? sma + " AU" : "—"}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Moons</span><span class="planet-card-row-val">${world.moonCount != null ? world.moonCount : "—"}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Star</span><span class="planet-card-row-val" style="color:${spectralColor(world.spectralClass)}">${world.spectralClass || "—"}</span></div>
-        <div class="planet-card-row"><span class="planet-card-row-label">Biome</span><span class="planet-card-row-val">${world.life && world.life.biome || "—"}</span></div>
-        <div class="planet-card-row"><span class="planet-card-row-label">Life Origin</span><span class="planet-card-row-val" style="color:var(--orange)">${world.life && world.life.origin || "—"}</span></div>
+        <div class="planet-card-row"><span class="planet-card-row-label">Biome</span><span class="planet-card-row-val">${(world.life && world.life.biome) || "—"}</span></div>
+        <div class="planet-card-row"><span class="planet-card-row-label">Life Origin</span><span class="planet-card-row-val" style="color:var(--orange)">${(world.life && world.life.origin) || "—"}</span></div>
       </div>
       <div class="planet-card-badges">
         <span class="badge" style="background:var(--orange-dim);color:var(--orange);border:1px solid rgba(249,115,22,0.25)">🌱 TERRAFORMED</span>
@@ -194,7 +205,11 @@ function populateOriginFilter() {
   var origins = [];
   for (var key in TERRAFORMED_WORLDS) {
     var world = TERRAFORMED_WORLDS[key];
-    if (world.life && world.life.origin && origins.indexOf(world.life.origin) === -1) {
+    if (
+      world.life &&
+      world.life.origin &&
+      origins.indexOf(world.life.origin) === -1
+    ) {
       origins.push(world.life.origin);
     }
   }
@@ -217,10 +232,14 @@ function applySort(entries, sortVal) {
 
   switch (sortVal) {
     case "dist-asc":
-      sorted.sort((a, b) => num(a[1].distToSun, true) - num(b[1].distToSun, true));
+      sorted.sort(
+        (a, b) => num(a[1].distToSun, true) - num(b[1].distToSun, true),
+      );
       break;
     case "dist-desc":
-      sorted.sort((a, b) => num(b[1].distToSun, false) - num(a[1].distToSun, false));
+      sorted.sort(
+        (a, b) => num(b[1].distToSun, false) - num(a[1].distToSun, false),
+      );
       break;
     case "radius-asc":
       sorted.sort((a, b) => {
@@ -251,10 +270,14 @@ function applySort(entries, sortVal) {
       });
       break;
     case "density-asc":
-      sorted.sort((a, b) => num(getDensity(a[1]), true) - num(getDensity(b[1]), true));
+      sorted.sort(
+        (a, b) => num(getDensity(a[1]), true) - num(getDensity(b[1]), true),
+      );
       break;
     case "density-desc":
-      sorted.sort((a, b) => num(getDensity(b[1]), false) - num(getDensity(a[1]), false));
+      sorted.sort(
+        (a, b) => num(getDensity(b[1]), false) - num(getDensity(a[1]), false),
+      );
       break;
     case "alpha-asc":
       sorted.sort((a, b) => a[0].localeCompare(b[0]));
@@ -284,10 +307,12 @@ function filterAndRender() {
       !query ||
       name.toLowerCase().indexOf(query) !== -1 ||
       (world.systemName || "").toLowerCase().indexOf(query) !== -1 ||
-      (world.life && world.life.biome || "").toLowerCase().indexOf(query) !== -1;
+      ((world.life && world.life.biome) || "").toLowerCase().indexOf(query) !==
+        -1;
 
     var matchType = !typeFilter || world.type === typeFilter;
-    var matchOrigin = !originFilter || (world.life && world.life.origin) === originFilter;
+    var matchOrigin =
+      !originFilter || (world.life && world.life.origin) === originFilter;
 
     return matchText && matchType && matchOrigin;
   });
@@ -311,10 +336,18 @@ window.addEventListener("DOMContentLoaded", () => {
   populateOriginFilter();
   filterAndRender();
 
-  document.getElementById("searchBox").addEventListener("input", filterAndRender);
-  document.getElementById("filterType").addEventListener("change", filterAndRender);
-  document.getElementById("filterOrigin").addEventListener("change", filterAndRender);
-  document.getElementById("sortSelect").addEventListener("change", filterAndRender);
+  document
+    .getElementById("searchBox")
+    .addEventListener("input", filterAndRender);
+  document
+    .getElementById("filterType")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("filterOrigin")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("sortSelect")
+    .addEventListener("change", filterAndRender);
 
   document.getElementById("modalClose").addEventListener("click", function () {
     document.getElementById("modal").classList.remove("open");

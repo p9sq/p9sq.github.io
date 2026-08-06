@@ -57,8 +57,10 @@ function lifeBadge(exists) {
 }
 
 function lifeStatusText(exists) {
-  if (exists === true) return '<span style="color:var(--green)">CONFIRMED</span>';
-  if (exists === "pending") return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
+  if (exists === true)
+    return '<span style="color:var(--green)">CONFIRMED</span>';
+  if (exists === "pending")
+    return '<span style="color:var(--yellow)">PENDING REVIEW</span>';
   return '<span style="color:#f87171">NOT DETECTED</span>';
 }
 
@@ -84,12 +86,14 @@ function renderTable(data) {
     var moonCell;
     if (rogue) {
       if (sys.moonCount) {
-        moonCell = sys.moonCount.major + " maj / " + sys.moonCount.dwarf + " dwf";
+        moonCell =
+          sys.moonCount.major + " maj / " + sys.moonCount.dwarf + " dwf";
       } else {
         moonCell = "—";
       }
     } else {
-      moonCell = '<span style="color:var(--text-dimmer);font-size:0.65rem">N/A</span>';
+      moonCell =
+        '<span style="color:var(--text-dimmer);font-size:0.65rem">N/A</span>';
     }
 
     var thumbHtml;
@@ -118,11 +122,14 @@ function renderTable(data) {
       <td style="color:var(--accent-bright)">${sys.pioneer || "—"}</td>
       <td>${lifeBadge(sys.life ? sys.life.exists : undefined)}</td>
     `;
-    tr.addEventListener("click", function (n, s) {
-      return function () {
-        openModal(n, s);
-      };
-    }(name, sys));
+    tr.addEventListener(
+      "click",
+      (function (n, s) {
+        return function () {
+          openModal(n, s);
+        };
+      })(name, sys),
+    );
     tbody.appendChild(tr);
   }
 }
@@ -242,10 +249,18 @@ function filterAndRender() {
 window.addEventListener("DOMContentLoaded", () => {
   filterAndRender();
 
-  document.getElementById("searchBox").addEventListener("input", filterAndRender);
-  document.getElementById("filterType").addEventListener("change", filterAndRender);
-  document.getElementById("filterLife").addEventListener("change", filterAndRender);
-  document.getElementById("sortSelect").addEventListener("change", filterAndRender);
+  document
+    .getElementById("searchBox")
+    .addEventListener("input", filterAndRender);
+  document
+    .getElementById("filterType")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("filterLife")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("sortSelect")
+    .addEventListener("change", filterAndRender);
 
   document.getElementById("modalClose").addEventListener("click", function () {
     document.getElementById("modal").classList.remove("open");
