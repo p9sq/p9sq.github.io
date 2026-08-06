@@ -1,7 +1,3 @@
-/* =============================================
-   PLANETARY ARCHIVE. EXOPLANET CORPORATION
-   ============================================= */
-
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap");
 
 :root {
@@ -15,7 +11,7 @@
   --border: #d1d8e8;
   --border-strong: #aab4cc;
 
-  /* Accent. Deep navy and indigo. */
+  /* Accent: Deep navy and indigo. */
   --accent: #1a3a6b;
   --accent-mid: #2755a0;
   --accent-light: #e8eef8;
@@ -61,7 +57,7 @@
     0 12px 32px rgba(15, 28, 46, 0.12), 0 4px 8px rgba(15, 28, 46, 0.06);
 }
 
-/* ── RESET ── */
+/* ── Reset ── */
 *,
 *::before,
 *::after {
@@ -73,7 +69,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── SCROLLBARS ── */
+/* ── Scroll bars ── */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -96,13 +92,13 @@ html {
   scrollbar-color: var(--border-strong) var(--bg2);
 }
 
-/* ── TEXT SELECTION ── */
+/* ── Text selection ── */
 ::selection {
   background: rgba(26, 58, 107, 0.15);
   color: var(--text);
 }
 
-/* ── BASE ── */
+/* ── Base ── */
 body {
   background: var(--bg);
   color: var(--text);
@@ -120,7 +116,7 @@ body {
   display: none;
 }
 
-/* ── NAV ── */
+/* ── Nav ── */
 .nav {
   position: fixed;
   top: 0;
@@ -230,7 +226,7 @@ body {
   }
 }
 
-/* ── HERO (INDEX) ── */
+/* ── Hero (index.html) ── */
 .hero {
   position: relative;
   z-index: 10;
@@ -387,7 +383,7 @@ body {
   }
 }
 
-/* ── ABOUT SECTION ── */
+/* ── About section ── */
 .about-section {
   padding: 4rem 2rem;
   background: var(--surface);
@@ -462,7 +458,7 @@ body {
   margin-bottom: 0.15rem;
 }
 
-/* ── GALLERY ── */
+/* ── Gallery ── */
 .gallery-section {
   padding: 3.5rem 2rem;
   background: var(--surface);
@@ -504,7 +500,7 @@ body {
   text-transform: uppercase;
 }
 
-/* ── QUICK LINKS ── */
+/* ── Quick links ── */
 .quicklinks-section {
   padding: 3.5rem 2rem 5rem;
   background: var(--bg);
@@ -580,7 +576,7 @@ body {
   transform: translateX(3px);
 }
 
-/* ── PAGE HERO (INNER PAGES) ── */
+/* ── Page hero (Inner pages) ── */
 .page-hero {
   background: var(--accent);
   color: #fff;
@@ -618,7 +614,7 @@ body {
   line-height: 1.7;
 }
 
-/* ── CONTROLS ── */
+/* ── Controls ── */
 .catalogue-controls {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -696,7 +692,7 @@ body {
   margin-left: auto;
 }
 
-/* ── TABLE ── */
+/* ── Table ── */
 .table-wrapper {
   position: relative;
   z-index: 10;
@@ -784,7 +780,7 @@ body {
   color: var(--text-dimmer);
 }
 
-/* ── BADGES ── */
+/* ── Badges ── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -814,7 +810,7 @@ body {
   border: 1px solid var(--yellow-border);
 }
 
-/* ── CARDS GRID ── */
+/* ── Cards grid ── */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -914,7 +910,7 @@ body {
   border-top: 3px solid var(--orange);
 }
 
-/* ── MODAL ── */
+/* ── Modal ── */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1040,7 +1036,7 @@ body {
   color: var(--text);
 }
 
-/* ── FOOTER ── */
+/* ── Footer ── */
 .footer {
   background: var(--accent);
   border-top: 3px solid var(--accent-mid);
@@ -1070,7 +1066,7 @@ body {
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* ── EMPTY STATE ── */
+/* ── Empty state ── */
 .empty-state {
   grid-column: 1/-1;
   text-align: center;
@@ -1082,7 +1078,7 @@ body {
   text-transform: uppercase;
 }
 
-/* ── NO DATA NOTICE ── */
+/* ── No data notice ── */
 .no-data-notice {
   margin: 0 2rem;
   background: var(--accent-light);
@@ -1095,7 +1091,7 @@ body {
   line-height: 1.6;
 }
 
-/* ── HAMBURGER ── */
+/* ── Hamburger ── */
 .nav-hamburger {
   display: none;
   flex-direction: column;
@@ -1137,7 +1133,7 @@ body {
   transform: translateY(-6.5px) rotate(-45deg);
 }
 
-/* ── TABLET (≤ 1024px) ── */
+/* ── Tablet (≤ 1024px) ── */
 @media (max-width: 1024px) {
   .about-grid {
     grid-template-columns: 1fr;
@@ -1154,7 +1150,7 @@ body {
   }
 }
 
-/* ── MOBILE (≤ 768px) ── */
+/* ── Mobile (≤ 768px) ── */
 @media (max-width: 768px) {
   /* Nav */
   .nav {
@@ -1443,7 +1439,7 @@ body {
   }
 }
 
-/* ── SMALL MOBILE (≤ 400px) ── */
+/* ── Small mobile (≤ 400px) ── */
 @media (max-width: 400px) {
   .filter-select {
     flex: 1 1 100%;
@@ -1462,7 +1458,7 @@ body {
   }
 }
 
-/* ── NAV LOGO. PORTRAIT MOBILE ── */
+/* ── Nav logo (Portrait mobile) ── */
 @media (max-width: 480px) {
   .nav-logo-sub {
     display: none;
