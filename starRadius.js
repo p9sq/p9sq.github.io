@@ -1223,6 +1223,14 @@ function printWD(massSun, ageGyr) {
     console.log(`(No age entered — cooling luminosity not calculated.)`);
   }
   console.log(`Mean density:          ${fmt(calcDensity(massSun, R))} g/cm³`);
+  if (massSun < 0.17)
+    console.log(
+      `\nNote: ${fmt(massSun)} M_Sun is below the typical calibrated range (0.17–1.33 M_Sun).` +
+        `\n      Extremely low-mass WDs are usually He-core remnants stripped via binary` +
+        `\n      mass transfer, not standard single-star evolution — treat this radius as` +
+        `\n      a rough extrapolation of the zero-temperature Nauenberg formula, not a` +
+        `\n      calibrated fit.`,
+    );
   console.log(
     `\nCalibration:  Nauenberg (1972); verified by Tremblay et al. (2017) Gaia DR1.`,
   );
@@ -1244,9 +1252,9 @@ function printWD(massSun, ageGyr) {
   console.log(
     `      Composition (DA/DB/DC) and hydrogen layer mass also affect radius by 1–5%.`,
   );
-  if (massSun > 1.3)
+  if (massSun > 1.33)
     console.log(
-      `!  Mass close to Chandrasekhar limit — radius very small; extreme caution.`,
+      `!  Mass > 1.33 M_Sun — approaching the Chandrasekhar limit; radius very small, extreme caution.`,
     );
 }
 
@@ -2115,7 +2123,7 @@ function wdMenu() {
         });
       });
     } else {
-      askFloat("Enter WD mass (M_Sun, 0.17–1.40): ", 0.01, 1.43, (mass) => {
+      askFloat("Enter WD mass (M_Sun, typical 0.17–1.33): ", 0.01, 1.43, (mass) => {
         ask("Enter cooling age in Gyr [Enter to skip]: ", (ageIn) => {
           const age = ageIn.trim() === "" ? null : parseFloat(ageIn.trim());
           printWD(mass, isNaN(age) ? null : age);
