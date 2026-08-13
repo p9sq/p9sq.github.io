@@ -1,4 +1,4 @@
-// Catalogued systems page
+// This page shows every catalogued system in a table
 
 const PC_TO_LY = 3.26156;
 
@@ -8,7 +8,7 @@ function fmtDist(pc) {
   return ly.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " ly";
 }
 
-// rough colour per spectral class, matches real star colours
+// colour per spectral class, based on real star colours
 const SPECTRAL_COLORS = {
   O: "#b0d4ff",
   B: "#cce0ff",
@@ -29,7 +29,14 @@ function spectralColor(sc) {
   return SPECTRAL_COLORS[sc[0].toUpperCase()] || "#7a92b8";
 }
 
-// rogue systems use spectral class "P" (no parent star)
+// class "P" has no parent star, so show a proper label instead of a letter
+function spectralLabel(sc) {
+  if (!sc) return "—";
+  if (sc[0].toUpperCase() === "P") return "Rogue object/Free floating";
+  return sc;
+}
+
+// class "P" means a rogue system, no parent star
 function isRogue(sys) {
   return sys.spectralClass && sys.spectralClass[0].toUpperCase() === "P";
 }
@@ -87,7 +94,7 @@ function renderTable(data) {
       <td class="td-desig">${sys.designation || "—"}</td>
       <td class="td-name">${name}</td>
       <td>${sys.systemType || "—"}</td>
-      <td style="color:${spectralColor(sys.spectralClass)};font-family:var(--font-mono)">${sys.spectralClass || "—"}</td>
+      <td style="color:${spectralColor(sys.spectralClass)};font-family:var(--font-mono)">${spectralLabel(sys.spectralClass)}</td>
       <td>${fmtDist(sys.distToSun)}</td>
       <td>${sys.planetCount ? sys.planetCount.major + " maj / " + sys.planetCount.dwarf + " dwf" : "—"}</td>
       <td>${moonCell}</td>
@@ -130,7 +137,7 @@ function openModal(name, sys) {
     <div class="modal-section-title">SYSTEM DATA</div>
     <div class="modal-grid">
       <div class="modal-field"><div class="modal-field-label">System Type</div><div class="modal-field-val">${sys.systemType || "—"}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(sys.spectralClass)}">${sys.spectralClass || "—"}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(sys.spectralClass)}">${spectralLabel(sys.spectralClass)}</div></div>
       <div class="modal-field"><div class="modal-field-label">Distance from Phebe</div><div class="modal-field-val">${fmtDist(sys.distToSun)}</div></div>
       <div class="modal-field"><div class="modal-field-label">Parent Sun</div><div class="modal-field-val">${sys.parentSun || "—"}</div></div>
       <div class="modal-field"><div class="modal-field-label">Major Planets</div><div class="modal-field-val">${sys.planetCount ? sys.planetCount.major : "—"}</div></div>

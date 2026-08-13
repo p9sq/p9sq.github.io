@@ -1,4 +1,4 @@
-// Terraformed worlds page
+// This page shows the terraformed worlds as cards
 
 const PC_TO_LY = 3.26156;
 const EARTH_RADIUS_KM = 6371;
@@ -33,6 +33,13 @@ const SPECTRAL_COLORS = {
 function spectralColor(sc) {
   if (!sc) return "#7a92b8";
   return SPECTRAL_COLORS[sc[0].toUpperCase()] || "#7a92b8";
+}
+
+// class "P" has no parent star, so show a proper label instead of a letter
+function spectralLabel(sc) {
+  if (!sc) return "—";
+  if (sc[0].toUpperCase() === "P") return "Rogue object/Free floating";
+  return sc;
 }
 
 function lifeBadge(exists) {
@@ -91,7 +98,7 @@ function makeCard(name, world) {
         <div class="planet-card-row"><span class="planet-card-row-label">Density</span><span class="planet-card-row-val">${density != null ? density + " g/cm³" : "—"}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">SMA</span><span class="planet-card-row-val">${sma != null ? sma + " AU" : "—"}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Moons</span><span class="planet-card-row-val">${world.moonCount != null ? world.moonCount : "—"}</span></div>
-        <div class="planet-card-row"><span class="planet-card-row-label">Star</span><span class="planet-card-row-val" style="color:${spectralColor(world.spectralClass)}">${world.spectralClass || "—"}</span></div>
+        <div class="planet-card-row"><span class="planet-card-row-label">Star</span><span class="planet-card-row-val" style="color:${spectralColor(world.spectralClass)}">${spectralLabel(world.spectralClass)}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Biome</span><span class="planet-card-row-val">${(world.life && world.life.biome) || "—"}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Life Origin</span><span class="planet-card-row-val" style="color:var(--orange)">${(world.life && world.life.origin) || "—"}</span></div>
       </div>
@@ -157,7 +164,7 @@ function openModal(name, world) {
       <div class="modal-field"><div class="modal-field-label">System</div><div class="modal-field-val">${world.systemName}</div></div>
       <div class="modal-field"><div class="modal-field-label">Parent Star</div><div class="modal-field-val">${world.parentStar}</div></div>
       ${world.type === "Moon" && world.parent ? `<div class="modal-field"><div class="modal-field-label">Parent Planet</div><div class="modal-field-val">${world.parent}</div></div>` : ""}
-      <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(world.spectralClass)}">${world.spectralClass || "—"}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(world.spectralClass)}">${spectralLabel(world.spectralClass)}</div></div>
       <div class="modal-field"><div class="modal-field-label">Distance from Phebe</div><div class="modal-field-val">${fmtDist(world.distToSun)}</div></div>
     </div>
 
