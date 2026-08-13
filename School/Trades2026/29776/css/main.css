@@ -57,7 +57,7 @@
     0 12px 32px rgba(15, 28, 46, 0.12), 0 4px 8px rgba(15, 28, 46, 0.06);
 }
 
-/* ── Reset ── */
+/* Reset */
 *,
 *::before,
 *::after {
@@ -69,7 +69,7 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── Scroll bars ── */
+/* Scroll bars */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -92,13 +92,13 @@ html {
   scrollbar-color: var(--border-strong) var(--bg2);
 }
 
-/* ── Text selection ── */
+/* Text selection */
 ::selection {
   background: rgba(26, 58, 107, 0.15);
   color: var(--text);
 }
 
-/* ── Base ── */
+/* Base */
 body {
   background: var(--bg);
   color: var(--text);
@@ -116,7 +116,7 @@ body {
   display: none;
 }
 
-/* ── Nav ── */
+/* Nav */
 .nav {
   position: fixed;
   top: 0;
@@ -226,7 +226,7 @@ body {
   }
 }
 
-/* ── Hero (index.html) ── */
+/* Hero (index.html) */
 .hero {
   position: relative;
   z-index: 10;
@@ -383,7 +383,7 @@ body {
   }
 }
 
-/* ── About section ── */
+/* About section */
 .about-section {
   padding: 4rem 2rem;
   background: var(--surface);
@@ -458,7 +458,7 @@ body {
   margin-bottom: 0.15rem;
 }
 
-/* ── Gallery ── */
+/* Gallery */
 .gallery-section {
   padding: 3.5rem 2rem;
   background: var(--surface);
@@ -500,7 +500,7 @@ body {
   text-transform: uppercase;
 }
 
-/* ── Quick links ── */
+/* Quick links */
 .quicklinks-section {
   padding: 3.5rem 2rem 5rem;
   background: var(--bg);
@@ -576,7 +576,7 @@ body {
   transform: translateX(3px);
 }
 
-/* ── Page hero (Inner pages) ── */
+/* Page hero (Inner pages) */
 .page-hero {
   background: var(--accent);
   color: #fff;
@@ -614,7 +614,7 @@ body {
   line-height: 1.7;
 }
 
-/* ── Controls ── */
+/* Controls */
 .catalogue-controls {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -692,7 +692,7 @@ body {
   margin-left: auto;
 }
 
-/* ── Table ── */
+/* Table */
 .table-wrapper {
   position: relative;
   z-index: 10;
@@ -780,7 +780,7 @@ body {
   color: var(--text-dimmer);
 }
 
-/* ── Badges ── */
+/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -810,7 +810,7 @@ body {
   border: 1px solid var(--yellow-border);
 }
 
-/* ── Cards grid ── */
+/* Cards grid */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -910,7 +910,7 @@ body {
   border-top: 3px solid var(--orange);
 }
 
-/* ── Modal ── */
+/* Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1036,7 +1036,7 @@ body {
   color: var(--text);
 }
 
-/* ── Footer ── */
+/* Footer */
 .footer {
   background: var(--accent);
   border-top: 3px solid var(--accent-mid);
@@ -1066,7 +1066,7 @@ body {
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* ── Empty state ── */
+/* Empty state */
 .empty-state {
   grid-column: 1/-1;
   text-align: center;
@@ -1078,7 +1078,7 @@ body {
   text-transform: uppercase;
 }
 
-/* ── No data notice ── */
+/* No data notice */
 .no-data-notice {
   margin: 0 2rem;
   background: var(--accent-light);
@@ -1091,7 +1091,7 @@ body {
   line-height: 1.6;
 }
 
-/* ── Hamburger ── */
+/* Hamburger */
 .nav-hamburger {
   display: none;
   flex-direction: column;
@@ -1133,7 +1133,7 @@ body {
   transform: translateY(-6.5px) rotate(-45deg);
 }
 
-/* ── Tablet (≤ 1024px) ── */
+/* Tablet (≤ 1024px) */
 @media (max-width: 1024px) {
   .about-grid {
     grid-template-columns: 1fr;
@@ -1150,7 +1150,7 @@ body {
   }
 }
 
-/* ── Mobile (≤ 768px) ── */
+/* Mobile (≤ 768px) */
 @media (max-width: 768px) {
   /* Nav */
   .nav {
@@ -1439,7 +1439,7 @@ body {
   }
 }
 
-/* ── Small mobile (≤ 400px) ── */
+/* Small mobile (≤ 400px) */
 @media (max-width: 400px) {
   .filter-select {
     flex: 1 1 100%;
@@ -1458,7 +1458,7 @@ body {
   }
 }
 
-/* ── Nav logo (Portrait mobile) ── */
+/* Nav logo (Portrait mobile) */
 @media (max-width: 480px) {
   .nav-logo-sub {
     display: none;
