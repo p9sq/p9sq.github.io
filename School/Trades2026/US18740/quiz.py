@@ -1,7 +1,7 @@
-import random
-score = 0
+import random # Import the random library so shuffle the list of questions
+score = 0 # Initialise score
 
-questions = [
+questions = [ # Set up each questions, possible answers, and their correct answers
     {
         "text": "Which planet is the smallest?",
         "correct_answer": "Mercury",
@@ -100,11 +100,13 @@ questions = [
     },
 ]
 
-random.shuffle(questions)
+random.shuffle(questions) # Randomise the list of the questions so that you can't predict which question is going to come next
 
+# Beginning prompt
 print("Welcome to the Solar System quiz!")
 print("Answer the following questions:")
 
+# Start the question asking loop
 for question in questions:
     print(question["text"])
     print("Possible answers:\n" + "\n".join(question["possible_answers"]))
@@ -117,11 +119,11 @@ for question in questions:
     if user_answer == question["correct_answer"].lower() or user_answer == question["correct_letter"].lower():
         print("Correct!")
         print("")
-        score += 1
+        score += 1 # Add 1 to the score for each correct answer
     else:
         print("Incorrect!")
         print("The correct answer is " + question["correct_letter"] + ". " + question["correct_answer"])
         print("Reason:", question["explanation"])
         print("")
 
-print("You have completed the quiz! Your total score is " + str(score) + "/8!")
+print("You have completed the quiz! Your total score is " + str(score) + "/8!") # Print the final score
