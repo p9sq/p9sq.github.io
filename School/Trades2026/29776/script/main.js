@@ -1,4 +1,4 @@
-// This counts up the stat numbers on the home page
+// this counts up the stat numbers on the home page
 
 function animateCount(el, target) {
   const duration = 1800;

@@ -1,12 +1,4 @@
-// This page shows every catalogued system in a table
-
-const PC_TO_LY = 3.26156;
-
-function fmtDist(pc) {
-  if (pc == null) return "—";
-  const ly = pc * PC_TO_LY;
-  return ly.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " ly";
-}
+// this page shows every catalogued system in a table
 
 // colour per spectral class, based on real star colours
 const SPECTRAL_COLORS = {
@@ -158,6 +150,7 @@ function openModal(name, sys) {
   `;
 
   modal.classList.add("open");
+  document.body.classList.add("no-scroll");
 }
 
 function applySort(entries, sortVal) {
@@ -224,10 +217,17 @@ window.addEventListener("DOMContentLoaded", () => {
     .addEventListener("change", filterAndRender);
 
   const modal = document.getElementById("modal");
-  document
-    .getElementById("modalClose")
-    .addEventListener("click", () => modal.classList.remove("open"));
-  modal.addEventListener("click", (e) => {
-    if (e.target === modal) modal.classList.remove("open");
+  document.getElementById("modalClose").addEventListener("click", () => {
+    modal.classList.remove("open");
+    document.body.classList.remove("no-scroll");
   });
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.classList.remove("open");
+      document.body.classList.remove("no-scroll");
+    }
+  });
+
+  // ly/pc and metric/imperial live in localStorage, re-render on change
+  document.addEventListener("settingschange", filterAndRender);
 });

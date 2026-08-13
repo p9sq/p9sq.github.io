@@ -40,7 +40,9 @@
   /* Fonts */
   --font-ui: "Inter", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", "Courier New", monospace;
+  --font-mono: var(--font-data);
   --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --accent-bright: var(--accent-mid);
 
   /* Sizing */
   --nav-h: 58px;
@@ -55,6 +57,45 @@
     0 4px 12px rgba(15, 28, 46, 0.1), 0 2px 4px rgba(15, 28, 46, 0.06);
   --shadow-lg:
     0 12px 32px rgba(15, 28, 46, 0.12), 0 4px 8px rgba(15, 28, 46, 0.06);
+}
+
+/* dark theme, switched on by the settings panel setting data-theme on <html> */
+[data-theme="dark"] {
+  --bg: #0b1220;
+  --bg2: #0f1729;
+  --surface: #131d33;
+  --surface2: #17223c;
+
+  --border: #23324f;
+  --border-strong: #34496e;
+
+  --accent: #7fb0ff;
+  --accent-mid: #8fbfff;
+  --accent-light: #1b2a45;
+  --accent-text: #071023;
+  --accent-bright: #9dcbff;
+
+  --green: #34d399;
+  --green-dim: #113127;
+  --green-border: #1f5c46;
+  --yellow: #fbbf24;
+  --yellow-dim: #332708;
+  --yellow-border: #6b4e12;
+  --orange: #fb923c;
+  --orange-dim: #3a2210;
+  --orange-border: #7a4318;
+  --red: #f87171;
+  --red-dim: #3a1414;
+  --red-border: #7a2727;
+
+  --text: #eef2f9;
+  --text-mid: #b9c4dc;
+  --text-dim: #8592ad;
+  --text-dimmer: #5c6784;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.35);
 }
 
 /* Reset */
@@ -224,6 +265,83 @@ body {
   50% {
     opacity: 0.35;
   }
+}
+
+/* settings toggle + panel, injected by settings.js */
+.settings-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.settings-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-mid);
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.settings-toggle:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.settings-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 220px;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+}
+.settings-panel.open {
+  display: block;
+}
+.settings-group + .settings-group {
+  margin-top: 0.75rem;
+}
+.settings-label {
+  font-family: var(--font-label);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+}
+.settings-options {
+  display: flex;
+  gap: 0.35rem;
+}
+.settings-options button {
+  flex: 1;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.7rem;
+  font-family: var(--font-ui);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text-mid);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.settings-options button:hover {
+  border-color: var(--border-strong);
+}
+.settings-options button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
 }
 
 /* Hero (index.html) */
@@ -911,6 +1029,11 @@ body {
 }
 
 /* Modal */
+/* locks the page behind an open modal */
+body.no-scroll {
+  overflow: hidden;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -950,25 +1073,29 @@ body {
 }
 .modal-close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
+  top: -0.85rem;
+  right: -0.85rem;
+  background: var(--red);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  color: #fff;
   font-size: 0.8rem;
-  width: 28px;
-  height: 28px;
+  font-weight: 700;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
+  box-shadow: var(--shadow-md);
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+  z-index: 5;
 }
 .modal-close:hover {
-  background: var(--red-dim);
-  color: var(--red);
-  border-color: var(--red-border);
+  filter: brightness(0.88);
+  transform: scale(1.07);
 }
 .modal-thumb {
   width: 100%;
