@@ -386,6 +386,28 @@ const CATALOGUED_SYSTEMS = {
 };
 
 const PROMISING_WORLDS = {
+  "Lucifer (AB) e I": {
+    systemName: "Lucifer System",
+    systemType: "Triple",
+    parentStar: "Lucifer A",
+    spectralClass: "K1.2V",
+    distToSun: 0.77,
+    type: "Moon",
+    moonCount: 0,
+    thumbnail: "img/promising/lucifer.png",
+    physical: {
+      mass: 0.72,
+      radius: 5830.252705016458,
+    },
+    orbit: {
+      sma: 0.00324202475,
+      period: 0.0061879382,
+      eccentricity: 0.01,
+    },
+    life: {
+      exists: "pending",
+    },
+  },
   Earth: {
     systemName: "Solar System",
     systemType: "Single",
