@@ -14,6 +14,7 @@ const SPECTRAL_COLORS = {
   Y: "#330000",
   P: "#a070ff",
   D: "#88aacc",
+  X: "#4b0082",
 };
 
 function spectralColor(sc) {
@@ -21,10 +22,12 @@ function spectralColor(sc) {
   return SPECTRAL_COLORS[sc[0].toUpperCase()] || "#7a92b8";
 }
 
-// class "P" has no parent star, so show a proper label instead of a letter
+// class "P" has no parent star and class "X" is a black hole, both need a proper label
 function spectralLabel(sc) {
   if (!sc) return "—";
-  if (sc[0].toUpperCase() === "P") return "Rogue object/Free floating";
+  const c = sc[0].toUpperCase();
+  if (c === "P") return "Rogue object/Free floating";
+  if (c === "X") return "Black hole";
   return sc;
 }
 

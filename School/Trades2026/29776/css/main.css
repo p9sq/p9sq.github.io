@@ -1073,8 +1073,8 @@ body.no-scroll {
 }
 .modal-close {
   position: absolute;
-  top: -0.85rem;
-  right: -0.85rem;
+  top: 0.85rem;
+  right: 0.85rem;
   background: var(--red);
   border: 2px solid var(--surface);
   border-radius: 50%;
