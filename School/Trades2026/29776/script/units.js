@@ -57,3 +57,23 @@ function fmtDensity(density) {
   }
   return density + " g/cm³";
 }
+
+const DAYS_PER_YEAR = 365.25;
+
+// orbital period is stored in years, drop to days then hours for short orbits
+function fmtPeriod(years) {
+  if (years == null) return "—";
+  if (Math.abs(years) >= 1) return years + " yr";
+
+  const days = years * DAYS_PER_YEAR;
+  if (Math.abs(days) >= 1) {
+    return (
+      days.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " days"
+    );
+  }
+
+  const hours = days * 24;
+  return (
+    hours.toLocaleString(undefined, { maximumFractionDigits: 2 }) + " hours"
+  );
+}

@@ -1056,10 +1056,14 @@ body.no-scroll {
   width: 100%;
   max-width: 640px;
   max-height: 88vh;
-  overflow-y: auto;
+  overflow: hidden;
   position: relative;
-  padding: 2rem;
   animation: modalIn 0.2s ease;
+}
+.modal-scroll {
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 3rem 2rem 2rem;
 }
 @keyframes modalIn {
   from {
@@ -1073,8 +1077,8 @@ body.no-scroll {
 }
 .modal-close {
   position: absolute;
-  top: 0.85rem;
-  right: 0.85rem;
+  top: 0.75rem;
+  right: 0.75rem;
   background: var(--red);
   border: 2px solid var(--surface);
   border-radius: 50%;
@@ -1534,8 +1538,11 @@ body.no-scroll {
     max-height: 90vh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     animation: modalInMobile 0.22s ease;
-    padding: 1.5rem 1.25rem;
     border-bottom: none;
+  }
+  .modal-scroll {
+    max-height: 90vh;
+    padding: 2.75rem 1.25rem 1.5rem;
   }
   @keyframes modalInMobile {
     from {

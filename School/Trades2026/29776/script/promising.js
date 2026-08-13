@@ -88,7 +88,7 @@ function makeCard(name, world) {
         <div class="planet-card-row"><span class="planet-card-row-label">Density</span><span class="planet-card-row-val">${fmtDensity(density)}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">SMA</span><span class="planet-card-row-val">${fmtSma(sma)}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Moons</span><span class="planet-card-row-val">${world.moonCount != null ? world.moonCount : "—"}</span></div>
-        <div class="planet-card-row"><span class="planet-card-row-label">Star</span><span class="planet-card-row-val" style="color:${spectralColor(world.spectralClass)}">${spectralLabel(world.spectralClass)}</span></div>
+        <div class="planet-card-row"><span class="planet-card-row-label">Star</span><span class="planet-card-row-val" style="color:${spectralColor(world.spectralClass)}">${world.parentStar || "—"}</span></div>
         <div class="planet-card-row"><span class="planet-card-row-label">Distance</span><span class="planet-card-row-val">${fmtDist(world.distToSun)}</span></div>
       </div>
       <div class="planet-card-badges">
@@ -142,7 +142,7 @@ function openModal(name, world) {
     <div class="modal-section-title">ORBITAL DATA</div>
     <div class="modal-grid">
       <div class="modal-field"><div class="modal-field-label">Semi-Major Axis</div><div class="modal-field-val">${fmtSma(sma)}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Orbital Period</div><div class="modal-field-val">${period != null ? period + " yr" : "—"}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Orbital Period</div><div class="modal-field-val">${fmtPeriod(period)}</div></div>
       <div class="modal-field"><div class="modal-field-label">Eccentricity</div><div class="modal-field-val">${ecc != null ? ecc : "—"}</div></div>
       <div class="modal-field"><div class="modal-field-label">System Type</div><div class="modal-field-val">${world.systemType || "—"}</div></div>
     </div>
