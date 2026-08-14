@@ -117,13 +117,14 @@ for question in questions:
         user_answer = input("Type your answer: ").strip().lower()
 
     if user_answer == question["correct_answer"].lower() or user_answer == question["correct_letter"].lower():
-        print("Correct!")
+        print("\033[92mCorrect!\033[0m")
         print("")
         score += 1 # Add 1 to the score for each correct answer
     else:
-        print("Incorrect!")
+        print("\033[91mIncorrect!\033[0m")
         print("The correct answer is " + question["correct_letter"] + ". " + question["correct_answer"])
         print("Reason:", question["explanation"])
         print("")
 
 print("You have completed the quiz! Your total score is " + str(score) + "/8!") # Print the final score
+input("Press Enter to close...") # Closing line
