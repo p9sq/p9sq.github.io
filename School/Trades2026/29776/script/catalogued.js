@@ -36,6 +36,11 @@ function isRogue(sys) {
   return sys.spectralClass && sys.spectralClass[0].toUpperCase() === "P";
 }
 
+// treat 0 major / 0 dwarf the same as no moon data at all
+function hasMoons(sys) {
+  return sys.moonCount && (sys.moonCount.major > 0 || sys.moonCount.dwarf > 0);
+}
+
 function lifeBadge(exists) {
   if (exists === true)
     return '<span class="badge badge-life">● CONFIRMED</span>';
@@ -73,10 +78,10 @@ function renderTable(data) {
 
     let moonCell =
       '<span style="color:var(--text-dimmer);font-size:0.65rem">N/A</span>';
-    if (rogue) {
-      moonCell = sys.moonCount
-        ? sys.moonCount.major + " maj / " + sys.moonCount.dwarf + " dwf"
-        : "—";
+    if (hasMoons(sys)) {
+      moonCell = sys.moonCount.major + " maj / " + sys.moonCount.dwarf + " dwf";
+    } else if (rogue && sys.moonCount == null) {
+      moonCell = "—";
     }
 
     const thumbHtml = sys.thumbnail
@@ -105,13 +110,12 @@ function renderTable(data) {
 function openModal(name, sys) {
   const modal = document.getElementById("modal");
   const content = document.getElementById("modalContent");
-  const rogue = isRogue(sys);
 
   let moonFields = "";
-  if (rogue) {
+  if (hasMoons(sys)) {
     moonFields = `
-    <div class="modal-field"><div class="modal-field-label">Major Moons</div><div class="modal-field-val">${sys.moonCount ? sys.moonCount.major : "—"}</div></div>
-    <div class="modal-field"><div class="modal-field-label">Dwarf Moons</div><div class="modal-field-val">${sys.moonCount ? sys.moonCount.dwarf : "—"}</div></div>
+    <div class="modal-field"><div class="modal-field-label">Major Moons</div><div class="modal-field-val">${sys.moonCount.major}</div></div>
+    <div class="modal-field"><div class="modal-field-label">Dwarf Moons</div><div class="modal-field-val">${sys.moonCount.dwarf}</div></div>
   `;
   }
 
@@ -176,9 +180,17 @@ function applySort(entries, sortVal) {
   return sorted;
 }
 
+function updateDistHeader() {
+  const th = document.getElementById("distHeader");
+  if (th) th.textContent = "DIST (" + getSettings().distUnit + ")";
+}
+
 function filterAndRender() {
+  updateDistHeader();
+
   const query = document.getElementById("searchBox").value.toLowerCase();
   const typeFilter = document.getElementById("filterType").value;
+  const rogueFilter = document.getElementById("filterRogue").value;
   const lifeFilter = document.getElementById("filterLife").value;
   const sortVal = document.getElementById("sortSelect").value;
 
@@ -193,11 +205,12 @@ function filterAndRender() {
       (sys.spectralClass || "").toLowerCase().includes(query);
 
     const matchType = !typeFilter || sys.systemType === typeFilter;
+    const matchRogue = !rogueFilter || String(isRogue(sys)) === rogueFilter;
 
     const lifeVal = sys.life ? sys.life.exists : undefined;
     const matchLife = !lifeFilter || String(lifeVal) === lifeFilter;
 
-    return matchText && matchType && matchLife;
+    return matchText && matchType && matchRogue && matchLife;
   });
 
   renderTable(applySort(entries, sortVal));
@@ -211,6 +224,9 @@ window.addEventListener("DOMContentLoaded", () => {
     .addEventListener("input", filterAndRender);
   document
     .getElementById("filterType")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("filterRogue")
     .addEventListener("change", filterAndRender);
   document
     .getElementById("filterLife")

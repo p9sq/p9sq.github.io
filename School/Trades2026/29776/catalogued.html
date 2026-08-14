@@ -60,9 +60,9 @@
         <div class="page-hero-eyebrow">ARCHIVE · SECTION 01</div>
         <h1 class="page-hero-title">Catalogued Systems</h1>
         <p class="page-hero-desc">
-          Every surveyed planetary system in the Exoplanet Corporation database
-          sits here. Each entry has discovery metadata, system architecture,
-          stellar classification, and confirmed life status.
+          Every surveyed planetary system in the Exoplanet Corporation
+          database sits here. Each entry has discovery metadata, system
+          architecture, stellar classification, and confirmed life status.
         </p>
       </div>
 
@@ -80,6 +80,11 @@
             <option value="Binary">Binary</option>
             <option value="Trinary">Trinary</option>
             <option value="Quaternary">Quaternary</option>
+          </select>
+          <select class="filter-select" id="filterRogue">
+            <option value="">All Systems</option>
+            <option value="true">Rogue Object/Free Floating</option>
+            <option value="false">Has a Parent Star</option>
           </select>
           <select class="filter-select" id="filterLife">
             <option value="">All Life Status</option>
@@ -106,7 +111,7 @@
               <th>NAME</th>
               <th>TYPE</th>
               <th>SPECTRAL</th>
-              <th>DIST (ly)</th>
+              <th id="distHeader">DIST (ly)</th>
               <th>PLANETS</th>
               <th>MOONS</th>
               <th>DISC. DATE</th>

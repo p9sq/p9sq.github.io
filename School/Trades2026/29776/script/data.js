@@ -5,7 +5,7 @@ const CATALOGUED_SYSTEMS = {
     discDate: "2968",
     discMethod: "Direct Imaging",
     pioneer: "Leon DeFox",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentSun: "Lucifer A",
     spectralClass: "K1.2V",
     distToSun: 0.77,
@@ -334,7 +334,7 @@ const CATALOGUED_SYSTEMS = {
 const PROMISING_WORLDS = {
   "Lucifer (AB) e I": {
     systemName: "Lucifer System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Lucifer A",
     spectralClass: "K1.2V",
     distToSun: 0.77,
@@ -381,7 +381,7 @@ const PROMISING_WORLDS = {
   },
   "Proxima Centauri b": {
     systemName: "Alpha Centauri",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Proxima Centauri",
     spectralClass: "M5.5V",
     distToSun: 6.29,
@@ -602,7 +602,7 @@ const PROMISING_WORLDS = {
   },
   "Gliese 667 C c": {
     systemName: "Gliese 667 System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Gliese 667 C",
     spectralClass: "M1.5V",
     distToSun: 4.73,
@@ -624,7 +624,7 @@ const PROMISING_WORLDS = {
   },
   "Gliese 667 C f": {
     systemName: "Gliese 667 System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Gliese 667 C",
     spectralClass: "M1.5V",
     distToSun: 4.73,
@@ -1245,7 +1245,7 @@ const PROMISING_WORLDS = {
   },
   Drakara: {
     systemName: "Keryx System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Sentinel",
     spectralClass: "K4.4V",
     distToSun: 38035958.5,
@@ -1267,7 +1267,7 @@ const PROMISING_WORLDS = {
   },
   Altan: {
     systemName: "Keryx System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Sentinel",
     spectralClass: "K4.4V",
     distToSun: 38035958.5,

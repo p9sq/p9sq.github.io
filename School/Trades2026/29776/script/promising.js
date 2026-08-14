@@ -30,6 +30,11 @@ function spectralLabel(sc) {
   return sc;
 }
 
+// class "P" means the world has no parent star
+function isRogue(world) {
+  return world.spectralClass && world.spectralClass[0].toUpperCase() === "P";
+}
+
 function lifeBadge(exists) {
   if (exists === true)
     return '<span class="badge badge-life">● LIFE CONFIRMED</span>';
@@ -233,6 +238,7 @@ function applySort(entries, sortVal) {
 function filterAndRender() {
   const query = document.getElementById("searchBox").value.toLowerCase();
   const typeFilter = document.getElementById("filterType").value;
+  const rogueFilter = document.getElementById("filterRogue").value;
   const lifeFilter = document.getElementById("filterLife").value;
   const sortVal = document.getElementById("sortSelect").value;
 
@@ -248,11 +254,12 @@ function filterAndRender() {
       ((world.life && world.life.type) || "").toLowerCase().includes(query);
 
     const matchType = !typeFilter || world.type === typeFilter;
+    const matchRogue = !rogueFilter || String(isRogue(world)) === rogueFilter;
 
     const lifeVal = world.life ? world.life.exists : undefined;
     const matchLife = !lifeFilter || String(lifeVal) === lifeFilter;
 
-    return matchText && matchType && matchLife;
+    return matchText && matchType && matchRogue && matchLife;
   });
 
   entries = applySort(entries, sortVal);
@@ -278,6 +285,9 @@ window.addEventListener("DOMContentLoaded", () => {
     .addEventListener("input", filterAndRender);
   document
     .getElementById("filterType")
+    .addEventListener("change", filterAndRender);
+  document
+    .getElementById("filterRogue")
     .addEventListener("change", filterAndRender);
   document
     .getElementById("filterLife")
