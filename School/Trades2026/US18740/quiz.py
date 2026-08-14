@@ -101,7 +101,6 @@ questions = [ # Set up each questions, possible answers, and their correct answe
 ]
 
 random.shuffle(questions) # Randomise the list of the questions so that you can't predict which question is going to come next
-possible_letters = ["A", "B", "C", "D"] # Possible answers (Letters only)
 
 # Beginning prompt
 print("Welcome to the Solar System quiz!")
@@ -111,24 +110,11 @@ print("Answer the following questions:")
 for question in questions:
     print(question["text"])
     print("Possible answers:\n" + "\n".join(question["possible_answers"]))
-    try:
-        user_answer = input("Type your answer: ").lower()
-    except KeyboardInterrupt:
-        user_answer = ""
+    user_answer = input("Type your answer: ").strip().lower()
 
     while user_answer == None or user_answer == "":
         print("\nInvalid input. Please try again.")
-        try:
-            user_answer = input("Type your answer: ").lower()
-        except KeyboardInterrupt:
-            user_answer = ""
-
-    while not any(letter in user_answer.upper() for letter in possible_letters):
-        print("Invalid input. Please try again.")
-        try:
-            user_answer = input("Type your answer: ").lower()
-        except KeyboardInterrupt:
-            user_answer = ""
+        user_answer = input("Type your answer: ").strip().lower()
 
     if user_answer == question["correct_answer"].lower() or user_answer == question["correct_letter"].lower():
         print("Correct!")
