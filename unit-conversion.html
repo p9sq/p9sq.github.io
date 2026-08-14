@@ -572,14 +572,24 @@
               kmOpt.textContent = "Kilometers (km)";
               sel.appendChild(kmOpt);
             }
+            if (mode === "mass") {
+              const kgOpt = document.createElement("option");
+              kgOpt.value = "kg";
+              kgOpt.textContent = "Kilograms (kg)";
+              sel.appendChild(kgOpt);
+            }
+            const extraUnit =
+              mode === "radius" ? "km" : mode === "mass" ? "kg" : null;
             const validKeys = bodies
               .map((b) => b.key)
-              .concat(mode === "radius" ? ["km"] : []);
+              .concat(extraUnit ? [extraUnit] : []);
             if (validKeys.includes(prev)) sel.value = prev;
           });
           if (fromSel.value === toSel.value) {
             const fallback = bodies.find((b) => b.key !== fromSel.value);
-            toSel.value = fallback ? fallback.key : "km";
+            const extraUnit =
+              mode === "radius" ? "km" : mode === "mass" ? "kg" : null;
+            toSel.value = fallback ? fallback.key : extraUnit;
           }
         }
 
@@ -626,12 +636,27 @@
           errorMsg.textContent = "";
 
           if (mode === "mass") {
+            // "from"/"to" may be kg directly or a body key
+            const inKg = from === "kg" ? value : value * massKg[from];
+
+            if (to === "kg") {
+              resultsWrap.innerHTML = resultRow(
+                "Result",
+                formatNum(inKg),
+                "kg",
+                true,
+              );
+              wireCopyButtons();
+              return;
+            }
+
             const toSym = bodies.find((b) => b.key === to).massSym;
-            const inKg = value * massKg[from];
             const result = inKg / massKg[to];
             resultsWrap.innerHTML =
               resultRow("Result", formatNum(result), toSym, true) +
-              resultRow("In kilograms", formatNum(inKg), "kg", false);
+              (from === "kg"
+                ? ""
+                : resultRow("In kilograms", formatNum(inKg), "kg", false));
           } else if (mode === "radius") {
             // radius mode: "from" may be km or a body; convert to km first
             const inKm = from === "km" ? value : value * radiusKm[from].mean;
@@ -716,7 +741,9 @@
               // nudge "to" to a different unit rather than blocking
               const list = mode === "distance" ? distanceUnits : bodies;
               const next = list.find((u) => u.key !== fromSel.value);
-              toSel.value = next ? next.key : "km";
+              const extraUnit =
+                mode === "radius" ? "km" : mode === "mass" ? "kg" : null;
+              toSel.value = next ? next.key : extraUnit;
             }
             render();
           }),
