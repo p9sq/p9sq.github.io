@@ -117,7 +117,7 @@ for question in questions:
         user_answer = ""
 
     while user_answer == None or user_answer == "":
-        print("Invalid input. Please try again.")
+        print("\nInvalid input. Please try again.")
         try:
             user_answer = input("Type your answer: ").lower()
         except KeyboardInterrupt:
