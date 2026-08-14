@@ -190,7 +190,6 @@ function filterAndRender() {
 
   const query = document.getElementById("searchBox").value.toLowerCase();
   const typeFilter = document.getElementById("filterType").value;
-  const rogueFilter = document.getElementById("filterRogue").value;
   const lifeFilter = document.getElementById("filterLife").value;
   const sortVal = document.getElementById("sortSelect").value;
 
@@ -204,13 +203,14 @@ function filterAndRender() {
       (sys.pioneer || "").toLowerCase().includes(query) ||
       (sys.spectralClass || "").toLowerCase().includes(query);
 
-    const matchType = !typeFilter || sys.systemType === typeFilter;
-    const matchRogue = !rogueFilter || String(isRogue(sys)) === rogueFilter;
+    const matchType =
+      !typeFilter ||
+      (typeFilter === "Rogue" ? isRogue(sys) : sys.systemType === typeFilter);
 
     const lifeVal = sys.life ? sys.life.exists : undefined;
     const matchLife = !lifeFilter || String(lifeVal) === lifeFilter;
 
-    return matchText && matchType && matchRogue && matchLife;
+    return matchText && matchType && matchLife;
   });
 
   renderTable(applySort(entries, sortVal));
@@ -224,9 +224,6 @@ window.addEventListener("DOMContentLoaded", () => {
     .addEventListener("input", filterAndRender);
   document
     .getElementById("filterType")
-    .addEventListener("change", filterAndRender);
-  document
-    .getElementById("filterRogue")
     .addEventListener("change", filterAndRender);
   document
     .getElementById("filterLife")
