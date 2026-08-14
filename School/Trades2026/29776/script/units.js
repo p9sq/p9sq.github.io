@@ -34,10 +34,12 @@ function fmtRadius(radiusKm) {
   return (radiusKm / EARTH_RADIUS_KM).toFixed(3) + " R⊕";
 }
 
-// orbits under 0.1 AU read better in km (or miles, under imperial)
+// orbits at or under 10,000,000 km (~0.0668 AU) read better in km (or miles, under imperial)
+const SMA_KM_THRESHOLD_AU = 0.066845871223;
+
 function fmtSma(au) {
   if (au == null) return "—";
-  if (Math.abs(au) >= 0.1) return au + " AU";
+  if (Math.abs(au) > SMA_KM_THRESHOLD_AU) return au + " AU";
 
   const km = au * AU_TO_KM;
   if (getSettings().units === "imperial") {
