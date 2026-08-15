@@ -110,6 +110,10 @@ def main():
 
     count = ask_int('Number of moons in this family', 15)
 
+    # numbering offset, same idea as AsBeCre's DwarfMoon offset. offset=5 means you
+    # already have 5 moons named, so this batch starts at 6 instead of 1.
+    numbering_offset = ask_int('Numbering offset (moons you already have named)', 0)
+
     # orbital radius bounds around the planet, in km (irregular moon families sit
     # tens of millions of km out, so km is the natural unit here, not AU)
     inner_radius_km = ask_float('Inner semi-major axis of family (km from planet center)', 15000000.0)
@@ -139,7 +143,7 @@ def main():
     print('-' * 70)
 
     moons_text = []
-    for i in range(1, count + 1):
+    for i in range(numbering_offset + 1, numbering_offset + count + 1):
         semi_km = random_generator(inner_radius_km, outer_radius_km)
         radius_km = random_generator(min_moon_radius_km, max_moon_radius_km)
         mass_earth = radius_to_mass_earth(radius_km, composition)
@@ -176,6 +180,7 @@ def main():
         f.write(f'// FamilyName      = {family_name}\n')
         f.write(f'// Composition     = {composition} ({density} g/cm3)\n')
         f.write(f'// Count           = {count}\n')
+        f.write(f'// NumberingOffset = {numbering_offset}  (first moon in this batch is {family_name}{numbering_offset + 1})\n')
         f.write(f'// InnerRadiusKm   = {inner_radius_km}\n')
         f.write(f'// OuterRadiusKm   = {outer_radius_km}\n')
         f.write(f'// MinMoonRadiusKm = {min_moon_radius_km}\n')
