@@ -32,12 +32,23 @@ body {
   color: rgb(194, 189, 189);
 }
 
+p a {
+  color: white;
+  transition: 0.5s;
+}
+
+p a:hover {
+  color: rgb(131, 131, 131);
+  transition: 0.5s;
+}
+
 #title {
   text-align: center;
 }
 
 .main {
   text-align: center;
+  margin-left: 20px;
 }
 
 .solsys-container {
