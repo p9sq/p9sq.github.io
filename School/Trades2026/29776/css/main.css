@@ -1,23 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap");
 
 :root {
-  /* Backgrounds */
   --bg: #f4f6f9;
   --bg2: #eef0f5;
   --surface: #ffffff;
   --surface2: #f8f9fc;
 
-  /* Borders */
   --border: #d1d8e8;
   --border-strong: #aab4cc;
 
-  /* Accent: Deep navy and indigo. */
   --accent: #1a3a6b;
   --accent-mid: #2755a0;
   --accent-light: #e8eef8;
   --accent-text: #ffffff;
 
-  /* Section accents */
   --green: #1a7a45;
   --green-dim: #e6f4ed;
   --green-border: #a8d5bc;
@@ -31,26 +27,22 @@
   --red-dim: #fbeaea;
   --red-border: #e8aaaa;
 
-  /* Text */
   --text: #0f1c2e;
   --text-mid: #3d5070;
   --text-dim: #6b7fa0;
   --text-dimmer: #9aaac0;
 
-  /* Fonts */
   --font-ui: "Inter", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", "Courier New", monospace;
   --font-mono: var(--font-data);
   --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
   --accent-bright: var(--accent-mid);
 
-  /* Sizing */
   --nav-h: 58px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
 
-  /* Shadows */
   --shadow-sm:
     0 1px 3px rgba(15, 28, 46, 0.08), 0 1px 2px rgba(15, 28, 46, 0.04);
   --shadow-md:
@@ -98,7 +90,6 @@
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.35);
 }
 
-/* Reset */
 *,
 *::before,
 *::after {
@@ -110,7 +101,6 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Scroll bars */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -133,13 +123,11 @@ html {
   scrollbar-color: var(--border-strong) var(--bg2);
 }
 
-/* Text selection */
 ::selection {
   background: rgba(26, 58, 107, 0.15);
   color: var(--text);
 }
 
-/* Base */
 body {
   background: var(--bg);
   color: var(--text);
@@ -150,14 +138,12 @@ body {
   overflow-x: hidden;
 }
 
-/* Remove old decorative backgrounds */
 .bg-grid,
 .bg-vignette,
 #starfield {
   display: none;
 }
 
-/* Nav */
 .nav {
   position: fixed;
   top: 0;
@@ -344,7 +330,6 @@ body {
   color: var(--accent-text);
 }
 
-/* Hero (index.html) */
 .hero {
   position: relative;
   z-index: 10;
@@ -501,7 +486,6 @@ body {
   }
 }
 
-/* About section */
 .about-section {
   padding: 4rem 2rem;
   background: var(--surface);
@@ -576,7 +560,6 @@ body {
   margin-bottom: 0.15rem;
 }
 
-/* Gallery */
 .gallery-section {
   padding: 3.5rem 2rem;
   background: var(--surface);
@@ -618,7 +601,6 @@ body {
   text-transform: uppercase;
 }
 
-/* Quick links */
 .quicklinks-section {
   padding: 3.5rem 2rem 5rem;
   background: var(--bg);
@@ -694,7 +676,6 @@ body {
   transform: translateX(3px);
 }
 
-/* Page hero (Inner pages) */
 .page-hero {
   background: var(--accent);
   color: #fff;
@@ -732,7 +713,6 @@ body {
   line-height: 1.7;
 }
 
-/* Controls */
 .catalogue-controls {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -810,7 +790,6 @@ body {
   margin-left: auto;
 }
 
-/* Table */
 .table-wrapper {
   position: relative;
   z-index: 10;
@@ -898,7 +877,6 @@ body {
   color: var(--text-dimmer);
 }
 
-/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -928,7 +906,6 @@ body {
   border: 1px solid var(--yellow-border);
 }
 
-/* Cards grid */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -1023,12 +1000,10 @@ body {
   border-top: 1px solid var(--bg2);
 }
 
-/* Terraformed top accent stripe */
 .cards-grid--terraformed .planet-card {
   border-top: 3px solid var(--orange);
 }
 
-/* Modal */
 /* locks the page behind an open modal */
 body.no-scroll {
   overflow: hidden;
@@ -1167,7 +1142,6 @@ body.no-scroll {
   color: var(--text);
 }
 
-/* Footer */
 .footer {
   background: var(--accent);
   border-top: 3px solid var(--accent-mid);
@@ -1197,7 +1171,6 @@ body.no-scroll {
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* Empty state */
 .empty-state {
   grid-column: 1/-1;
   text-align: center;
@@ -1209,7 +1182,6 @@ body.no-scroll {
   text-transform: uppercase;
 }
 
-/* No data notice */
 .no-data-notice {
   margin: 0 2rem;
   background: var(--accent-light);
@@ -1222,7 +1194,6 @@ body.no-scroll {
   line-height: 1.6;
 }
 
-/* Hamburger */
 .nav-hamburger {
   display: none;
   flex-direction: column;
@@ -1264,7 +1235,6 @@ body.no-scroll {
   transform: translateY(-6.5px) rotate(-45deg);
 }
 
-/* Tablet (≤ 1024px) */
 @media (max-width: 1024px) {
   .about-grid {
     grid-template-columns: 1fr;
@@ -1281,9 +1251,7 @@ body.no-scroll {
   }
 }
 
-/* Mobile (≤ 768px) */
 @media (max-width: 768px) {
-  /* Nav */
   .nav {
     padding: 0 1.25rem;
     gap: 0;
@@ -1326,7 +1294,6 @@ body.no-scroll {
     border-bottom: none;
   }
 
-  /* Hero */
   .hero {
     padding: calc(var(--nav-h) + 2.5rem) 1.25rem 3.5rem;
   }
@@ -1356,7 +1323,6 @@ body.no-scroll {
     min-width: 200px;
   }
 
-  /* About */
   .about-section {
     padding: 2.5rem 1.25rem;
   }
@@ -1374,7 +1340,6 @@ body.no-scroll {
     border-radius: 0 0 var(--radius-md) var(--radius-md);
   }
 
-  /* Gallery */
   .gallery-section {
     padding: 2.5rem 1.25rem;
   }
@@ -1385,7 +1350,6 @@ body.no-scroll {
     height: 200px;
   }
 
-  /* Quick links */
   .quicklinks-section {
     padding: 2.5rem 1.25rem 3.5rem;
   }
@@ -1393,7 +1357,6 @@ body.no-scroll {
     grid-template-columns: 1fr;
   }
 
-  /* Page hero */
   .page-hero {
     padding: calc(var(--nav-h) + 1.5rem) 1.25rem 2rem;
   }
@@ -1404,7 +1367,6 @@ body.no-scroll {
     font-size: 0.85rem;
   }
 
-  /* Controls */
   .catalogue-controls {
     padding: 0.85rem 1.25rem;
   }
@@ -1422,7 +1384,6 @@ body.no-scroll {
     text-align: right;
   }
 
-  /* Table → card rows */
   .table-wrapper {
     padding: 0 1.25rem 3rem;
     overflow-x: unset;
@@ -1522,13 +1483,11 @@ body.no-scroll {
     white-space: normal;
   }
 
-  /* Cards grid */
   .cards-grid {
     padding: 1rem 1.25rem 3rem;
     grid-template-columns: 1fr;
   }
 
-  /* Modal */
   .modal-overlay {
     padding: 0;
     align-items: flex-end;
@@ -1561,7 +1520,6 @@ body.no-scroll {
     grid-template-columns: 1fr;
   }
 
-  /* Footer */
   .footer {
     padding: 1.5rem 1.25rem;
     flex-direction: column;
@@ -1573,7 +1531,6 @@ body.no-scroll {
   }
 }
 
-/* Small mobile (≤ 400px) */
 @media (max-width: 400px) {
   .filter-select {
     flex: 1 1 100%;
@@ -1592,7 +1549,6 @@ body.no-scroll {
   }
 }
 
-/* Nav logo (Portrait mobile) */
 @media (max-width: 480px) {
   .nav-logo-sub {
     display: none;

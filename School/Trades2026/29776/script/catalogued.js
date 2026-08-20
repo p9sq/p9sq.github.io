@@ -1,7 +1,7 @@
 // this page shows every catalogued system in a table
 
 // colour per spectral class, based on real star colours
-const SPECTRAL_COLORS = {
+var SPECTRAL_COLORS = {
   O: "#b0d4ff",
   B: "#cce0ff",
   A: "#e8f0ff",
@@ -25,7 +25,7 @@ function spectralColor(sc) {
 // class "P" has no parent star and class "X" is a black hole, both need a proper label
 function spectralLabel(sc) {
   if (!sc) return "—";
-  const c = sc[0].toUpperCase();
+  var c = sc[0].toUpperCase();
   if (c === "P") return "Rogue object/Free floating";
   if (c === "X") return "Black hole";
   return sc;
@@ -58,10 +58,10 @@ function lifeStatusText(exists) {
 }
 
 function renderTable(data) {
-  const tbody = document.getElementById("catalogueBody");
+  var tbody = document.getElementById("catalogueBody");
   tbody.innerHTML = "";
 
-  const countEl = document.getElementById("resultsCount");
+  var countEl = document.getElementById("resultsCount");
 
   if (data.length === 0) {
     tbody.innerHTML =
@@ -73,10 +73,12 @@ function renderTable(data) {
   countEl.textContent =
     data.length + " system" + (data.length !== 1 ? "s" : "");
 
-  for (const [name, sys] of data) {
-    const rogue = isRogue(sys);
+  for (var i = 0; i < data.length; i++) {
+    var name = data[i][0];
+    var sys = data[i][1];
+    var rogue = isRogue(sys);
 
-    let moonCell =
+    var moonCell =
       '<span style="color:var(--text-dimmer);font-size:0.65rem">N/A</span>';
     if (hasMoons(sys)) {
       moonCell = sys.moonCount.major + " maj / " + sys.moonCount.dwarf + " dwf";
@@ -84,11 +86,15 @@ function renderTable(data) {
       moonCell = "—";
     }
 
-    const thumbHtml = sys.thumbnail
-      ? `<img class="td-thumb" src="${sys.thumbnail}" alt="${name}" onerror="this.style.display='none'">`
+    var thumbHtml = sys.thumbnail
+      ? '<img class="td-thumb" src="' +
+        sys.thumbnail +
+        '" alt="' +
+        name +
+        '" onerror="this.style.display=\'none\'">'
       : '<div class="td-thumb-placeholder">⬡</div>';
 
-    const tr = document.createElement("tr");
+    var tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${thumbHtml}</td>
       <td class="td-desig">${sys.designation || "—"}</td>
@@ -102,16 +108,26 @@ function renderTable(data) {
       <td style="color:var(--accent-bright)">${sys.pioneer || "—"}</td>
       <td>${lifeBadge(sys.life ? sys.life.exists : undefined)}</td>
     `;
-    tr.addEventListener("click", () => openModal(name, sys));
+
+    // use an IIFE so each row remembers its own name/sys instead of the last one in the loop
+    tr.addEventListener(
+      "click",
+      (function (n, s) {
+        return function () {
+          openModal(n, s);
+        };
+      })(name, sys),
+    );
+
     tbody.appendChild(tr);
   }
 }
 
 function openModal(name, sys) {
-  const modal = document.getElementById("modal");
-  const content = document.getElementById("modalContent");
+  var modal = document.getElementById("modal");
+  var content = document.getElementById("modalContent");
 
-  let moonFields = "";
+  var moonFields = "";
   if (hasMoons(sys)) {
     moonFields = `
     <div class="modal-field"><div class="modal-field-label">Major Moons</div><div class="modal-field-val">${sys.moonCount.major}</div></div>
@@ -119,9 +135,9 @@ function openModal(name, sys) {
   `;
   }
 
-  const lifeExists = sys.life ? sys.life.exists : undefined;
+  var lifeExists = sys.life ? sys.life.exists : undefined;
 
-  let lifeExtra = "";
+  var lifeExtra = "";
   if (lifeExists === true) {
     lifeExtra = `
         <div class="modal-field"><div class="modal-field-label">Objects with Life</div><div class="modal-field-val">${sys.life.objectsWithLife}</div></div>
@@ -161,54 +177,65 @@ function openModal(name, sys) {
 }
 
 function applySort(entries, sortVal) {
-  const sorted = [...entries];
+  var sorted = entries.slice();
 
   if (sortVal === "dist-asc") {
-    sorted.sort(
-      (a, b) => (a[1].distToSun ?? Infinity) - (b[1].distToSun ?? Infinity),
-    );
+    sorted.sort(function (a, b) {
+      var da = a[1].distToSun == null ? Infinity : a[1].distToSun;
+      var db = b[1].distToSun == null ? Infinity : b[1].distToSun;
+      return da - db;
+    });
   } else if (sortVal === "dist-desc") {
-    sorted.sort(
-      (a, b) => (b[1].distToSun ?? -Infinity) - (a[1].distToSun ?? -Infinity),
-    );
+    sorted.sort(function (a, b) {
+      var da = a[1].distToSun == null ? -Infinity : a[1].distToSun;
+      var db = b[1].distToSun == null ? -Infinity : b[1].distToSun;
+      return db - da;
+    });
   } else if (sortVal === "alpha-asc") {
-    sorted.sort((a, b) => a[0].localeCompare(b[0]));
+    sorted.sort(function (a, b) {
+      return a[0].localeCompare(b[0]);
+    });
   } else if (sortVal === "alpha-desc") {
-    sorted.sort((a, b) => b[0].localeCompare(a[0]));
+    sorted.sort(function (a, b) {
+      return b[0].localeCompare(a[0]);
+    });
   }
 
   return sorted;
 }
 
 function updateDistHeader() {
-  const th = document.getElementById("distHeader");
+  var th = document.getElementById("distHeader");
   if (th) th.textContent = "DIST (" + getSettings().distUnit + ")";
 }
 
 function filterAndRender() {
   updateDistHeader();
 
-  const query = document.getElementById("searchBox").value.toLowerCase();
-  const typeFilter = document.getElementById("filterType").value;
-  const lifeFilter = document.getElementById("filterLife").value;
-  const sortVal = document.getElementById("sortSelect").value;
+  var query = document.getElementById("searchBox").value.toLowerCase();
+  var typeFilter = document.getElementById("filterType").value;
+  var lifeFilter = document.getElementById("filterLife").value;
+  var sortVal = document.getElementById("sortSelect").value;
 
-  let entries = Object.entries(CATALOGUED_SYSTEMS);
+  var entries = Object.entries(CATALOGUED_SYSTEMS);
 
-  entries = entries.filter(([name, sys]) => {
-    const matchText =
+  entries = entries.filter(function (entry) {
+    var name = entry[0];
+    var sys = entry[1];
+
+    var matchText =
       !query ||
-      name.toLowerCase().includes(query) ||
-      (sys.designation || "").toLowerCase().includes(query) ||
-      (sys.pioneer || "").toLowerCase().includes(query) ||
-      (sys.spectralClass || "").toLowerCase().includes(query);
+      name.toLowerCase().indexOf(query) !== -1 ||
+      (sys.designation || "").toLowerCase().indexOf(query) !== -1 ||
+      (sys.pioneer || "").toLowerCase().indexOf(query) !== -1 ||
+      (sys.spectralClass || "").toLowerCase().indexOf(query) !== -1;
 
-    const matchType =
+    var matchType =
       !typeFilter ||
       (typeFilter === "Rogue" ? isRogue(sys) : sys.systemType === typeFilter);
 
-    const lifeVal = sys.life ? sys.life.exists : undefined;
-    const matchLife = !lifeFilter || String(lifeVal) === lifeFilter;
+    var lifeVal = sys.life ? sys.life.exists : undefined;
+    var matchLife = !lifeFilter || String(lifeVal) === lifeFilter;
 
     return matchText && matchType && matchLife;
   });
@@ -216,7 +243,7 @@ function filterAndRender() {
   renderTable(applySort(entries, sortVal));
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", function () {
   filterAndRender();
 
   document
@@ -232,18 +259,20 @@ window.addEventListener("DOMContentLoaded", () => {
     .getElementById("sortSelect")
     .addEventListener("change", filterAndRender);
 
-  const modal = document.getElementById("modal");
-  document.getElementById("modalClose").addEventListener("click", () => {
+  var modal = document.getElementById("modal");
+
+  document.getElementById("modalClose").addEventListener("click", function () {
     modal.classList.remove("open");
     document.body.classList.remove("no-scroll");
   });
-  modal.addEventListener("click", (e) => {
+
+  modal.addEventListener("click", function (e) {
     if (e.target === modal) {
       modal.classList.remove("open");
       document.body.classList.remove("no-scroll");
     }
   });
 
-  // ly/pc and metric/imperial live in localStorage, re-render on change
+  // ly/pc and metric/imperial live in localStorage, re-render whenever the settings panel changes
   document.addEventListener("settingschange", filterAndRender);
 });

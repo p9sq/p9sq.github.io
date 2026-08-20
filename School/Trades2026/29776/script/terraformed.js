@@ -1,6 +1,6 @@
 // this page shows the terraformed worlds as cards
 
-const SPECTRAL_COLORS = {
+var SPECTRAL_COLORS = {
   O: "#b0d4ff",
   B: "#cce0ff",
   A: "#e8f0ff",
@@ -24,7 +24,7 @@ function spectralColor(sc) {
 // class "P" has no parent star and class "X" is a black hole, both need a proper label
 function spectralLabel(sc) {
   if (!sc) return "—";
-  const c = sc[0].toUpperCase();
+  var c = sc[0].toUpperCase();
   if (c === "P") return "Rogue object/Free floating";
   if (c === "X") return "Black hole";
   return sc;
@@ -47,32 +47,40 @@ function lifeStatusText(exists) {
 
 function getDensity(world) {
   if (!world.physical) return null;
-  const { radius: r, mass: m } = world.physical;
+  var r = world.physical.radius;
+  var m = world.physical.mass;
   if (r == null || m == null) return null;
-  const rEarths = r / 6378.14;
-  const density = 5.5136 * (m / Math.pow(rEarths, 3));
+  var rEarths = r / 6378.14;
+  var density = 5.5136 * (m / Math.pow(rEarths, 3));
   return Math.round(density * 1000) / 1000;
 }
 
 function makeCard(name, world) {
-  const density = getDensity(world);
-  const mass = world.physical ? world.physical.mass : null;
-  const radius = world.physical ? world.physical.radius : null;
-  const sma = world.orbit ? world.orbit.sma : null;
+  var density = getDensity(world);
+  var mass = world.physical ? world.physical.mass : null;
+  var radius = world.physical ? world.physical.radius : null;
+  var sma = world.orbit ? world.orbit.sma : null;
 
-  const imgHtml = world.thumbnail
-    ? `<img class="planet-card-img" src="${world.thumbnail}" alt="${name}" onerror="this.style.display='none'">`
+  var imgHtml = world.thumbnail
+    ? '<img class="planet-card-img" src="' +
+      world.thumbnail +
+      '" alt="' +
+      name +
+      '" onerror="this.style.display=\'none\'">'
     : '<div class="planet-card-img-placeholder">🌱</div>';
 
-  let altNameHtml = "";
+  var altNameHtml = "";
   if (world.type === "Moon" && world.altName) {
-    altNameHtml = ` <span style="color:var(--text-dimmer);font-size:0.75em;font-weight:400">/ ${world.altName}</span>`;
+    altNameHtml =
+      ' <span style="color:var(--text-dimmer);font-size:0.75em;font-weight:400">/ ' +
+      world.altName +
+      "</span>";
   }
 
-  const moonOfHtml =
+  var moonOfHtml =
     world.type === "Moon" && world.parent ? " · Moon of " + world.parent : "";
 
-  const div = document.createElement("div");
+  var div = document.createElement("div");
   div.className = "planet-card";
   div.innerHTML = `
     ${imgHtml}
@@ -96,27 +104,37 @@ function makeCard(name, world) {
       </div>
     </div>
   `;
-  div.addEventListener("click", () => openModal(name, world));
+
+  // use an IIFE so each card remembers its own name/world instead of the last one in the loop
+  div.addEventListener(
+    "click",
+    (function (n, w) {
+      return function () {
+        openModal(n, w);
+      };
+    })(name, world),
+  );
+
   return div;
 }
 
 function openModal(name, world) {
-  const modal = document.getElementById("modal");
-  const content = document.getElementById("modalContent");
-  const density = getDensity(world);
-  const mass = world.physical ? world.physical.mass : null;
-  const radius = world.physical ? world.physical.radius : null;
-  const sma = world.orbit ? world.orbit.sma : null;
-  const period = world.orbit ? world.orbit.period : null;
-  const ecc = world.orbit ? world.orbit.eccentricity : null;
-  const lifeExists = world.life ? world.life.exists : undefined;
+  var modal = document.getElementById("modal");
+  var content = document.getElementById("modalContent");
+  var density = getDensity(world);
+  var mass = world.physical ? world.physical.mass : null;
+  var radius = world.physical ? world.physical.radius : null;
+  var sma = world.orbit ? world.orbit.sma : null;
+  var period = world.orbit ? world.orbit.period : null;
+  var ecc = world.orbit ? world.orbit.eccentricity : null;
+  var lifeExists = world.life ? world.life.exists : undefined;
 
-  const altNameHtml =
-    world.type === "Moon" && world.altName
-      ? `<span class="modal-altname"> / ${world.altName}</span>`
-      : "";
+  var altNameHtml = "";
+  if (world.type === "Moon" && world.altName) {
+    altNameHtml = '<span class="modal-altname"> / ' + world.altName + "</span>";
+  }
 
-  let lifeExtra = "";
+  var lifeExtra = "";
   if (lifeExists === true) {
     lifeExtra = `
         <div class="modal-field"><div class="modal-field-label">Life Type</div><div class="modal-field-val">${world.life.type || "—"}</div></div>
@@ -168,23 +186,23 @@ function openModal(name, world) {
 }
 
 function populateOriginFilter() {
-  const sel = document.getElementById("filterOrigin");
-  const origins = [];
-  for (const key in TERRAFORMED_WORLDS) {
-    const world = TERRAFORMED_WORLDS[key];
+  var sel = document.getElementById("filterOrigin");
+  var origins = [];
+  for (var key in TERRAFORMED_WORLDS) {
+    var world = TERRAFORMED_WORLDS[key];
     if (
       world.life &&
       world.life.origin &&
-      !origins.includes(world.life.origin)
+      origins.indexOf(world.life.origin) === -1
     ) {
       origins.push(world.life.origin);
     }
   }
   origins.sort();
-  for (const origin of origins) {
-    const opt = document.createElement("option");
-    opt.value = origin;
-    opt.textContent = origin;
+  for (var i = 0; i < origins.length; i++) {
+    var opt = document.createElement("option");
+    opt.value = origins[i];
+    opt.textContent = origins[i];
     sel.appendChild(opt);
   }
 }
@@ -194,83 +212,104 @@ function num(v, fallbackForAsc) {
   return v;
 }
 
+// world.physical might not exist, so this reads radius/mass off it safely
+function physicalVal(world, field) {
+  return world.physical ? world.physical[field] : null;
+}
+
 function applySort(entries, sortVal) {
-  const sorted = [...entries];
+  var sorted = entries.slice();
 
   switch (sortVal) {
     case "dist-asc":
-      sorted.sort(
-        (a, b) => num(a[1].distToSun, true) - num(b[1].distToSun, true),
-      );
+      sorted.sort(function (a, b) {
+        return num(a[1].distToSun, true) - num(b[1].distToSun, true);
+      });
       break;
     case "dist-desc":
-      sorted.sort(
-        (a, b) => num(b[1].distToSun, false) - num(a[1].distToSun, false),
-      );
+      sorted.sort(function (a, b) {
+        return num(b[1].distToSun, false) - num(a[1].distToSun, false);
+      });
       break;
     case "radius-asc":
-      sorted.sort(
-        (a, b) =>
-          num(a[1].physical?.radius, true) - num(b[1].physical?.radius, true),
-      );
+      sorted.sort(function (a, b) {
+        return (
+          num(physicalVal(a[1], "radius"), true) -
+          num(physicalVal(b[1], "radius"), true)
+        );
+      });
       break;
     case "radius-desc":
-      sorted.sort(
-        (a, b) =>
-          num(b[1].physical?.radius, false) - num(a[1].physical?.radius, false),
-      );
+      sorted.sort(function (a, b) {
+        return (
+          num(physicalVal(b[1], "radius"), false) -
+          num(physicalVal(a[1], "radius"), false)
+        );
+      });
       break;
     case "mass-asc":
-      sorted.sort(
-        (a, b) =>
-          num(a[1].physical?.mass, true) - num(b[1].physical?.mass, true),
-      );
+      sorted.sort(function (a, b) {
+        return (
+          num(physicalVal(a[1], "mass"), true) -
+          num(physicalVal(b[1], "mass"), true)
+        );
+      });
       break;
     case "mass-desc":
-      sorted.sort(
-        (a, b) =>
-          num(b[1].physical?.mass, false) - num(a[1].physical?.mass, false),
-      );
+      sorted.sort(function (a, b) {
+        return (
+          num(physicalVal(b[1], "mass"), false) -
+          num(physicalVal(a[1], "mass"), false)
+        );
+      });
       break;
     case "density-asc":
-      sorted.sort(
-        (a, b) => num(getDensity(a[1]), true) - num(getDensity(b[1]), true),
-      );
+      sorted.sort(function (a, b) {
+        return num(getDensity(a[1]), true) - num(getDensity(b[1]), true);
+      });
       break;
     case "density-desc":
-      sorted.sort(
-        (a, b) => num(getDensity(b[1]), false) - num(getDensity(a[1]), false),
-      );
+      sorted.sort(function (a, b) {
+        return num(getDensity(b[1]), false) - num(getDensity(a[1]), false);
+      });
       break;
     case "alpha-asc":
-      sorted.sort((a, b) => a[0].localeCompare(b[0]));
+      sorted.sort(function (a, b) {
+        return a[0].localeCompare(b[0]);
+      });
       break;
     case "alpha-desc":
-      sorted.sort((a, b) => b[0].localeCompare(a[0]));
+      sorted.sort(function (a, b) {
+        return b[0].localeCompare(a[0]);
+      });
       break;
   }
   return sorted;
 }
 
 function filterAndRender() {
-  const query = document.getElementById("searchBox").value.toLowerCase();
-  const typeFilter = document.getElementById("filterType").value;
-  const originFilter = document.getElementById("filterOrigin").value;
-  const sortVal = document.getElementById("sortSelect").value;
+  var query = document.getElementById("searchBox").value.toLowerCase();
+  var typeFilter = document.getElementById("filterType").value;
+  var originFilter = document.getElementById("filterOrigin").value;
+  var sortVal = document.getElementById("sortSelect").value;
 
-  const grid = document.getElementById("terraformedGrid");
+  var grid = document.getElementById("terraformedGrid");
   grid.innerHTML = "";
 
-  let entries = Object.entries(TERRAFORMED_WORLDS);
-  entries = entries.filter(([name, world]) => {
-    const matchText =
-      !query ||
-      name.toLowerCase().includes(query) ||
-      (world.systemName || "").toLowerCase().includes(query) ||
-      ((world.life && world.life.biome) || "").toLowerCase().includes(query);
+  var entries = Object.entries(TERRAFORMED_WORLDS);
+  entries = entries.filter(function (entry) {
+    var name = entry[0];
+    var world = entry[1];
 
-    const matchType = !typeFilter || world.type === typeFilter;
-    const matchOrigin =
+    var matchText =
+      !query ||
+      name.toLowerCase().indexOf(query) !== -1 ||
+      (world.systemName || "").toLowerCase().indexOf(query) !== -1 ||
+      ((world.life && world.life.biome) || "").toLowerCase().indexOf(query) !==
+        -1;
+
+    var matchType = !typeFilter || world.type === typeFilter;
+    var matchOrigin =
       !originFilter || (world.life && world.life.origin) === originFilter;
 
     return matchText && matchType && matchOrigin;
@@ -286,12 +325,12 @@ function filterAndRender() {
     return;
   }
 
-  for (const [name, world] of entries) {
-    grid.appendChild(makeCard(name, world));
+  for (var i = 0; i < entries.length; i++) {
+    grid.appendChild(makeCard(entries[i][0], entries[i][1]));
   }
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", function () {
   populateOriginFilter();
   filterAndRender();
 
@@ -308,18 +347,20 @@ window.addEventListener("DOMContentLoaded", () => {
     .getElementById("sortSelect")
     .addEventListener("change", filterAndRender);
 
-  const modal = document.getElementById("modal");
-  document.getElementById("modalClose").addEventListener("click", () => {
+  var modal = document.getElementById("modal");
+
+  document.getElementById("modalClose").addEventListener("click", function () {
     modal.classList.remove("open");
     document.body.classList.remove("no-scroll");
   });
-  modal.addEventListener("click", (e) => {
+
+  modal.addEventListener("click", function (e) {
     if (e.target === modal) {
       modal.classList.remove("open");
       document.body.classList.remove("no-scroll");
     }
   });
 
-  // ly/pc and metric/imperial live in localStorage, re-render on change
+  // ly/pc and metric/imperial live in localStorage, re-render whenever the settings panel changes
   document.addEventListener("settingschange", filterAndRender);
 });
