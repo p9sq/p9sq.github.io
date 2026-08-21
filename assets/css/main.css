@@ -19,50 +19,73 @@ html {
   transform: scale(1.1);
 }
 
-.bg-text {
+.card {
   position: absolute;
-  text-align: left;
-  transform: translate(-50%, -50%);
   top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
   background-color: rgba(0, 0, 0, 0.404);
   color: white;
   border-radius: 10px;
-  padding: 10px;
+  padding: 30px 34px;
   width: 80vw;
-  height: 80vh;
+  max-width: 780px;
 }
 
-.boxes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
+.card h1 {
+  margin: 0 0 10px;
+  font-size: 28px;
 }
 
-.boxes section {
-  background-color: rgba(0, 0, 0, 0.404);
-  padding: 3px;
-  border-radius: 10px;
-  width: 40vw;
-  flex: 0 0 48%;
+.intro {
+  margin: 0 0 24px;
+  color: rgb(210, 210, 210);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
-.boxes h1 {
-  margin-bottom: 0;
-  margin-top: 0;
+.grid {
+  columns: 2;
+  column-gap: 40px;
 }
 
-.boxes ul {
-  margin-top: 0;
+.grid section {
+  break-inside: avoid;
+  margin-bottom: 24px;
 }
 
-li a {
-  color: white;
+.grid h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 8px;
+}
+
+.grid ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+}
+
+.grid li {
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+li a,
+.intro a {
+  color: rgb(142, 198, 232);
   transition: 0.3s;
 }
 
-li a:hover {
+li a:hover,
+.intro a:hover {
   color: rgb(189, 189, 189);
   transition: 0.3s;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    columns: 1;
+  }
 }
