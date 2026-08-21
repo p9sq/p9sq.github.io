@@ -85,6 +85,27 @@ li a:hover,
 }
 
 @media (max-width: 600px) {
+  body,
+  html {
+    overflow-y: auto;
+    height: auto;
+    min-height: 100%;
+  }
+
+  .bg-image {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
+
+  .card {
+    position: static;
+    transform: none;
+    width: auto;
+    margin: 40px 16px;
+  }
+
   .grid {
     columns: 1;
   }
