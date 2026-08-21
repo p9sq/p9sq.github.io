@@ -12,7 +12,7 @@ Habitable Worlds is a public website catalogue which aims to let the public (Arv
 
 # Lore (Vulcean Continuity)
 
-The Vulcean Continuity takes place in the year 3000 (Arventian years) and the year 2445 (Earth years). This difference in years is because an Arventian year is longer than an Earth year.
+The Vulcean Continuity takes place in the year 3000 (Arventian years) and the year 2542 (Earth years). This difference in years is because an Arventian year is longer than an Earth year.
 
 Earth's technology has advanced significantly over many centuries, especially in exoplanet science. However, just like Tau Ceti, it still struggles to detect, let alone confirm, any planets within the Phebe System...
 
