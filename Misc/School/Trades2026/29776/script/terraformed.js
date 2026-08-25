@@ -171,7 +171,7 @@ function openModal(name, world) {
       <div class="modal-field"><div class="modal-field-label">Parent Star</div><div class="modal-field-val">${world.parentStar}</div></div>
       ${world.type === "Moon" && world.parent ? `<div class="modal-field"><div class="modal-field-label">Parent Planet</div><div class="modal-field-val">${world.parent}</div></div>` : ""}
       <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(world.spectralClass)}">${spectralLabel(world.spectralClass)}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Distance from Fujaris</div><div class="modal-field-val">${fmtDist(world.distToSun)}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Distance from Athovon</div><div class="modal-field-val">${fmtDist(world.distToSun)}</div></div>
     </div>
 
     <div class="modal-section-title">BIOSPHERE DATA</div>

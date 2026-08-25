@@ -153,7 +153,7 @@ function openModal(name, sys) {
     <div class="modal-grid">
       <div class="modal-field"><div class="modal-field-label">System Type</div><div class="modal-field-val">${sys.systemType || "—"}</div></div>
       <div class="modal-field"><div class="modal-field-label">Spectral Class</div><div class="modal-field-val" style="color:${spectralColor(sys.spectralClass)}">${spectralLabel(sys.spectralClass)}</div></div>
-      <div class="modal-field"><div class="modal-field-label">Distance from Fujaris</div><div class="modal-field-val">${fmtDist(sys.distToSun)}</div></div>
+      <div class="modal-field"><div class="modal-field-label">Distance from Athovon</div><div class="modal-field-val">${fmtDist(sys.distToSun)}</div></div>
       <div class="modal-field"><div class="modal-field-label">Parent Sun</div><div class="modal-field-val">${sys.parentSun || "—"}</div></div>
       <div class="modal-field"><div class="modal-field-label">Major Planets</div><div class="modal-field-val">${sys.planetCount ? sys.planetCount.major : "—"}</div></div>
       <div class="modal-field"><div class="modal-field-label">Dwarf Planets</div><div class="modal-field-val">${sys.planetCount ? sys.planetCount.dwarf : "—"}</div></div>
