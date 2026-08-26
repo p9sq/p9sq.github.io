@@ -39,12 +39,14 @@ body {
 }
 
 p a,
+li a,
 figcaption a {
   color: white;
   transition: 0.5s;
 }
 
 p a:hover,
+li a:hover,
 figcaption a:hover {
   color: rgb(131, 131, 131);
   transition: 0.5s;
@@ -80,7 +82,20 @@ figcaption a:hover {
 
 .solsys {
   width: 100vw;
-  height: 72vh;
+  height: 71vh;
+}
+
+#sol-sys {
+  text-align: center;
+}
+
+#sol-sys img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 95%;
+  height: 95%;
+  border-radius: 20px;
 }
 
 #planet-photo {
