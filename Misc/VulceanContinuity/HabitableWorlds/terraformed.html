@@ -3,8 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Terraformed Worlds — Planetary Archive</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta
+      name="description"
+      content="Track planets and moons the Exoplanet Corporation has terraformed, along with biosphere status and life origin data."
+    />
+    <title>Terraformed Worlds - Planetary Archive</title>
+    <script src="script/settings.js"></script>
+    <link rel="stylesheet" href="css/main.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap"
@@ -16,95 +21,108 @@
     <div class="bg-vignette"></div>
     <canvas id="starfield"></canvas>
 
-    <nav class="nav">
-      <a href="index.html" class="nav-logo">
-        <span class="nav-logo-icon">⬡</span>
-        <div>
-          <div class="nav-logo-main">
-            <span class="nav-logo-full">PLANETARY ARCHIVE</span
-            ><span class="nav-logo-short">P. ARCHIVE</span>
+    <header class="site-header">
+      <nav class="nav">
+        <a href="index.html" class="nav-logo">
+          <span class="nav-logo-icon">⬡</span>
+          <div>
+            <div class="nav-logo-main">
+              <span class="nav-logo-full">PLANETARY ARCHIVE</span
+              ><span class="nav-logo-short">P. ARCHIVE</span>
+            </div>
+            <div class="nav-logo-sub">Exoplanet Corporation · AIRA</div>
           </div>
-          <div class="nav-logo-sub">Exoplanet Corporation · AIRA</div>
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="catalogued.html">Catalogued Systems</a></li>
+          <li><a href="promising.html">Arventia 2.0 Candidates</a></li>
+          <li>
+            <a href="terraformed.html" class="active">Terraformed Worlds</a>
+          </li>
+        </ul>
+        <button
+          class="nav-hamburger"
+          id="navHamburger"
+          aria-label="Toggle menu"
+        >
+          <span></span><span></span><span></span>
+        </button>
+        <div class="nav-status">
+          <span class="status-dot"></span>
+          <span>ARCHIVE LIVE</span>
         </div>
-      </a>
-      <ul class="nav-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="catalogued.html">Catalogued Systems</a></li>
-        <li><a href="promising.html">Arventia 2.0 Candidates</a></li>
-        <li>
-          <a href="terraformed.html" class="active">Terraformed Worlds</a>
-        </li>
-      </ul>
-      <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="nav-status">
-        <span class="status-dot"></span>
-        <span>ARCHIVE LIVE</span>
+      </nav>
+    </header>
+
+    <main>
+      <div class="page-hero page-hero--orange">
+        <div class="page-hero-eyebrow">ARCHIVE · SECTION 03</div>
+        <h1 class="page-hero-title">Terraformed Worlds</h1>
+        <p class="page-hero-desc">
+          The Corporation has fully or partially terraformed these planets and
+          moons. Each record has current biosphere status, life origin, and
+          parent system data.
+        </p>
       </div>
-    </nav>
 
-    <div class="page-hero page-hero--orange">
-      <div class="page-hero-eyebrow">ARCHIVE · SECTION 03</div>
-      <h1 class="page-hero-title">Terraformed Worlds</h1>
-      <p class="page-hero-desc">
-        Planets and moons that have undergone full or partial terraforming
-        operations. Records include current biosphere status, life origin, and
-        parent system data.
-      </p>
-    </div>
-
-    <div class="catalogue-controls">
-      <input
-        type="text"
-        class="search-box"
-        id="searchBox"
-        placeholder="Search terraformed worlds, systems…"
-      />
-      <div class="filter-row">
-        <select class="filter-select" id="filterType">
-          <option value="">All Object Types</option>
-          <option value="Planet">Planet</option>
-          <option value="Moon">Moon</option>
-        </select>
-        <select class="filter-select" id="filterOrigin">
-          <option value="">All Life Origins</option>
-        </select>
-        <select class="filter-select" id="sortSelect">
-          <option value="dist-asc" selected>Distance: Closest First</option>
-          <option value="dist-desc">Distance: Furthest First</option>
-          <option value="radius-asc">Size: Smallest First</option>
-          <option value="radius-desc">Size: Largest First</option>
-          <option value="mass-asc">Mass: Lightest First</option>
-          <option value="mass-desc">Mass: Heaviest First</option>
-          <option value="density-asc">Density: Lowest First</option>
-          <option value="density-desc">Density: Highest First</option>
-          <option value="alpha-asc">Name: A → Z</option>
-          <option value="alpha-desc">Name: Z → A</option>
-        </select>
-        <div class="results-count" id="resultsCount">— worlds</div>
+      <div class="catalogue-controls">
+        <input
+          type="text"
+          class="search-box"
+          id="searchBox"
+          placeholder="Search terraformed worlds, systems…"
+        />
+        <div class="filter-row">
+          <select class="filter-select" id="filterType">
+            <option value="">All Object Types</option>
+            <option value="Planet">Planet</option>
+            <option value="Moon">Moon</option>
+          </select>
+          <select class="filter-select" id="filterOrigin">
+            <option value="">All Life Origins</option>
+          </select>
+          <select class="filter-select" id="sortSelect">
+            <option value="dist-asc" selected>Distance: Closest First</option>
+            <option value="dist-desc">Distance: Furthest First</option>
+            <option value="radius-asc">Size: Smallest First</option>
+            <option value="radius-desc">Size: Largest First</option>
+            <option value="mass-asc">Mass: Lightest First</option>
+            <option value="mass-desc">Mass: Heaviest First</option>
+            <option value="density-asc">Density: Lowest First</option>
+            <option value="density-desc">Density: Highest First</option>
+            <option value="alpha-asc">Name: A → Z</option>
+            <option value="alpha-desc">Name: Z → A</option>
+          </select>
+          <div class="results-count" id="resultsCount">— worlds</div>
+        </div>
       </div>
-    </div>
 
-    <div class="cards-grid cards-grid--terraformed" id="terraformedGrid"></div>
+      <div
+        class="cards-grid cards-grid--terraformed"
+        id="terraformedGrid"
+      ></div>
 
-    <div class="modal-overlay" id="modal">
-      <div class="modal-box" id="modalBox">
-        <button class="modal-close" id="modalClose">✕</button>
-        <div id="modalContent"></div>
+      <div class="modal-overlay" id="modal">
+        <div class="modal-box" id="modalBox">
+          <button class="modal-close" id="modalClose">✕</button>
+          <div class="modal-scroll">
+            <div id="modalContent"></div>
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
 
     <footer class="footer">
       <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
-      <div class="footer-info">Exoplanet Corporation · A AIRA Subsidiary</div>
+      <div class="footer-info">Exoplanet Corporation · An AIRA Subsidiary</div>
       <div class="footer-copy">
         © 3000 Arventian Standard · Exoplanet Corporation
       </div>
     </footer>
 
-    <script src="script/starfield.js"></script>
     <script src="script/data.js"></script>
+    <script src="script/units.js"></script>
     <script src="script/terraformed.js"></script>
     <script>
       const btn = document.getElementById("navHamburger");

@@ -1,27 +1,19 @@
-/* =============================================
-   PLANETARY ARCHIVE — EXOPLANET CORPORATION
-   ============================================= */
-
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap");
 
 :root {
-  /* Backgrounds */
   --bg: #f4f6f9;
   --bg2: #eef0f5;
   --surface: #ffffff;
   --surface2: #f8f9fc;
 
-  /* Borders */
   --border: #d1d8e8;
   --border-strong: #aab4cc;
 
-  /* Accent — deep navy/indigo */
   --accent: #1a3a6b;
   --accent-mid: #2755a0;
   --accent-light: #e8eef8;
   --accent-text: #ffffff;
 
-  /* Section accents */
   --green: #1a7a45;
   --green-dim: #e6f4ed;
   --green-border: #a8d5bc;
@@ -35,24 +27,22 @@
   --red-dim: #fbeaea;
   --red-border: #e8aaaa;
 
-  /* Text */
   --text: #0f1c2e;
   --text-mid: #3d5070;
   --text-dim: #6b7fa0;
   --text-dimmer: #9aaac0;
 
-  /* Fonts */
   --font-ui: "Inter", system-ui, sans-serif;
   --font-data: "IBM Plex Mono", "Courier New", monospace;
+  --font-mono: var(--font-data);
   --font-label: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --accent-bright: var(--accent-mid);
 
-  /* Sizing */
   --nav-h: 58px;
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 10px;
 
-  /* Shadows */
   --shadow-sm:
     0 1px 3px rgba(15, 28, 46, 0.08), 0 1px 2px rgba(15, 28, 46, 0.04);
   --shadow-md:
@@ -61,7 +51,45 @@
     0 12px 32px rgba(15, 28, 46, 0.12), 0 4px 8px rgba(15, 28, 46, 0.06);
 }
 
-/* ── RESET ── */
+/* dark theme, switched on by the settings panel setting data-theme on <html> */
+[data-theme="dark"] {
+  --bg: #0b1220;
+  --bg2: #0f1729;
+  --surface: #131d33;
+  --surface2: #17223c;
+
+  --border: #23324f;
+  --border-strong: #34496e;
+
+  --accent: #7fb0ff;
+  --accent-mid: #8fbfff;
+  --accent-light: #1b2a45;
+  --accent-text: #071023;
+  --accent-bright: #9dcbff;
+
+  --green: #34d399;
+  --green-dim: #113127;
+  --green-border: #1f5c46;
+  --yellow: #fbbf24;
+  --yellow-dim: #332708;
+  --yellow-border: #6b4e12;
+  --orange: #fb923c;
+  --orange-dim: #3a2210;
+  --orange-border: #7a4318;
+  --red: #f87171;
+  --red-dim: #3a1414;
+  --red-border: #7a2727;
+
+  --text: #eef2f9;
+  --text-mid: #b9c4dc;
+  --text-dim: #8592ad;
+  --text-dimmer: #5c6784;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+
 *,
 *::before,
 *::after {
@@ -73,7 +101,6 @@ html {
   scroll-behavior: smooth;
 }
 
-/* ── SCROLLBARS ── */
 ::-webkit-scrollbar {
   width: 7px;
   height: 7px;
@@ -96,13 +123,11 @@ html {
   scrollbar-color: var(--border-strong) var(--bg2);
 }
 
-/* ── TEXT SELECTION ── */
 ::selection {
   background: rgba(26, 58, 107, 0.15);
   color: var(--text);
 }
 
-/* ── BASE ── */
 body {
   background: var(--bg);
   color: var(--text);
@@ -113,14 +138,12 @@ body {
   overflow-x: hidden;
 }
 
-/* Kill old decorative backgrounds */
 .bg-grid,
 .bg-vignette,
 #starfield {
   display: none;
 }
 
-/* ── NAV ── */
 .nav {
   position: fixed;
   top: 0;
@@ -196,6 +219,11 @@ body {
   background: rgba(255, 255, 255, 0.18);
   font-weight: 600;
 }
+/* Show a ring around the active nav link on tab focus */
+.nav-links a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
 
 .nav-status {
   display: flex;
@@ -225,7 +253,83 @@ body {
   }
 }
 
-/* ── HERO (INDEX) ── */
+/* settings toggle + panel, injected by settings.js */
+.settings-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.settings-toggle {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-mid);
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.settings-toggle:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+.settings-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 220px;
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+}
+.settings-panel.open {
+  display: block;
+}
+.settings-group + .settings-group {
+  margin-top: 0.75rem;
+}
+.settings-label {
+  font-family: var(--font-label);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+}
+.settings-options {
+  display: flex;
+  gap: 0.35rem;
+}
+.settings-options button {
+  flex: 1;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.7rem;
+  font-family: var(--font-ui);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text-mid);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.settings-options button:hover {
+  border-color: var(--border-strong);
+}
+.settings-options button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
 .hero {
   position: relative;
   z-index: 10;
@@ -365,6 +469,11 @@ body {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.6);
 }
+/* Keep a visible ring on tab focus. Do not remove this. */
+.btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
 
 @keyframes fadeUp {
   from {
@@ -377,7 +486,6 @@ body {
   }
 }
 
-/* ── ABOUT SECTION ── */
 .about-section {
   padding: 4rem 2rem;
   background: var(--surface);
@@ -433,8 +541,66 @@ body {
 .about-card p:last-child {
   margin-bottom: 0;
 }
+.about-card a {
+  color: var(--accent-mid);
+  font-weight: 600;
+}
+.about-card a:focus-visible {
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 2px;
+}
+.about-card-list {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  line-height: 1.8;
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+.about-card-list li {
+  margin-bottom: 0.15rem;
+}
 
-/* ── QUICK LINKS ── */
+.gallery-section {
+  padding: 3.5rem 2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.gallery-item {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg);
+}
+.gallery-item img {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+.gallery-item figcaption {
+  padding: 0.85rem 1.1rem;
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  line-height: 1.5;
+}
+.gallery-credit {
+  display: block;
+  margin-top: 0.25rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--text-dimmer);
+  text-transform: uppercase;
+}
+
 .quicklinks-section {
   padding: 3.5rem 2rem 5rem;
   background: var(--bg);
@@ -471,6 +637,13 @@ body {
   box-shadow: var(--shadow-md);
   transform: translateY(-2px);
 }
+/* Same look as hover, but for keyboard tab focus */
+.ql-card:focus-visible {
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 3px;
+  border-color: var(--accent-mid);
+  box-shadow: var(--shadow-md);
+}
 .ql-card-num {
   font-family: var(--font-label);
   font-size: 2.5rem;
@@ -503,7 +676,6 @@ body {
   transform: translateX(3px);
 }
 
-/* ── PAGE HERO (INNER PAGES) ── */
 .page-hero {
   background: var(--accent);
   color: #fff;
@@ -541,7 +713,6 @@ body {
   line-height: 1.7;
 }
 
-/* ── CONTROLS ── */
 .catalogue-controls {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -619,7 +790,6 @@ body {
   margin-left: auto;
 }
 
-/* ── TABLE ── */
 .table-wrapper {
   position: relative;
   z-index: 10;
@@ -670,6 +840,12 @@ body {
 .data-table tbody tr:hover td {
   color: var(--text);
 }
+/* Rows get tabindex in JS. This shows where the focus is. */
+.data-table tbody tr:focus-visible {
+  outline: 2px solid var(--accent-mid);
+  outline-offset: -2px;
+  background: var(--accent-light);
+}
 
 .td-name {
   color: var(--text) !important;
@@ -701,7 +877,6 @@ body {
   color: var(--text-dimmer);
 }
 
-/* ── BADGES ── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -731,7 +906,6 @@ body {
   border: 1px solid var(--yellow-border);
 }
 
-/* ── CARDS GRID ── */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -751,6 +925,13 @@ body {
   border-color: var(--accent-mid);
   box-shadow: var(--shadow-md);
   transform: translateY(-3px);
+}
+/* Cards get tabindex in JS. This shows where the focus is. */
+.planet-card:focus-visible {
+  outline: 2px solid var(--accent-mid);
+  outline-offset: 3px;
+  border-color: var(--accent-mid);
+  box-shadow: var(--shadow-md);
 }
 .planet-card-img {
   width: 100%;
@@ -819,12 +1000,15 @@ body {
   border-top: 1px solid var(--bg2);
 }
 
-/* Terraformed top accent stripe */
 .cards-grid--terraformed .planet-card {
   border-top: 3px solid var(--orange);
 }
 
-/* ── MODAL ── */
+/* locks the page behind an open modal */
+body.no-scroll {
+  overflow: hidden;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -847,10 +1031,14 @@ body {
   width: 100%;
   max-width: 640px;
   max-height: 88vh;
-  overflow-y: auto;
+  overflow: hidden;
   position: relative;
-  padding: 2rem;
   animation: modalIn 0.2s ease;
+}
+.modal-scroll {
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 3rem 2rem 2rem;
 }
 @keyframes modalIn {
   from {
@@ -864,25 +1052,29 @@ body {
 }
 .modal-close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
+  top: 0.75rem;
+  right: 0.75rem;
+  background: var(--red);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  color: #fff;
   font-size: 0.8rem;
-  width: 28px;
-  height: 28px;
+  font-weight: 700;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.15s;
+  box-shadow: var(--shadow-md);
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+  z-index: 5;
 }
 .modal-close:hover {
-  background: var(--red-dim);
-  color: var(--red);
-  border-color: var(--red-border);
+  filter: brightness(0.88);
+  transform: scale(1.07);
 }
 .modal-thumb {
   width: 100%;
@@ -950,7 +1142,6 @@ body {
   color: var(--text);
 }
 
-/* ── FOOTER ── */
 .footer {
   background: var(--accent);
   border-top: 3px solid var(--accent-mid);
@@ -980,7 +1171,6 @@ body {
   color: rgba(255, 255, 255, 0.35);
 }
 
-/* ── EMPTY STATE ── */
 .empty-state {
   grid-column: 1/-1;
   text-align: center;
@@ -992,7 +1182,6 @@ body {
   text-transform: uppercase;
 }
 
-/* ── NO DATA NOTICE ── */
 .no-data-notice {
   margin: 0 2rem;
   background: var(--accent-light);
@@ -1005,7 +1194,6 @@ body {
   line-height: 1.6;
 }
 
-/* ── HAMBURGER ── */
 .nav-hamburger {
   display: none;
   flex-direction: column;
@@ -1047,7 +1235,6 @@ body {
   transform: translateY(-6.5px) rotate(-45deg);
 }
 
-/* ── TABLET (≤ 1024px) ── */
 @media (max-width: 1024px) {
   .about-grid {
     grid-template-columns: 1fr;
@@ -1064,9 +1251,7 @@ body {
   }
 }
 
-/* ── MOBILE (≤ 768px) ── */
 @media (max-width: 768px) {
-  /* Nav */
   .nav {
     padding: 0 1.25rem;
     gap: 0;
@@ -1109,7 +1294,6 @@ body {
     border-bottom: none;
   }
 
-  /* Hero */
   .hero {
     padding: calc(var(--nav-h) + 2.5rem) 1.25rem 3.5rem;
   }
@@ -1139,7 +1323,6 @@ body {
     min-width: 200px;
   }
 
-  /* About */
   .about-section {
     padding: 2.5rem 1.25rem;
   }
@@ -1157,7 +1340,16 @@ body {
     border-radius: 0 0 var(--radius-md) var(--radius-md);
   }
 
-  /* Quick links */
+  .gallery-section {
+    padding: 2.5rem 1.25rem;
+  }
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+  .gallery-item img {
+    height: 200px;
+  }
+
   .quicklinks-section {
     padding: 2.5rem 1.25rem 3.5rem;
   }
@@ -1165,7 +1357,6 @@ body {
     grid-template-columns: 1fr;
   }
 
-  /* Page hero */
   .page-hero {
     padding: calc(var(--nav-h) + 1.5rem) 1.25rem 2rem;
   }
@@ -1176,7 +1367,6 @@ body {
     font-size: 0.85rem;
   }
 
-  /* Controls */
   .catalogue-controls {
     padding: 0.85rem 1.25rem;
   }
@@ -1194,7 +1384,6 @@ body {
     text-align: right;
   }
 
-  /* Table → card rows */
   .table-wrapper {
     padding: 0 1.25rem 3rem;
     overflow-x: unset;
@@ -1294,13 +1483,11 @@ body {
     white-space: normal;
   }
 
-  /* Cards grid */
   .cards-grid {
     padding: 1rem 1.25rem 3rem;
     grid-template-columns: 1fr;
   }
 
-  /* Modal */
   .modal-overlay {
     padding: 0;
     align-items: flex-end;
@@ -1310,8 +1497,11 @@ body {
     max-height: 90vh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     animation: modalInMobile 0.22s ease;
-    padding: 1.5rem 1.25rem;
     border-bottom: none;
+  }
+  .modal-scroll {
+    max-height: 90vh;
+    padding: 2.75rem 1.25rem 1.5rem;
   }
   @keyframes modalInMobile {
     from {
@@ -1330,7 +1520,6 @@ body {
     grid-template-columns: 1fr;
   }
 
-  /* Footer */
   .footer {
     padding: 1.5rem 1.25rem;
     flex-direction: column;
@@ -1342,7 +1531,6 @@ body {
   }
 }
 
-/* ── SMALL MOBILE (≤ 400px) ── */
 @media (max-width: 400px) {
   .filter-select {
     flex: 1 1 100%;
@@ -1361,7 +1549,6 @@ body {
   }
 }
 
-/* ── NAV LOGO — PORTRAIT MOBILE ── */
 @media (max-width: 480px) {
   .nav-logo-sub {
     display: none;

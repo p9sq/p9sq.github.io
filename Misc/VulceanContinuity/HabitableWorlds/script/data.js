@@ -1,8 +1,3 @@
-// ============================================================
-//  PLANETARY ARCHIVE — DATA FILE
-// ============================================================
-
-// ── CATALOGUED SYSTEMS ──────────────────────────────────────
 const CATALOGUED_SYSTEMS = {
   "Lucifer System": {
     thumbnail: "img/catalogued/1.png",
@@ -10,7 +5,7 @@ const CATALOGUED_SYSTEMS = {
     discDate: "2968",
     discMethod: "Direct Imaging",
     pioneer: "Leon DeFox",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentSun: "Lucifer A",
     spectralClass: "K1.2V",
     distToSun: 0.77,
@@ -336,8 +331,29 @@ const CATALOGUED_SYSTEMS = {
   },
 };
 
-// ── PROMISING WORLDS (ARVENTIA 2.0 CANDIDATES) ──────────────
 const PROMISING_WORLDS = {
+  "Lucifer (AB) e I": {
+    systemName: "Lucifer System",
+    systemType: "Trinary",
+    parentStar: "Lucifer A",
+    spectralClass: "K1.2V",
+    distToSun: 0.77,
+    type: "Moon",
+    moonCount: 0,
+    thumbnail: "img/promising/lucifer.png",
+    physical: {
+      mass: 0.72,
+      radius: 5830.252705016458,
+    },
+    orbit: {
+      sma: 0.00324202475,
+      period: 0.0061879382,
+      eccentricity: 0.01,
+    },
+    life: {
+      exists: "pending",
+    },
+  },
   Earth: {
     systemName: "Solar System",
     systemType: "Single",
@@ -365,7 +381,7 @@ const PROMISING_WORLDS = {
   },
   "Proxima Centauri b": {
     systemName: "Alpha Centauri",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Proxima Centauri",
     spectralClass: "M5.5V",
     distToSun: 6.29,
@@ -586,7 +602,7 @@ const PROMISING_WORLDS = {
   },
   "Gliese 667 C c": {
     systemName: "Gliese 667 System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Gliese 667 C",
     spectralClass: "M1.5V",
     distToSun: 4.73,
@@ -608,7 +624,7 @@ const PROMISING_WORLDS = {
   },
   "Gliese 667 C f": {
     systemName: "Gliese 667 System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Gliese 667 C",
     spectralClass: "M1.5V",
     distToSun: 4.73,
@@ -1229,7 +1245,7 @@ const PROMISING_WORLDS = {
   },
   Drakara: {
     systemName: "Keryx System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Sentinel",
     spectralClass: "K4.4V",
     distToSun: 38035958.5,
@@ -1251,7 +1267,7 @@ const PROMISING_WORLDS = {
   },
   Altan: {
     systemName: "Keryx System",
-    systemType: "Triple",
+    systemType: "Trinary",
     parentStar: "Sentinel",
     spectralClass: "K4.4V",
     distToSun: 38035958.5,
@@ -1317,7 +1333,6 @@ const PROMISING_WORLDS = {
   },
 };
 
-// ── TERRAFORMED WORLDS ───────────────────────────────────────
 const TERRAFORMED_WORLDS = {
   Pholion: {
     altName: "Boreas I",

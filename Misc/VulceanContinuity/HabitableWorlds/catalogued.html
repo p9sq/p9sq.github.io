@@ -3,8 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Catalogued Systems — Planetary Archive</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta
+      name="description"
+      content="Browse every planetary system in the Exoplanet Corporation's archive, with discovery data, stellar class, and life status."
+    />
+    <title>Catalogued Systems - Planetary Archive</title>
+    <script src="script/settings.js"></script>
+    <link rel="stylesheet" href="css/main.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap"
@@ -16,100 +21,113 @@
     <div class="bg-vignette"></div>
     <canvas id="starfield"></canvas>
 
-    <nav class="nav">
-      <a href="index.html" class="nav-logo">
-        <span class="nav-logo-icon">⬡</span>
-        <div>
-          <div class="nav-logo-main">
-            <span class="nav-logo-full">PLANETARY ARCHIVE</span
-            ><span class="nav-logo-short">P. ARCHIVE</span>
+    <header class="site-header">
+      <nav class="nav">
+        <a href="index.html" class="nav-logo">
+          <span class="nav-logo-icon">⬡</span>
+          <div>
+            <div class="nav-logo-main">
+              <span class="nav-logo-full">PLANETARY ARCHIVE</span
+              ><span class="nav-logo-short">P. ARCHIVE</span>
+            </div>
+            <div class="nav-logo-sub">Exoplanet Corporation · AIRA</div>
           </div>
-          <div class="nav-logo-sub">Exoplanet Corporation · AIRA</div>
+        </a>
+        <ul class="nav-links">
+          <li><a href="index.html">Home</a></li>
+          <li>
+            <a href="catalogued.html" class="active">Catalogued Systems</a>
+          </li>
+          <li><a href="promising.html">Arventia 2.0 Candidates</a></li>
+          <li><a href="terraformed.html">Terraformed Worlds</a></li>
+        </ul>
+        <button
+          class="nav-hamburger"
+          id="navHamburger"
+          aria-label="Toggle menu"
+        >
+          <span></span><span></span><span></span>
+        </button>
+        <div class="nav-status">
+          <span class="status-dot"></span>
+          <span>ARCHIVE LIVE</span>
         </div>
-      </a>
-      <ul class="nav-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="catalogued.html" class="active">Catalogued Systems</a></li>
-        <li><a href="promising.html">Arventia 2.0 Candidates</a></li>
-        <li><a href="terraformed.html">Terraformed Worlds</a></li>
-      </ul>
-      <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
-        <span></span><span></span><span></span>
-      </button>
-      <div class="nav-status">
-        <span class="status-dot"></span>
-        <span>ARCHIVE LIVE</span>
+      </nav>
+    </header>
+
+    <main>
+      <div class="page-hero">
+        <div class="page-hero-eyebrow">ARCHIVE · SECTION 01</div>
+        <h1 class="page-hero-title">Catalogued Systems</h1>
+        <p class="page-hero-desc">
+          Every surveyed planetary system in the Exoplanet Corporation database
+          sits here. Each entry has discovery metadata, system architecture,
+          stellar classification, and confirmed life status.
+        </p>
       </div>
-    </nav>
 
-    <div class="page-hero">
-      <div class="page-hero-eyebrow">ARCHIVE · SECTION 01</div>
-      <h1 class="page-hero-title">Catalogued Systems</h1>
-      <p class="page-hero-desc">
-        All surveyed planetary systems registered in the Exoplanet Corporation
-        database. Data includes discovery metadata, system architecture, stellar
-        classification, and confirmed life status.
-      </p>
-    </div>
-
-    <div class="catalogue-controls">
-      <input
-        type="text"
-        class="search-box"
-        id="searchBox"
-        placeholder="Search systems, designations, pioneers…"
-      />
-      <div class="filter-row">
-        <select class="filter-select" id="filterType">
-          <option value="">All System Types</option>
-          <option value="Single">Single</option>
-          <option value="Binary">Binary</option>
-          <option value="Trinary">Trinary</option>
-          <option value="Quaternary">Quaternary</option>
-        </select>
-        <select class="filter-select" id="filterLife">
-          <option value="">All Life Status</option>
-          <option value="true">Life Confirmed</option>
-          <option value="false">No Life</option>
-          <option value="pending">Pending Review</option>
-        </select>
-        <select class="filter-select" id="sortSelect">
-          <option value="dist-asc" selected>Distance: Closest First</option>
-          <option value="dist-desc">Distance: Furthest First</option>
-          <option value="alpha-asc">Name: A → Z</option>
-          <option value="alpha-desc">Name: Z → A</option>
-        </select>
-        <div class="results-count" id="resultsCount">— systems</div>
+      <div class="catalogue-controls">
+        <input
+          type="text"
+          class="search-box"
+          id="searchBox"
+          placeholder="Search systems, designations, pioneers…"
+        />
+        <div class="filter-row">
+          <select class="filter-select" id="filterType">
+            <option value="">All System Types</option>
+            <option value="Single">Single</option>
+            <option value="Binary">Binary</option>
+            <option value="Trinary">Trinary</option>
+            <option value="Quaternary">Quaternary</option>
+            <option value="Rogue">Rogue Object/Free Floating</option>
+          </select>
+          <select class="filter-select" id="filterLife">
+            <option value="">All Life Status</option>
+            <option value="true">Life Confirmed</option>
+            <option value="false">No Life</option>
+            <option value="pending">Pending Review</option>
+          </select>
+          <select class="filter-select" id="sortSelect">
+            <option value="dist-asc" selected>Distance: Closest First</option>
+            <option value="dist-desc">Distance: Furthest First</option>
+            <option value="alpha-asc">Name: A → Z</option>
+            <option value="alpha-desc">Name: Z → A</option>
+          </select>
+          <div class="results-count" id="resultsCount">— systems</div>
+        </div>
       </div>
-    </div>
 
-    <div class="table-wrapper">
-      <table class="data-table" id="catalogueTable">
-        <thead>
-          <tr>
-            <th></th>
-            <th>DESIGNATION</th>
-            <th>NAME</th>
-            <th>TYPE</th>
-            <th>SPECTRAL</th>
-            <th>DIST (ly)</th>
-            <th>PLANETS</th>
-            <th>MOONS</th>
-            <th>DISC. DATE</th>
-            <th>PIONEER</th>
-            <th>LIFE</th>
-          </tr>
-        </thead>
-        <tbody id="catalogueBody"></tbody>
-      </table>
-    </div>
-
-    <div class="modal-overlay" id="modal">
-      <div class="modal-box" id="modalBox">
-        <button class="modal-close" id="modalClose">✕</button>
-        <div id="modalContent"></div>
+      <div class="table-wrapper">
+        <table class="data-table" id="catalogueTable">
+          <thead>
+            <tr>
+              <th></th>
+              <th>DESIGNATION</th>
+              <th>NAME</th>
+              <th>TYPE</th>
+              <th>SPECTRAL</th>
+              <th id="distHeader">DIST (ly)</th>
+              <th>PLANETS</th>
+              <th>MOONS</th>
+              <th>DISC. DATE</th>
+              <th>PIONEER</th>
+              <th>LIFE</th>
+            </tr>
+          </thead>
+          <tbody id="catalogueBody"></tbody>
+        </table>
       </div>
-    </div>
+
+      <div class="modal-overlay" id="modal">
+        <div class="modal-box" id="modalBox">
+          <button class="modal-close" id="modalClose">✕</button>
+          <div class="modal-scroll">
+            <div id="modalContent"></div>
+          </div>
+        </div>
+      </div>
+    </main>
 
     <footer class="footer">
       <div class="footer-logo">⬡ PLANETARY ARCHIVE</div>
@@ -119,8 +137,8 @@
       </div>
     </footer>
 
-    <script src="script/starfield.js"></script>
     <script src="script/data.js"></script>
+    <script src="script/units.js"></script>
     <script src="script/catalogued.js"></script>
     <script>
       const btn = document.getElementById("navHamburger");
