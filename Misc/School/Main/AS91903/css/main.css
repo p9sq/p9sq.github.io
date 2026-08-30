@@ -55,6 +55,13 @@ figcaption a:hover {
 #title {
   text-align: center;
   font-size: 4vh;
+  margin-bottom: 0;
+}
+
+#subtext {
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .main,
