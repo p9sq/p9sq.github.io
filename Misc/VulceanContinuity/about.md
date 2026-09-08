@@ -1,6 +1,6 @@
 # About the Vulcean Continuity
 
-The Vulcean Continuity is a world-building project I started in early 2025. This project takes place on a fictional Earth-like moom (Arventia) in a fictional star system (Athovon System), which is located 21.9 light-years away from Earth in the constellation of Serpens Caput. This is also my first ever world building project, meaning that I may not be the best at this kind of thing 😅 (The main reason I started this project was because I had a story which I had created back in 2022 or so, and as of early 2025, I got into astronomy, and then when I found out about world building, I had decided to create the Vulcean Continuity)
+The Vulcean Continuity is a worldbuilding project I started in early 2025. This project takes place on a fictional Earth-like moon (Arventia) in a fictional star system (Athovon System), which is located 21.9 light-years away from Earth in the constellation of Serpens Caput. This is also my first ever worldbuilding project, meaning that I may not be the best at this kind of thing 😅 (The main reason I started this project was because I had a story which I had created back in 2022 or so, and as of early 2025, I got into astronomy, and then when I found out about worldbuilding, I had decided to create the Vulcean Continuity)
 
 ### Namesake
 
@@ -8,7 +8,7 @@ The Vulcean Continuity is named after the hypothetical planet Vulcan that was th
 
 # About Habitable Worlds
 
-Habitable Worlds is a public website catalogue which aims to let the public (Arventian inhabitants) know about potential candidate Arventia 2.0 analogues that have been discovered. Habitable Worlds was also developed by AIRA (Arventian Interplanetary Research Authority, which is the NASA analogue of my world-building project) and Exoplanet Corporation, which is a sub-company led by a group of AIRA members.
+Habitable Worlds is a public website catalogue which aims to let the public (Arventian inhabitants) know about potential candidate Arventia 2.0 analogues that have been discovered. Habitable Worlds was also developed by AIRA (Arventian Interplanetary Research Authority, which is the NASA analogue of my worldbuilding project) and Exoplanet Corporation, which is a sub-company led by a group of AIRA members.
 
 # Lore (Vulcean Continuity)
 
