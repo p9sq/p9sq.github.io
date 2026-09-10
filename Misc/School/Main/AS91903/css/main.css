@@ -86,7 +86,21 @@ figcaption a:hover {
   padding: 1%;
   text-align: left;
   margin-left: 20px;
+  margin-right: 20px;
   font-size: 95%;
+}
+
+.flexbox {
+  display: flex;
+  gap: 20px;
+}
+
+.flexbox > section {
+  flex: 1;
+}
+
+.flexbox section {
+  text-align: justify;
 }
 
 .overview h1,
@@ -109,6 +123,23 @@ figcaption a:hover {
   height: calc(100vh - 31.5vh);
 }
 
+.planetsrow {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: row;
+}
+
+#innerplanet img,
+#outerplanet img {
+  height: 200px;
+  border-radius: 20px;
+}
+
+#innerplanet figcaption,
+#outerplanet figcaption {
+  text-align: center;
+}
+
 #sol-sys {
   text-align: center;
 }
@@ -129,7 +160,7 @@ figcaption a:hover {
 }
 
 #planet-photo img {
-  width: 45vh;
+  width: 350px;
   padding: 10px;
   border-radius: 20px;
 }
