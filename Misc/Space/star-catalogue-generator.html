@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Star Catalogue Generator</title>
+<style>
+  * { box-sizing: border-box }
+
+  body {
+    background: #0b0e17;
+    color: #dfe4ee;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    margin: 0;
+    padding: 40px 20px 80px;
+  }
+
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  .lede {
+    color: #8b93a7;
+    margin-top: 0;
+    margin-bottom: 32px;
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .field .hint {
+    color: #8b93a7;
+    font-size: 0.8rem;
+    margin-top: 4px;
+  }
+
+  input {
+    width: 100%;
+    background: #161b29;
+    border: 1px solid #2b3242;
+    color: #dfe4ee;
+    padding: 10px 12px;
+    border-radius: 4px;
+    font-size: 1rem;
+  }
+
+  input:focus {
+    outline: 2px solid #5fb0ff;
+    outline-offset: 1px;
+  }
+
+  .row {
+    display: flex;
+    gap: 16px;
+  }
+
+  .row .field {
+    flex: 1;
+  }
+
+  button {
+    background: #5fb0ff;
+    color: #0b0e17;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #7cbdff;
+  }
+
+  button:focus-visible {
+    outline: 2px solid #dfe4ee;
+    outline-offset: 2px;
+  }
+
+  .error {
+    background: #2a1418;
+    border: 1px solid #6b2530;
+    color: #ff9baa;
+    padding: 10px 12px;
+    border-radius: 4px;
+    margin-bottom: 18px;
+  }
+
+  section {
+    margin-top: 32px;
+  }
+
+  progress {
+    width: 100%;
+    height: 10px;
+  }
+
+  #progressText {
+    color: #8b93a7;
+    font-size: 0.9rem;
+    margin-top: 6px;
+  }
+
+  #doneMsg {
+    margin-bottom: 12px;
+  }
+
+  textarea {
+    width: 100%;
+    background: #161b29;
+    border: 1px solid #2b3242;
+    color: #dfe4ee;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 0.8rem;
+    padding: 12px;
+    border-radius: 4px;
+    margin-top: 14px;
+    resize: vertical;
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <h1>Star Catalogue Generator</h1>
+  <p class="lede">Builds a Space Engine CSV star catalogue. Mass, radius, temperature, and apparent magnitude are all derived from the same physical model, so they stay consistent with each other.</p>
+
+  <form id="genForm">
+    <div class="field">
+      <label for="starCount">Number of stars</label>
+      <input type="number" id="starCount" min="1" step="1" placeholder="1000">
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="catName">Catalogue name</label>
+        <input type="text" id="catName" placeholder="GEN">
+      </div>
+      <div class="field">
+        <label for="sepChar">Separator</label>
+        <input type="text" id="sepChar" placeholder=" " maxlength="3">
+      </div>
+    </div>
+    <p class="hint">Star names come out as name + separator + number, zero-padded to match your star count so they sort cleanly in Space Engine. Leave a field blank to use its default, shown as the greyed-out placeholder.</p>
+
+    <div class="field">
+      <label for="baseDist">Base distance (light-years)</label>
+      <input type="number" id="baseDist" min="0" step="any" placeholder="0">
+      <p class="hint">Added to every star's distance. Use this to place the whole catalogue somewhere other than right next to the Sun.</p>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="minDist">Minimum star distance (ly)</label>
+        <input type="number" id="minDist" min="0.001" step="any" placeholder="4">
+      </div>
+      <div class="field">
+        <label for="maxDist">Maximum star distance (ly)</label>
+        <input type="number" id="maxDist" min="0.001" step="any" placeholder="2000000">
+      </div>
+    </div>
+    <p class="hint">Distances are sampled on a log scale between these two, since the default range spans nearby stars to nearby galaxies. RA and dec are sampled uniformly over the whole sky.</p>
+
+    <button type="submit" id="genBtn">Generate catalogue</button>
+  </form>
+
+  <p class="error" id="errorMsg" hidden></p>
+
+  <section id="progressSection" hidden>
+    <progress id="progressBar" value="0" max="100"></progress>
+    <p id="progressText">0 / 0</p>
+  </section>
+
+  <section id="resultSection" hidden>
+    <p id="doneMsg"></p>
+    <button type="button" id="downloadBtn">Download CSV</button>
+    <textarea id="csvOutput" rows="14" readonly></textarea>
+  </section>
+</main>
+
+<script>
+"use strict"
+
+// Pecaut & Mamajek (2022) main sequence table, O3V-M9V.
+// Columns: [Teff, logL, R_Sun, M_Sun]. Same source data as starRadius.js,
+// so results line up with values already checked against that tool.
+const MS_TABLE = {
+  O3: [44900, 5.82, 13.43, 59.0],
+  O4: [42900, 5.65, 12.13, 48.0],
+  O5: [41400, 5.54, 11.45, 43.0],
+  "O5.5": [40500, 5.44, 10.71, 38.0],
+  O6: [39500, 5.36, 10.27, 35.0],
+  "O6.5": [38300, 5.27, 9.82, 31.0],
+  O7: [37100, 5.18, 9.42, 28.0],
+  "O7.5": [36100, 5.09, 8.95, 26.0],
+  O8: [35100, 4.99, 8.47, 23.6],
+  "O8.5": [34300, 4.91, 8.06, 21.9],
+  O9: [33300, 4.82, 7.72, 20.2],
+  "O9.5": [31900, 4.72, 7.5, 18.7],
+  B0: [31400, 4.65, 7.16, 17.7],
+  "B0.5": [29000, 4.43, 6.48, 14.8],
+  B1: [26000, 4.13, 5.71, 11.8],
+  "B1.5": [24500, 3.91, 5.02, 9.9],
+  B2: [20600, 3.43, 4.06, 7.3],
+  "B2.5": [18500, 3.2, 3.89, 6.1],
+  B3: [17000, 2.99, 3.61, 5.4],
+  B4: [16400, 2.89, 3.46, 5.1],
+  B5: [15700, 2.77, 3.36, 4.7],
+  B6: [14500, 2.57, 3.27, 4.3],
+  B7: [14000, 2.48, 2.94, 3.92],
+  B8: [12300, 2.19, 2.86, 3.38],
+  B9: [10700, 1.86, 2.49, 2.75],
+  "B9.5": [10400, 1.8, 2.45, 2.68],
+  A0: [9700, 1.58, 2.193, 2.18],
+  A1: [9300, 1.49, 2.136, 2.05],
+  A2: [8800, 1.38, 2.117, 1.98],
+  A3: [8600, 1.23, 1.861, 1.86],
+  A4: [8250, 1.13, 1.794, 1.93],
+  A5: [8100, 1.09, 1.785, 1.88],
+  A6: [7910, 1.05, 1.775, 1.83],
+  A7: [7760, 1.0, 1.75, 1.77],
+  A8: [7590, 0.96, 1.747, 1.81],
+  A9: [7400, 0.92, 1.747, 1.75],
+  F0: [7220, 0.86, 1.728, 1.61],
+  F1: [7020, 0.79, 1.679, 1.5],
+  F2: [6820, 0.71, 1.622, 1.46],
+  F3: [6750, 0.67, 1.578, 1.44],
+  F4: [6670, 0.62, 1.533, 1.38],
+  F5: [6550, 0.56, 1.473, 1.33],
+  F6: [6350, 0.43, 1.359, 1.25],
+  F7: [6280, 0.39, 1.324, 1.21],
+  F8: [6180, 0.29, 1.221, 1.18],
+  F9: [6050, 0.22, 1.167, 1.13],
+  "F9.5": [5990, 0.18, 1.142, 1.08],
+  G0: [5930, 0.13, 1.1, 1.06],
+  G1: [5860, 0.08, 1.06, 1.03],
+  G2: [5770, 0.01, 1.012, 1.0],
+  G3: [5720, -0.01, 1.002, 0.99],
+  G4: [5680, -0.04, 0.991, 0.985],
+  G5: [5660, -0.05, 0.977, 0.98],
+  G6: [5600, -0.1, 0.949, 0.97],
+  G7: [5550, -0.13, 0.927, 0.95],
+  G8: [5480, -0.17, 0.914, 0.94],
+  G9: [5380, -0.26, 0.853, 0.9],
+  K0: [5270, -0.34, 0.813, 0.88],
+  K1: [5170, -0.39, 0.797, 0.86],
+  K2: [5100, -0.43, 0.783, 0.82],
+  K3: [4830, -0.55, 0.755, 0.78],
+  K4: [4600, -0.69, 0.713, 0.73],
+  K5: [4440, -0.76, 0.701, 0.7],
+  K6: [4300, -0.86, 0.669, 0.69],
+  K7: [4100, -1.0, 0.63, 0.64],
+  K8: [3990, -1.06, 0.615, 0.62],
+  K9: [3930, -1.1, 0.608, 0.59],
+  M0: [3850, -1.16, 0.588, 0.57],
+  "M0.5": [3770, -1.27, 0.544, 0.54],
+  M1: [3660, -1.39, 0.501, 0.5],
+  "M1.5": [3620, -1.44, 0.482, 0.47],
+  M2: [3560, -1.54, 0.446, 0.44],
+  "M2.5": [3470, -1.64, 0.421, 0.4],
+  M3: [3430, -1.79, 0.361, 0.37],
+  "M3.5": [3270, -2.03, 0.3, 0.27],
+  M4: [3210, -2.14, 0.274, 0.23],
+  "M4.5": [3110, -2.4, 0.217, 0.162],
+  M5: [2950, -2.7, 0.189, 0.132],
+  "M5.5": [2800, -3.0, 0.168, 0.113],
+  M6: [2700, -3.14, 0.148, 0.102],
+  "M6.5": [2600, -3.28, 0.127, 0.09],
+  M7: [2500, -3.49, 0.112, 0.083],
+  "M7.5": [2400, -3.67, 0.107, 0.078],
+  M8: [2300, -3.87, 0.101, 0.073],
+  "M8.5": [2200, -4.07, 0.097, 0.07],
+  M9: [2000, -4.6, 0.088, 0.079],
+}
+
+// Baraffe et al. (2015) BHAC tracks. Corrects the Mamajek table for
+// stars near the hydrogen-burning limit, where luminosity drops off a
+// cliff the Mamajek fit doesn't capture. Columns: [M, Teff, logL, R].
+const BHAC15 = [
+  [0.075, 2650, -4.27, 0.09],
+  [0.08, 2750, -4.0, 0.096],
+  [0.085, 2820, -3.82, 0.101],
+  [0.09, 2900, -3.63, 0.107],
+  [0.1, 3000, -3.42, 0.117],
+  [0.11, 3100, -3.22, 0.128],
+  [0.12, 3190, -3.05, 0.138],
+  [0.13, 3270, -2.9, 0.148],
+  [0.15, 3380, -2.66, 0.165],
+]
+
+// Roughly how common each spectral class is among real main sequence
+// stars. Weighted this way so a generated catalogue isn't flooded with
+// O and B giants, which are vanishingly rare in practice.
+const CLASS_WEIGHTS = { O: 0.00003, B: 0.13, A: 0.6, F: 3.0, G: 7.5, K: 12.1, M: 76.45 }
+
+const LY_PER_PC = 3.2615637771674
+
+// Group the table by letter class, sorted by subtype, once up front,
+// so each star draw is just a lookup and an interpolation.
+const classEntries = (() => {
+  const groups = {}
+  for (const key in MS_TABLE) {
+    const letter = key[0]
+    const subtype = parseFloat(key.slice(1))
+    const [teff, logL, r, m] = MS_TABLE[key]
+    if (!groups[letter]) groups[letter] = []
+    groups[letter].push({ subtype, teff, l: Math.pow(10, logL), r, m })
+  }
+  for (const letter in groups) groups[letter].sort((a, b) => a.subtype - b.subtype)
+  return groups
+})()
+
+function pickClass() {
+  const letters = Object.keys(CLASS_WEIGHTS)
+  const total = letters.reduce((sum, l) => sum + CLASS_WEIGHTS[l], 0)
+  let r = Math.random() * total
+  for (const l of letters) {
+    if (r < CLASS_WEIGHTS[l]) return l
+    r -= CLASS_WEIGHTS[l]
+  }
+  return letters[letters.length - 1]
+}
+
+function bhac15Lookup(mass) {
+  if (mass < BHAC15[0][0] || mass > BHAC15[BHAC15.length - 1][0]) return null
+  let lo = BHAC15[0], hi = BHAC15[BHAC15.length - 1]
+  for (let i = 0; i < BHAC15.length - 1; i++) {
+    if (BHAC15[i][0] <= mass && BHAC15[i + 1][0] >= mass) {
+      lo = BHAC15[i]
+      hi = BHAC15[i + 1]
+      break
+    }
+  }
+  const f = (mass - lo[0]) / (hi[0] - lo[0])
+  return {
+    teff: lo[1] + f * (hi[1] - lo[1]),
+    l: Math.pow(10, lo[2] + f * (hi[2] - lo[2])),
+    r: lo[3] + f * (hi[3] - lo[3]),
+  }
+}
+
+// Picks a class, then a random subtype within it, then interpolates
+// Teff/L/R/M between the two nearest table rows for that subtype.
+function randomStar() {
+  const letter = pickClass()
+  const entries = classEntries[letter]
+  const minSub = entries[0].subtype
+  const maxSub = entries[entries.length - 1].subtype
+  const subtype = minSub + Math.random() * (maxSub - minSub)
+
+  let lo = entries[0], hi = entries[entries.length - 1]
+  for (let i = 0; i < entries.length - 1; i++) {
+    if (entries[i].subtype <= subtype && entries[i + 1].subtype >= subtype) {
+      lo = entries[i]
+      hi = entries[i + 1]
+      break
+    }
+  }
+  const f = hi.subtype === lo.subtype ? 0 : (subtype - lo.subtype) / (hi.subtype - lo.subtype)
+  let teff = lo.teff + f * (hi.teff - lo.teff)
+  let l = lo.l + f * (hi.l - lo.l)
+  let r = lo.r + f * (hi.r - lo.r)
+  const m = lo.m + f * (hi.m - lo.m)
+
+  // low-mass override, matches the fix already made in starRadius.js
+  if (m <= 0.15) {
+    const bhac = bhac15Lookup(Math.max(0.075, m))
+    if (bhac) {
+      teff = bhac.teff
+      l = bhac.l
+      r = bhac.r
+    }
+  }
+
+  return { letter, subtype, teff, l, r, m }
+}
+
+// Torres (2010) / Flower (1996) bolometric correction, piecewise in
+// log Teff. Lets apparent magnitude fall out of the same Teff and L
+// every other column is built from, instead of being picked separately.
+function calcBCV(teff) {
+  const lt = Math.log10(teff)
+  if (lt < 3.7) {
+    const a = -19053.7291496456, b = 15514.4866764412, c = -4212.78819301717, d = 381.476328422343
+    return a + b * lt + c * lt * lt + d * lt * lt * lt
+  }
+  if (lt <= 3.9) {
+    const a = -37051.0203809015, b = 38567.2629965804, c = -15065.1486316025, d = 2617.24637119416, e = -170.623810323864
+    return a + b * lt + c * lt * lt + d * lt * lt * lt + e * lt * lt * lt * lt
+  }
+  const a = -118115.450538963, b = 137145.973583929, c = -63623.3812100225, d = 14741.2923562646, e = -1705.87278406872, f = 78.873172180499
+  return a + b * lt + c * lt * lt + d * lt * lt * lt + e * lt * lt * lt * lt + f * lt * lt * lt * lt * lt
+}
+
+function calcMbol(l) {
+  return 4.74 - 2.5 * Math.log10(l)
+}
+
+// Log-uniform, not linear, since the default range covers nearby stars
+// through to nearby galaxies. Linear would pack almost every star near
+// the top end of that range.
+function randomLogUniform(min, max) {
+  const logMin = Math.log(min)
+  const logMax = Math.log(max)
+  return Math.exp(logMin + Math.random() * (logMax - logMin))
+}
+
+function buildStarRow(index, totalDigits, catName, sep, basePc, minLy, maxLy) {
+  const star = randomStar()
+
+  const mbol = calcMbol(star.l)
+  const bcv = calcBCV(star.teff)
+  const absMagV = mbol - bcv
+
+  const starLy = randomLogUniform(minLy, maxLy)
+  const distPc = basePc + starLy / LY_PER_PC
+  const appMagn = absMagV + 5 * Math.log10(distPc) - 5
+
+  // uniform over the celestial sphere, not just uniform in raw degrees,
+  // so stars don't bunch up near the poles
+  const ra = Math.random() * 24
+  const dec = Math.asin(Math.random() * 2 - 1) * 180 / Math.PI
+
+  const subLabel = Math.min(9, Math.round(star.subtype))
+  const specClass = star.letter + subLabel + "V"
+
+  const name = catName + sep + String(index).padStart(totalDigits, "0")
+
+  return [name, ra, dec, distPc, appMagn, specClass, star.m, star.r, Math.round(star.teff)].join(",")
+}
+
+const form = document.querySelector("#genForm")
+const errorMsg = document.querySelector("#errorMsg")
+const progressSection = document.querySelector("#progressSection")
+const progressBar = document.querySelector("#progressBar")
+const progressText = document.querySelector("#progressText")
+const resultSection = document.querySelector("#resultSection")
+const doneMsg = document.querySelector("#doneMsg")
+const csvOutput = document.querySelector("#csvOutput")
+const downloadBtn = document.querySelector("#downloadBtn")
+
+// mirrors the placeholder text shown in each input, so a blank field
+// behaves the same as typing the placeholder value in yourself
+const DEFAULTS = { count: 1000, catName: "GEN", sep: " ", baseLy: 0, minLy: 4, maxLy: 2000000 }
+
+let lastCsv = ""
+let lastCatName = "catalogue"
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault()
+  errorMsg.hidden = true
+
+  const countRaw = document.querySelector("#starCount").value.trim()
+  const count = countRaw === "" ? DEFAULTS.count : parseInt(countRaw, 10)
+
+  const catNameRaw = document.querySelector("#catName").value.trim()
+  const catName = (catNameRaw === "" ? DEFAULTS.catName : catNameRaw).replace(/,/g, "")
+
+  const sepRaw = document.querySelector("#sepChar").value
+  const sep = (sepRaw === "" ? DEFAULTS.sep : sepRaw).replace(/,/g, "")
+
+  const baseDistRaw = document.querySelector("#baseDist").value.trim()
+  const baseLy = baseDistRaw === "" ? DEFAULTS.baseLy : parseFloat(baseDistRaw)
+
+  const minDistRaw = document.querySelector("#minDist").value.trim()
+  const minLy = minDistRaw === "" ? DEFAULTS.minLy : parseFloat(minDistRaw)
+
+  const maxDistRaw = document.querySelector("#maxDist").value.trim()
+  const maxLy = maxDistRaw === "" ? DEFAULTS.maxLy : parseFloat(maxDistRaw)
+
+  const badInput = !count || count < 1 || !catName || !(baseLy >= 0) || !(minLy > 0) || !(maxLy > minLy)
+  if (badInput) {
+    errorMsg.textContent = "Check your inputs. Star count needs to be at least 1, catalogue name can't be empty, and max distance needs to be bigger than min distance."
+    errorMsg.hidden = false
+    return
+  }
+
+  resultSection.hidden = true
+  progressSection.hidden = false
+  progressBar.value = 0
+  progressBar.max = count
+  progressText.textContent = `0 / ${count}`
+
+  const basePc = baseLy / LY_PER_PC
+  const totalDigits = String(count).length
+  const rows = new Array(count)
+  let done = 0
+
+  // generate in batches so the progress bar actually updates instead
+  // of the tab freezing until the whole catalogue is done
+  function chunk() {
+    const batchEnd = Math.min(done + 500, count)
+    for (let i = done; i < batchEnd; i++) {
+      rows[i] = buildStarRow(i + 1, totalDigits, catName, sep, basePc, minLy, maxLy)
+    }
+    done = batchEnd
+    progressBar.value = done
+    progressText.textContent = `${done} / ${count}`
+
+    if (done < count) {
+      setTimeout(chunk, 0)
+    } else {
+      finish(rows, catName)
+    }
+  }
+
+  chunk()
+})
+
+function finish(rows, catName) {
+  const header = "Name,RA,Dec,Dist,AppMagn,SpecClass,MassSol,RadSol,Temperature"
+  lastCsv = header + "\n" + rows.join("\n") + "\n"
+  lastCatName = catName || "catalogue"
+
+  doneMsg.textContent = `Done. Generated ${rows.length} stars.`
+  csvOutput.value = lastCsv
+  resultSection.hidden = false
+}
+
+downloadBtn.addEventListener("click", () => {
+  const blob = new Blob([lastCsv], { type: "text/csv" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `${lastCatName}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+})
+</script>
+
+</body>
+</html>
