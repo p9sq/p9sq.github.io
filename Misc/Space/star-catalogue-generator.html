@@ -220,16 +220,26 @@
       </p>
 
       <form id="genForm">
-        <div class="field">
-          <label for="starCount">Number of stars</label>
-          <input
-            type="number"
-            id="starCount"
-            min="1"
-            step="1"
-            placeholder="1000"
-          />
+        <div class="row">
+          <div class="field">
+            <label for="starCount">Number of stars</label>
+            <input
+              type="number"
+              id="starCount"
+              min="1"
+              step="1"
+              placeholder="1000"
+            />
+          </div>
+          <div class="field">
+            <label for="numOffset">Numbering offset</label>
+            <input type="number" id="numOffset" step="1" placeholder="1" />
+          </div>
         </div>
+        <p class="hint">
+          Numbering starts at the offset. Default 1 numbers stars 1, 2, 3 in
+          order.
+        </p>
 
         <div class="row">
           <div class="field">
@@ -246,20 +256,44 @@
           GEN 2, GEN 3.
         </p>
 
-        <div class="field">
-          <label for="baseDist">Base distance (light-years)</label>
-          <input
-            type="number"
-            id="baseDist"
-            min="0"
-            step="any"
-            placeholder="0"
-          />
-          <p class="hint">
-            Added to every star's distance. Use this to place the whole
-            catalogue somewhere other than right next to the Sun.
-          </p>
+        <div class="row">
+          <div class="field">
+            <label for="baseDist">Base distance (ly)</label>
+            <input
+              type="number"
+              id="baseDist"
+              min="0"
+              step="any"
+              placeholder="0"
+            />
+          </div>
+          <div class="field">
+            <label for="baseRA">Base RA (hours)</label>
+            <input
+              type="number"
+              id="baseRA"
+              min="0"
+              max="24"
+              step="any"
+              placeholder="0"
+            />
+          </div>
+          <div class="field">
+            <label for="baseDec">Base Dec (degrees)</label>
+            <input
+              type="number"
+              id="baseDec"
+              min="-90"
+              max="90"
+              step="any"
+              placeholder="0"
+            />
+          </div>
         </div>
+        <p class="hint">
+          These three set the center point stars spread from. Default keeps the
+          center at the Sun, at 0 ly, RA 0, Dec 0.
+        </p>
 
         <div class="row">
           <div class="field">
@@ -284,10 +318,11 @@
           </div>
         </div>
         <p class="hint">
-          Distances are sampled on a log scale between these two, since the
-          default range spans nearby stars to nearby galaxies. RA and dec are
-          sampled uniformly over the whole sky. Stars are kept at least a
-          light-year apart from each other so they don't pile up like a cluster.
+          These set how far each star sits from the center point, sampled on a
+          log scale since the default range spans nearby stars to nearby
+          galaxies. Direction from the center point is uniform over the whole
+          sky. Stars are kept at least a light-year apart from each other so
+          they don't pile up like a cluster.
         </p>
 
         <button type="button" id="openSettingsBtn" class="secondary">
@@ -1117,6 +1152,29 @@
       // Sky positions, kept spread apart
       // ============================================================
 
+      // Converts the base RA/Dec/distance into a Cartesian point relative to
+      // the Sun. Stars then spread out from this point instead of the Sun.
+      function raDecDistToXyz(raHours, decDeg, distLy) {
+        const raRad = (raHours / 24) * 2 * Math.PI;
+        const decRad = (decDeg * Math.PI) / 180;
+        return {
+          x: distLy * Math.cos(decRad) * Math.cos(raRad),
+          y: distLy * Math.cos(decRad) * Math.sin(raRad),
+          z: distLy * Math.sin(decRad),
+        };
+      }
+
+      // Converts a Cartesian point back to RA/Dec/distance as seen from the
+      // Sun, since that's what the CSV columns expect.
+      function xyzToRaDecDist(x, y, z) {
+        const dist = Math.sqrt(x * x + y * y + z * z);
+        let raRad = Math.atan2(y, x);
+        if (raRad < 0) raRad += 2 * Math.PI;
+        const ra = (raRad / (2 * Math.PI)) * 24;
+        const dec = dist === 0 ? 0 : (Math.asin(z / dist) * 180) / Math.PI;
+        return { ra, dec, dist };
+      }
+
       // A minimum separation stops stars from landing on top of each other by
       // chance, which at small distances would look like a cluster. Points are
       // bucketed into a spatial hash so each check only looks at nearby cells,
@@ -1166,27 +1224,26 @@
         grid.get(key).push([x, y, z]);
       }
 
-      function pickSpreadOutPosition(grid, minLy, maxLy, baseLy) {
+      function pickSpreadOutPosition(grid, minLy, maxLy, basePos) {
         const maxAttempts = 30;
-        let ra, dec, finalDistLy, x, y, z;
+        let x, y, z;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          finalDistLy = baseLy + randomLogUniform(minLy, maxLy);
-          ra = Math.random() * 24;
-          dec = (Math.asin(Math.random() * 2 - 1) * 180) / Math.PI;
-          const raRad = (ra / 24) * 2 * Math.PI;
-          const decRad = (dec * Math.PI) / 180;
-          x = finalDistLy * Math.cos(decRad) * Math.cos(raRad);
-          y = finalDistLy * Math.cos(decRad) * Math.sin(raRad);
-          z = finalDistLy * Math.sin(decRad);
+          const offsetLy = randomLogUniform(minLy, maxLy);
+          const dirRaRad = Math.random() * 2 * Math.PI;
+          const dirDecRad = Math.asin(Math.random() * 2 - 1);
+          x = basePos.x + offsetLy * Math.cos(dirDecRad) * Math.cos(dirRaRad);
+          y = basePos.y + offsetLy * Math.cos(dirDecRad) * Math.sin(dirRaRad);
+          z = basePos.z + offsetLy * Math.sin(dirDecRad);
           if (!tooClose(grid, x, y, z)) break;
         }
         addToGrid(grid, x, y, z);
-        return { ra, dec, finalDistLy };
+        const fromSun = xyzToRaDecDist(x, y, z);
+        return { ra: fromSun.ra, dec: fromSun.dec, finalDistLy: fromSun.dist };
       }
 
-      function buildStarRow(index, catName, sep, baseLy, minLy, maxLy, grid) {
+      function buildStarRow(index, catName, sep, minLy, maxLy, basePos, grid) {
         const star = generateStar();
-        const pos = pickSpreadOutPosition(grid, minLy, maxLy, baseLy);
+        const pos = pickSpreadOutPosition(grid, minLy, maxLy, basePos);
         const distPc = pos.finalDistLy / LY_PER_PC;
 
         const appMagn =
@@ -1276,9 +1333,12 @@
       // behaves the same as typing the placeholder value in yourself
       const DEFAULTS = {
         count: 1000,
+        numOffset: 1,
         catName: "GEN",
         sep: " ",
         baseLy: 0,
+        baseRA: 0,
+        baseDec: 0,
         minLy: 4,
         maxLy: 2000000,
       };
@@ -1293,6 +1353,10 @@
         const countRaw = document.querySelector("#starCount").value.trim();
         const count = countRaw === "" ? DEFAULTS.count : parseInt(countRaw, 10);
 
+        const numOffsetRaw = document.querySelector("#numOffset").value.trim();
+        const numOffset =
+          numOffsetRaw === "" ? DEFAULTS.numOffset : parseInt(numOffsetRaw, 10);
+
         const catNameRaw = document.querySelector("#catName").value.trim();
         const catName = (
           catNameRaw === "" ? DEFAULTS.catName : catNameRaw
@@ -1305,6 +1369,14 @@
         const baseLy =
           baseDistRaw === "" ? DEFAULTS.baseLy : parseFloat(baseDistRaw);
 
+        const baseRARaw = document.querySelector("#baseRA").value.trim();
+        const baseRA =
+          baseRARaw === "" ? DEFAULTS.baseRA : parseFloat(baseRARaw);
+
+        const baseDecRaw = document.querySelector("#baseDec").value.trim();
+        const baseDec =
+          baseDecRaw === "" ? DEFAULTS.baseDec : parseFloat(baseDecRaw);
+
         const minDistRaw = document.querySelector("#minDist").value.trim();
         const minLy =
           minDistRaw === "" ? DEFAULTS.minLy : parseFloat(minDistRaw);
@@ -1316,13 +1388,16 @@
         const badInput =
           !count ||
           count < 1 ||
+          Number.isNaN(numOffset) ||
           !catName ||
           !(baseLy >= 0) ||
+          !(baseRA >= 0 && baseRA <= 24) ||
+          !(baseDec >= -90 && baseDec <= 90) ||
           !(minLy > 0) ||
           !(maxLy > minLy);
         if (badInput) {
           errorMsg.textContent =
-            "Check your inputs. Star count needs to be at least 1, catalogue name can't be empty, and max distance needs to be bigger than min distance.";
+            "Check your inputs. Star count needs to be at least 1, catalogue name can't be empty, base RA needs to be between 0 and 24, base Dec needs to be between -90 and 90, and max distance needs to be bigger than min distance.";
           errorMsg.hidden = false;
           return;
         }
@@ -1335,6 +1410,7 @@
 
         const rows = new Array(count);
         const grid = new Map();
+        const basePos = raDecDistToXyz(baseRA, baseDec, baseLy);
         let done = 0;
 
         // generate in batches so the progress bar actually updates instead
@@ -1343,12 +1419,12 @@
           const batchEnd = Math.min(done + 500, count);
           for (let i = done; i < batchEnd; i++) {
             rows[i] = buildStarRow(
-              i + 1,
+              i + numOffset,
               catName,
               sep,
-              baseLy,
               minLy,
               maxLy,
+              basePos,
               grid,
             );
           }
