@@ -1,547 +1,1390 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Star Catalogue Generator</title>
-<style>
-  * { box-sizing: border-box }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Star Catalogue Generator</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-  body {
-    background: #0b0e17;
-    color: #dfe4ee;
-    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    margin: 0;
-    padding: 40px 20px 80px;
-  }
+      body {
+        background: #0b0e17;
+        color: #dfe4ee;
+        font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+        line-height: 1.5;
+        margin: 0;
+        padding: 40px 20px 80px;
+      }
 
-  main {
-    max-width: 640px;
-    margin: 0 auto;
-  }
+      main {
+        max-width: 640px;
+        margin: 0 auto;
+      }
 
-  h1 {
-    font-size: 1.6rem;
-    margin-bottom: 4px;
-  }
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 4px;
+      }
 
-  .lede {
-    color: #8b93a7;
-    margin-top: 0;
-    margin-bottom: 32px;
-  }
+      h2 {
+        font-size: 1.2rem;
+        margin-top: 0;
+      }
 
-  .field {
-    margin-bottom: 18px;
-  }
+      .lede {
+        color: #8b93a7;
+        margin-top: 0;
+        margin-bottom: 32px;
+      }
 
-  .field label {
-    display: block;
-    font-size: 0.9rem;
-    margin-bottom: 6px;
-  }
+      .field {
+        margin-bottom: 18px;
+      }
 
-  .field .hint {
-    color: #8b93a7;
-    font-size: 0.8rem;
-    margin-top: 4px;
-  }
+      .field label {
+        display: block;
+        font-size: 0.9rem;
+        margin-bottom: 6px;
+      }
 
-  input {
-    width: 100%;
-    background: #161b29;
-    border: 1px solid #2b3242;
-    color: #dfe4ee;
-    padding: 10px 12px;
-    border-radius: 4px;
-    font-size: 1rem;
-  }
+      .field .hint {
+        color: #8b93a7;
+        font-size: 0.8rem;
+        margin-top: 4px;
+      }
 
-  input:focus {
-    outline: 2px solid #5fb0ff;
-    outline-offset: 1px;
-  }
+      input[type="text"],
+      input[type="number"] {
+        width: 100%;
+        background: #161b29;
+        border: 1px solid #2b3242;
+        color: #dfe4ee;
+        padding: 10px 12px;
+        border-radius: 4px;
+        font-size: 1rem;
+      }
 
-  .row {
-    display: flex;
-    gap: 16px;
-  }
+      input:focus {
+        outline: 2px solid #5fb0ff;
+        outline-offset: 1px;
+      }
 
-  .row .field {
-    flex: 1;
-  }
+      .row {
+        display: flex;
+        gap: 16px;
+      }
 
-  button {
-    background: #5fb0ff;
-    color: #0b0e17;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
+      .row .field {
+        flex: 1;
+      }
 
-  button:hover {
-    background: #7cbdff;
-  }
+      button {
+        background: #5fb0ff;
+        color: #0b0e17;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
 
-  button:focus-visible {
-    outline: 2px solid #dfe4ee;
-    outline-offset: 2px;
-  }
+      button:hover {
+        background: #7cbdff;
+      }
 
-  .error {
-    background: #2a1418;
-    border: 1px solid #6b2530;
-    color: #ff9baa;
-    padding: 10px 12px;
-    border-radius: 4px;
-    margin-bottom: 18px;
-  }
+      button:focus-visible {
+        outline: 2px solid #dfe4ee;
+        outline-offset: 2px;
+      }
 
-  section {
-    margin-top: 32px;
-  }
+      button.secondary {
+        background: transparent;
+        border: 1px solid #2b3242;
+        color: #dfe4ee;
+        font-weight: 400;
+        margin-bottom: 14px;
+        width: 100%;
+      }
 
-  progress {
-    width: 100%;
-    height: 10px;
-  }
+      button.secondary:hover {
+        background: #161b29;
+      }
 
-  #progressText {
-    color: #8b93a7;
-    font-size: 0.9rem;
-    margin-top: 6px;
-  }
+      .error {
+        background: #2a1418;
+        border: 1px solid #6b2530;
+        color: #ff9baa;
+        padding: 10px 12px;
+        border-radius: 4px;
+        margin-bottom: 18px;
+      }
 
-  #doneMsg {
-    margin-bottom: 12px;
-  }
+      section {
+        margin-top: 32px;
+      }
 
-  textarea {
-    width: 100%;
-    background: #161b29;
-    border: 1px solid #2b3242;
-    color: #dfe4ee;
-    font-family: "SF Mono", Consolas, monospace;
-    font-size: 0.8rem;
-    padding: 12px;
-    border-radius: 4px;
-    margin-top: 14px;
-    resize: vertical;
-  }
-</style>
-</head>
-<body>
+      progress {
+        width: 100%;
+        height: 10px;
+      }
 
-<main>
-  <h1>Star Catalogue Generator</h1>
-  <p class="lede">Builds a Space Engine CSV star catalogue. Mass, radius, temperature, and apparent magnitude are all derived from the same physical model, so they stay consistent with each other.</p>
+      #progressText {
+        color: #8b93a7;
+        font-size: 0.9rem;
+        margin-top: 6px;
+      }
 
-  <form id="genForm">
-    <div class="field">
-      <label for="starCount">Number of stars</label>
-      <input type="number" id="starCount" min="1" step="1" placeholder="1000">
-    </div>
+      #doneMsg {
+        margin-bottom: 12px;
+      }
 
-    <div class="row">
-      <div class="field">
-        <label for="catName">Catalogue name</label>
-        <input type="text" id="catName" placeholder="GEN">
+      dialog {
+        background: #12172a;
+        color: #dfe4ee;
+        border: 1px solid #2b3242;
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 480px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+      }
+
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.6);
+      }
+
+      .mode-row {
+        display: block;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+      }
+
+      .mode-row input {
+        width: auto;
+        margin-right: 8px;
+      }
+
+      #customSliders {
+        margin-top: 16px;
+        border-top: 1px solid #2b3242;
+        padding-top: 16px;
+      }
+
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .slider-row label {
+        flex: 0 0 170px;
+        font-size: 0.8rem;
+      }
+
+      .slider-row input[type="range"] {
+        flex: 1;
+        width: auto;
+      }
+
+      .slider-row .sliderVal {
+        flex: 0 0 26px;
+        text-align: right;
+        font-size: 0.8rem;
+        color: #8b93a7;
+      }
+
+      .dialog-actions {
+        margin-top: 18px;
+        text-align: right;
+      }
+
+      .dialog-actions button {
+        width: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Star Catalogue Generator</h1>
+      <p class="lede">
+        Builds a Space Engine CSV star catalogue. Covers main sequence dwarfs,
+        giants and supergiants, Wolf-Rayet stars, white dwarfs, neutron stars,
+        black holes, and brown dwarfs, all with mass, radius, and temperature
+        tied together by the same physical models, age included where age
+        changes the numbers.
+      </p>
+
+      <form id="genForm">
+        <div class="field">
+          <label for="starCount">Number of stars</label>
+          <input
+            type="number"
+            id="starCount"
+            min="1"
+            step="1"
+            placeholder="1000"
+          />
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="catName">Catalogue name</label>
+            <input type="text" id="catName" placeholder="GEN" />
+          </div>
+          <div class="field">
+            <label for="sepChar">Separator</label>
+            <input type="text" id="sepChar" placeholder=" " maxlength="3" />
+          </div>
+        </div>
+        <p class="hint">
+          Star names come out as name + separator + number, for example GEN 1,
+          GEN 2, GEN 3.
+        </p>
+
+        <div class="field">
+          <label for="baseDist">Base distance (light-years)</label>
+          <input
+            type="number"
+            id="baseDist"
+            min="0"
+            step="any"
+            placeholder="0"
+          />
+          <p class="hint">
+            Added to every star's distance. Use this to place the whole
+            catalogue somewhere other than right next to the Sun.
+          </p>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="minDist">Minimum star distance (ly)</label>
+            <input
+              type="number"
+              id="minDist"
+              min="0.001"
+              step="any"
+              placeholder="4"
+            />
+          </div>
+          <div class="field">
+            <label for="maxDist">Maximum star distance (ly)</label>
+            <input
+              type="number"
+              id="maxDist"
+              min="0.001"
+              step="any"
+              placeholder="2000000"
+            />
+          </div>
+        </div>
+        <p class="hint">
+          Distances are sampled on a log scale between these two, since the
+          default range spans nearby stars to nearby galaxies. RA and dec are
+          sampled uniformly over the whole sky. Stars are kept at least a
+          light-year apart from each other so they don't pile up like a cluster.
+        </p>
+
+        <button type="button" id="openSettingsBtn" class="secondary">
+          Star type settings
+        </button>
+        <button type="submit" id="genBtn">Generate catalogue</button>
+      </form>
+
+      <p class="error" id="errorMsg" hidden></p>
+
+      <section id="progressSection" hidden>
+        <progress id="progressBar" value="0" max="100"></progress>
+        <p id="progressText">0 / 0</p>
+      </section>
+
+      <section id="resultSection" hidden>
+        <p id="doneMsg"></p>
+        <button type="button" id="downloadBtn">Download CSV</button>
+      </section>
+    </main>
+
+    <dialog id="settingsDialog">
+      <h2>Star type mix</h2>
+      <label class="mode-row"
+        ><input type="radio" name="mixMode" value="realistic" checked />
+        Realistic — M dwarfs common, O/B stars rare, remnants and brown dwarfs
+        mixed in at low rates</label
+      >
+      <label class="mode-row"
+        ><input type="radio" name="mixMode" value="equal" /> Equal — every type
+        equally likely</label
+      >
+      <label class="mode-row"
+        ><input type="radio" name="mixMode" value="custom" /> Custom — set your
+        own mix below</label
+      >
+      <div id="customSliders" hidden></div>
+      <div class="dialog-actions">
+        <button type="button" id="closeSettings">Done</button>
       </div>
-      <div class="field">
-        <label for="sepChar">Separator</label>
-        <input type="text" id="sepChar" placeholder=" " maxlength="3">
-      </div>
-    </div>
-    <p class="hint">Star names come out as name + separator + number, zero-padded to match your star count so they sort cleanly in Space Engine. Leave a field blank to use its default, shown as the greyed-out placeholder.</p>
+    </dialog>
 
-    <div class="field">
-      <label for="baseDist">Base distance (light-years)</label>
-      <input type="number" id="baseDist" min="0" step="any" placeholder="0">
-      <p class="hint">Added to every star's distance. Use this to place the whole catalogue somewhere other than right next to the Sun.</p>
-    </div>
+    <script>
+      "use strict";
 
-    <div class="row">
-      <div class="field">
-        <label for="minDist">Minimum star distance (ly)</label>
-        <input type="number" id="minDist" min="0.001" step="any" placeholder="4">
-      </div>
-      <div class="field">
-        <label for="maxDist">Maximum star distance (ly)</label>
-        <input type="number" id="maxDist" min="0.001" step="any" placeholder="2000000">
-      </div>
-    </div>
-    <p class="hint">Distances are sampled on a log scale between these two, since the default range spans nearby stars to nearby galaxies. RA and dec are sampled uniformly over the whole sky.</p>
+      // ============================================================
+      // Physical constants
+      // ============================================================
+      const LY_PER_PC = 3.2615637771674;
+      const R_SUN_KM = 695700;
+      const R_SUN_M = 6.957e8;
+      const M_SUN_KG = 1.9885e30;
+      const L_SUN = 3.828e26;
+      const SIGMA = 5.6704e-8;
+      const G_CONST = 6.674e-11;
+      const C_LIGHT = 2.998e8;
+      const M_JUP_IN_MSUN = 9.543e-4;
 
-    <button type="submit" id="genBtn">Generate catalogue</button>
-  </form>
+      function calcTeff(luminositySun, radiusSun) {
+        const l = luminositySun * L_SUN;
+        const r = radiusSun * R_SUN_M;
+        return Math.pow(l / (4 * Math.PI * r * r * SIGMA), 0.25);
+      }
 
-  <p class="error" id="errorMsg" hidden></p>
+      // Torres (2010) / Flower (1996) bolometric correction, piecewise in
+      // log Teff. Lets apparent magnitude fall out of the same Teff and L
+      // every other column is built from, instead of being picked separately.
+      function calcBCV(teff) {
+        const lt = Math.log10(teff);
+        if (lt < 3.7) {
+          const a = -19053.7291496456,
+            b = 15514.4866764412,
+            c = -4212.78819301717,
+            d = 381.476328422343;
+          return a + b * lt + c * lt * lt + d * lt * lt * lt;
+        }
+        if (lt <= 3.9) {
+          const a = -37051.0203809015,
+            b = 38567.2629965804,
+            c = -15065.1486316025,
+            d = 2617.24637119416,
+            e = -170.623810323864;
+          return (
+            a + b * lt + c * lt * lt + d * lt * lt * lt + e * lt * lt * lt * lt
+          );
+        }
+        const a = -118115.450538963,
+          b = 137145.973583929,
+          c = -63623.3812100225,
+          d = 14741.2923562646,
+          e = -1705.87278406872,
+          f = 78.873172180499;
+        return (
+          a +
+          b * lt +
+          c * lt * lt +
+          d * lt * lt * lt +
+          e * lt * lt * lt * lt +
+          f * lt * lt * lt * lt * lt
+        );
+      }
 
-  <section id="progressSection" hidden>
-    <progress id="progressBar" value="0" max="100"></progress>
-    <p id="progressText">0 / 0</p>
-  </section>
+      function calcMbol(l) {
+        return 4.74 - 2.5 * Math.log10(l);
+      }
 
-  <section id="resultSection" hidden>
-    <p id="doneMsg"></p>
-    <button type="button" id="downloadBtn">Download CSV</button>
-    <textarea id="csvOutput" rows="14" readonly></textarea>
-  </section>
-</main>
+      // Log-uniform, not linear, so a wide range doesn't dump almost every
+      // draw near the top end. Used for distance and for remnant/BD ages.
+      function randomLogUniform(min, max) {
+        const logMin = Math.log(min);
+        const logMax = Math.log(max);
+        return Math.exp(logMin + Math.random() * (logMax - logMin));
+      }
 
-<script>
-"use strict"
+      function weightedPick(weights) {
+        const keys = Object.keys(weights);
+        const total = keys.reduce((sum, k) => sum + weights[k], 0);
+        let r = Math.random() * total;
+        for (const k of keys) {
+          if (r < weights[k]) return k;
+          r -= weights[k];
+        }
+        return keys[keys.length - 1];
+      }
 
-// Pecaut & Mamajek (2022) main sequence table, O3V-M9V.
-// Columns: [Teff, logL, R_Sun, M_Sun]. Same source data as starRadius.js,
-// so results line up with values already checked against that tool.
-const MS_TABLE = {
-  O3: [44900, 5.82, 13.43, 59.0],
-  O4: [42900, 5.65, 12.13, 48.0],
-  O5: [41400, 5.54, 11.45, 43.0],
-  "O5.5": [40500, 5.44, 10.71, 38.0],
-  O6: [39500, 5.36, 10.27, 35.0],
-  "O6.5": [38300, 5.27, 9.82, 31.0],
-  O7: [37100, 5.18, 9.42, 28.0],
-  "O7.5": [36100, 5.09, 8.95, 26.0],
-  O8: [35100, 4.99, 8.47, 23.6],
-  "O8.5": [34300, 4.91, 8.06, 21.9],
-  O9: [33300, 4.82, 7.72, 20.2],
-  "O9.5": [31900, 4.72, 7.5, 18.7],
-  B0: [31400, 4.65, 7.16, 17.7],
-  "B0.5": [29000, 4.43, 6.48, 14.8],
-  B1: [26000, 4.13, 5.71, 11.8],
-  "B1.5": [24500, 3.91, 5.02, 9.9],
-  B2: [20600, 3.43, 4.06, 7.3],
-  "B2.5": [18500, 3.2, 3.89, 6.1],
-  B3: [17000, 2.99, 3.61, 5.4],
-  B4: [16400, 2.89, 3.46, 5.1],
-  B5: [15700, 2.77, 3.36, 4.7],
-  B6: [14500, 2.57, 3.27, 4.3],
-  B7: [14000, 2.48, 2.94, 3.92],
-  B8: [12300, 2.19, 2.86, 3.38],
-  B9: [10700, 1.86, 2.49, 2.75],
-  "B9.5": [10400, 1.8, 2.45, 2.68],
-  A0: [9700, 1.58, 2.193, 2.18],
-  A1: [9300, 1.49, 2.136, 2.05],
-  A2: [8800, 1.38, 2.117, 1.98],
-  A3: [8600, 1.23, 1.861, 1.86],
-  A4: [8250, 1.13, 1.794, 1.93],
-  A5: [8100, 1.09, 1.785, 1.88],
-  A6: [7910, 1.05, 1.775, 1.83],
-  A7: [7760, 1.0, 1.75, 1.77],
-  A8: [7590, 0.96, 1.747, 1.81],
-  A9: [7400, 0.92, 1.747, 1.75],
-  F0: [7220, 0.86, 1.728, 1.61],
-  F1: [7020, 0.79, 1.679, 1.5],
-  F2: [6820, 0.71, 1.622, 1.46],
-  F3: [6750, 0.67, 1.578, 1.44],
-  F4: [6670, 0.62, 1.533, 1.38],
-  F5: [6550, 0.56, 1.473, 1.33],
-  F6: [6350, 0.43, 1.359, 1.25],
-  F7: [6280, 0.39, 1.324, 1.21],
-  F8: [6180, 0.29, 1.221, 1.18],
-  F9: [6050, 0.22, 1.167, 1.13],
-  "F9.5": [5990, 0.18, 1.142, 1.08],
-  G0: [5930, 0.13, 1.1, 1.06],
-  G1: [5860, 0.08, 1.06, 1.03],
-  G2: [5770, 0.01, 1.012, 1.0],
-  G3: [5720, -0.01, 1.002, 0.99],
-  G4: [5680, -0.04, 0.991, 0.985],
-  G5: [5660, -0.05, 0.977, 0.98],
-  G6: [5600, -0.1, 0.949, 0.97],
-  G7: [5550, -0.13, 0.927, 0.95],
-  G8: [5480, -0.17, 0.914, 0.94],
-  G9: [5380, -0.26, 0.853, 0.9],
-  K0: [5270, -0.34, 0.813, 0.88],
-  K1: [5170, -0.39, 0.797, 0.86],
-  K2: [5100, -0.43, 0.783, 0.82],
-  K3: [4830, -0.55, 0.755, 0.78],
-  K4: [4600, -0.69, 0.713, 0.73],
-  K5: [4440, -0.76, 0.701, 0.7],
-  K6: [4300, -0.86, 0.669, 0.69],
-  K7: [4100, -1.0, 0.63, 0.64],
-  K8: [3990, -1.06, 0.615, 0.62],
-  K9: [3930, -1.1, 0.608, 0.59],
-  M0: [3850, -1.16, 0.588, 0.57],
-  "M0.5": [3770, -1.27, 0.544, 0.54],
-  M1: [3660, -1.39, 0.501, 0.5],
-  "M1.5": [3620, -1.44, 0.482, 0.47],
-  M2: [3560, -1.54, 0.446, 0.44],
-  "M2.5": [3470, -1.64, 0.421, 0.4],
-  M3: [3430, -1.79, 0.361, 0.37],
-  "M3.5": [3270, -2.03, 0.3, 0.27],
-  M4: [3210, -2.14, 0.274, 0.23],
-  "M4.5": [3110, -2.4, 0.217, 0.162],
-  M5: [2950, -2.7, 0.189, 0.132],
-  "M5.5": [2800, -3.0, 0.168, 0.113],
-  M6: [2700, -3.14, 0.148, 0.102],
-  "M6.5": [2600, -3.28, 0.127, 0.09],
-  M7: [2500, -3.49, 0.112, 0.083],
-  "M7.5": [2400, -3.67, 0.107, 0.078],
-  M8: [2300, -3.87, 0.101, 0.073],
-  "M8.5": [2200, -4.07, 0.097, 0.07],
-  M9: [2000, -4.6, 0.088, 0.079],
-}
+      // ============================================================
+      // Main sequence (Pecaut & Mamajek 2022, O3V-M9V)
+      // Same source data as starRadius.js, so results line up with values
+      // already checked against that tool.
+      // Columns: [Teff, logL, R_Sun, M_Sun]
+      // ============================================================
+      const MS_TABLE = {
+        O3: [44900, 5.82, 13.43, 59.0],
+        O4: [42900, 5.65, 12.13, 48.0],
+        O5: [41400, 5.54, 11.45, 43.0],
+        "O5.5": [40500, 5.44, 10.71, 38.0],
+        O6: [39500, 5.36, 10.27, 35.0],
+        "O6.5": [38300, 5.27, 9.82, 31.0],
+        O7: [37100, 5.18, 9.42, 28.0],
+        "O7.5": [36100, 5.09, 8.95, 26.0],
+        O8: [35100, 4.99, 8.47, 23.6],
+        "O8.5": [34300, 4.91, 8.06, 21.9],
+        O9: [33300, 4.82, 7.72, 20.2],
+        "O9.5": [31900, 4.72, 7.5, 18.7],
+        B0: [31400, 4.65, 7.16, 17.7],
+        "B0.5": [29000, 4.43, 6.48, 14.8],
+        B1: [26000, 4.13, 5.71, 11.8],
+        "B1.5": [24500, 3.91, 5.02, 9.9],
+        B2: [20600, 3.43, 4.06, 7.3],
+        "B2.5": [18500, 3.2, 3.89, 6.1],
+        B3: [17000, 2.99, 3.61, 5.4],
+        B4: [16400, 2.89, 3.46, 5.1],
+        B5: [15700, 2.77, 3.36, 4.7],
+        B6: [14500, 2.57, 3.27, 4.3],
+        B7: [14000, 2.48, 2.94, 3.92],
+        B8: [12300, 2.19, 2.86, 3.38],
+        B9: [10700, 1.86, 2.49, 2.75],
+        "B9.5": [10400, 1.8, 2.45, 2.68],
+        A0: [9700, 1.58, 2.193, 2.18],
+        A1: [9300, 1.49, 2.136, 2.05],
+        A2: [8800, 1.38, 2.117, 1.98],
+        A3: [8600, 1.23, 1.861, 1.86],
+        A4: [8250, 1.13, 1.794, 1.93],
+        A5: [8100, 1.09, 1.785, 1.88],
+        A6: [7910, 1.05, 1.775, 1.83],
+        A7: [7760, 1.0, 1.75, 1.77],
+        A8: [7590, 0.96, 1.747, 1.81],
+        A9: [7400, 0.92, 1.747, 1.75],
+        F0: [7220, 0.86, 1.728, 1.61],
+        F1: [7020, 0.79, 1.679, 1.5],
+        F2: [6820, 0.71, 1.622, 1.46],
+        F3: [6750, 0.67, 1.578, 1.44],
+        F4: [6670, 0.62, 1.533, 1.38],
+        F5: [6550, 0.56, 1.473, 1.33],
+        F6: [6350, 0.43, 1.359, 1.25],
+        F7: [6280, 0.39, 1.324, 1.21],
+        F8: [6180, 0.29, 1.221, 1.18],
+        F9: [6050, 0.22, 1.167, 1.13],
+        "F9.5": [5990, 0.18, 1.142, 1.08],
+        G0: [5930, 0.13, 1.1, 1.06],
+        G1: [5860, 0.08, 1.06, 1.03],
+        G2: [5770, 0.01, 1.012, 1.0],
+        G3: [5720, -0.01, 1.002, 0.99],
+        G4: [5680, -0.04, 0.991, 0.985],
+        G5: [5660, -0.05, 0.977, 0.98],
+        G6: [5600, -0.1, 0.949, 0.97],
+        G7: [5550, -0.13, 0.927, 0.95],
+        G8: [5480, -0.17, 0.914, 0.94],
+        G9: [5380, -0.26, 0.853, 0.9],
+        K0: [5270, -0.34, 0.813, 0.88],
+        K1: [5170, -0.39, 0.797, 0.86],
+        K2: [5100, -0.43, 0.783, 0.82],
+        K3: [4830, -0.55, 0.755, 0.78],
+        K4: [4600, -0.69, 0.713, 0.73],
+        K5: [4440, -0.76, 0.701, 0.7],
+        K6: [4300, -0.86, 0.669, 0.69],
+        K7: [4100, -1.0, 0.63, 0.64],
+        K8: [3990, -1.06, 0.615, 0.62],
+        K9: [3930, -1.1, 0.608, 0.59],
+        M0: [3850, -1.16, 0.588, 0.57],
+        "M0.5": [3770, -1.27, 0.544, 0.54],
+        M1: [3660, -1.39, 0.501, 0.5],
+        "M1.5": [3620, -1.44, 0.482, 0.47],
+        M2: [3560, -1.54, 0.446, 0.44],
+        "M2.5": [3470, -1.64, 0.421, 0.4],
+        M3: [3430, -1.79, 0.361, 0.37],
+        "M3.5": [3270, -2.03, 0.3, 0.27],
+        M4: [3210, -2.14, 0.274, 0.23],
+        "M4.5": [3110, -2.4, 0.217, 0.162],
+        M5: [2950, -2.7, 0.189, 0.132],
+        "M5.5": [2800, -3.0, 0.168, 0.113],
+        M6: [2700, -3.14, 0.148, 0.102],
+        "M6.5": [2600, -3.28, 0.127, 0.09],
+        M7: [2500, -3.49, 0.112, 0.083],
+        "M7.5": [2400, -3.67, 0.107, 0.078],
+        M8: [2300, -3.87, 0.101, 0.073],
+        "M8.5": [2200, -4.07, 0.097, 0.07],
+        M9: [2000, -4.6, 0.088, 0.079],
+      };
 
-// Baraffe et al. (2015) BHAC tracks. Corrects the Mamajek table for
-// stars near the hydrogen-burning limit, where luminosity drops off a
-// cliff the Mamajek fit doesn't capture. Columns: [M, Teff, logL, R].
-const BHAC15 = [
-  [0.075, 2650, -4.27, 0.09],
-  [0.08, 2750, -4.0, 0.096],
-  [0.085, 2820, -3.82, 0.101],
-  [0.09, 2900, -3.63, 0.107],
-  [0.1, 3000, -3.42, 0.117],
-  [0.11, 3100, -3.22, 0.128],
-  [0.12, 3190, -3.05, 0.138],
-  [0.13, 3270, -2.9, 0.148],
-  [0.15, 3380, -2.66, 0.165],
-]
+      // Baraffe et al. (2015) BHAC tracks. Corrects the Mamajek table near the
+      // hydrogen-burning limit, where luminosity drops off a cliff the Mamajek
+      // fit doesn't capture. Columns: [M, Teff, logL, R].
+      const BHAC15 = [
+        [0.075, 2650, -4.27, 0.09],
+        [0.08, 2750, -4.0, 0.096],
+        [0.085, 2820, -3.82, 0.101],
+        [0.09, 2900, -3.63, 0.107],
+        [0.1, 3000, -3.42, 0.117],
+        [0.11, 3100, -3.22, 0.128],
+        [0.12, 3190, -3.05, 0.138],
+        [0.13, 3270, -2.9, 0.148],
+        [0.15, 3380, -2.66, 0.165],
+      ];
 
-// Roughly how common each spectral class is among real main sequence
-// stars. Weighted this way so a generated catalogue isn't flooded with
-// O and B giants, which are vanishingly rare in practice.
-const CLASS_WEIGHTS = { O: 0.00003, B: 0.13, A: 0.6, F: 3.0, G: 7.5, K: 12.1, M: 76.45 }
+      // Group the main sequence table by letter, sorted by subtype, once up
+      // front, so each draw is just a lookup and an interpolation.
+      const classEntries = (() => {
+        const groups = {};
+        for (const key in MS_TABLE) {
+          const letter = key[0];
+          const subtype = parseFloat(key.slice(1));
+          const [teff, logL, r, m] = MS_TABLE[key];
+          if (!groups[letter]) groups[letter] = [];
+          groups[letter].push({ subtype, teff, l: Math.pow(10, logL), r, m });
+        }
+        for (const letter in groups)
+          groups[letter].sort((a, b) => a.subtype - b.subtype);
+        return groups;
+      })();
 
-const LY_PER_PC = 3.2615637771674
+      // Every table entry flattened and searchable by Teff alone, used to find
+      // a letter+subtype label for evolved stars where temperature (not mass)
+      // is what actually sets the spectral letter.
+      const teffSequence = (() => {
+        const out = [];
+        for (const letter in classEntries) {
+          for (const e of classEntries[letter])
+            out.push({ letter, subtype: e.subtype, teff: e.teff });
+        }
+        return out;
+      })();
 
-// Group the table by letter class, sorted by subtype, once up front,
-// so each star draw is just a lookup and an interpolation.
-const classEntries = (() => {
-  const groups = {}
-  for (const key in MS_TABLE) {
-    const letter = key[0]
-    const subtype = parseFloat(key.slice(1))
-    const [teff, logL, r, m] = MS_TABLE[key]
-    if (!groups[letter]) groups[letter] = []
-    groups[letter].push({ subtype, teff, l: Math.pow(10, logL), r, m })
-  }
-  for (const letter in groups) groups[letter].sort((a, b) => a.subtype - b.subtype)
-  return groups
-})()
+      function teffToLabel(teff) {
+        let best = teffSequence[0];
+        let bestDiff = Math.abs(best.teff - teff);
+        for (const e of teffSequence) {
+          const diff = Math.abs(e.teff - teff);
+          if (diff < bestDiff) {
+            bestDiff = diff;
+            best = e;
+          }
+        }
+        return {
+          letter: best.letter,
+          subtype: Math.min(9, Math.round(best.subtype)),
+        };
+      }
 
-function pickClass() {
-  const letters = Object.keys(CLASS_WEIGHTS)
-  const total = letters.reduce((sum, l) => sum + CLASS_WEIGHTS[l], 0)
-  let r = Math.random() * total
-  for (const l of letters) {
-    if (r < CLASS_WEIGHTS[l]) return l
-    r -= CLASS_WEIGHTS[l]
-  }
-  return letters[letters.length - 1]
-}
+      function bhac15Lookup(mass) {
+        if (mass < BHAC15[0][0] || mass > BHAC15[BHAC15.length - 1][0])
+          return null;
+        let lo = BHAC15[0],
+          hi = BHAC15[BHAC15.length - 1];
+        for (let i = 0; i < BHAC15.length - 1; i++) {
+          if (BHAC15[i][0] <= mass && BHAC15[i + 1][0] >= mass) {
+            lo = BHAC15[i];
+            hi = BHAC15[i + 1];
+            break;
+          }
+        }
+        const f = (mass - lo[0]) / (hi[0] - lo[0]);
+        return {
+          teff: lo[1] + f * (hi[1] - lo[1]),
+          l: Math.pow(10, lo[2] + f * (hi[2] - lo[2])),
+          r: lo[3] + f * (hi[3] - lo[3]),
+        };
+      }
 
-function bhac15Lookup(mass) {
-  if (mass < BHAC15[0][0] || mass > BHAC15[BHAC15.length - 1][0]) return null
-  let lo = BHAC15[0], hi = BHAC15[BHAC15.length - 1]
-  for (let i = 0; i < BHAC15.length - 1; i++) {
-    if (BHAC15[i][0] <= mass && BHAC15[i + 1][0] >= mass) {
-      lo = BHAC15[i]
-      hi = BHAC15[i + 1]
-      break
-    }
-  }
-  const f = (mass - lo[0]) / (hi[0] - lo[0])
-  return {
-    teff: lo[1] + f * (hi[1] - lo[1]),
-    l: Math.pow(10, lo[2] + f * (hi[2] - lo[2])),
-    r: lo[3] + f * (hi[3] - lo[3]),
-  }
-}
+      // Picks a random subtype within a given letter class, then interpolates
+      // Teff/L/R/M between the two nearest table rows for that subtype.
+      function randomStarOfClass(letter) {
+        const entries = classEntries[letter];
+        const minSub = entries[0].subtype;
+        const maxSub = entries[entries.length - 1].subtype;
+        const subtype = minSub + Math.random() * (maxSub - minSub);
 
-// Picks a class, then a random subtype within it, then interpolates
-// Teff/L/R/M between the two nearest table rows for that subtype.
-function randomStar() {
-  const letter = pickClass()
-  const entries = classEntries[letter]
-  const minSub = entries[0].subtype
-  const maxSub = entries[entries.length - 1].subtype
-  const subtype = minSub + Math.random() * (maxSub - minSub)
+        let lo = entries[0],
+          hi = entries[entries.length - 1];
+        for (let i = 0; i < entries.length - 1; i++) {
+          if (
+            entries[i].subtype <= subtype &&
+            entries[i + 1].subtype >= subtype
+          ) {
+            lo = entries[i];
+            hi = entries[i + 1];
+            break;
+          }
+        }
+        const f =
+          hi.subtype === lo.subtype
+            ? 0
+            : (subtype - lo.subtype) / (hi.subtype - lo.subtype);
+        let teff = lo.teff + f * (hi.teff - lo.teff);
+        let l = lo.l + f * (hi.l - lo.l);
+        let r = lo.r + f * (hi.r - lo.r);
+        const m = lo.m + f * (hi.m - lo.m);
 
-  let lo = entries[0], hi = entries[entries.length - 1]
-  for (let i = 0; i < entries.length - 1; i++) {
-    if (entries[i].subtype <= subtype && entries[i + 1].subtype >= subtype) {
-      lo = entries[i]
-      hi = entries[i + 1]
-      break
-    }
-  }
-  const f = hi.subtype === lo.subtype ? 0 : (subtype - lo.subtype) / (hi.subtype - lo.subtype)
-  let teff = lo.teff + f * (hi.teff - lo.teff)
-  let l = lo.l + f * (hi.l - lo.l)
-  let r = lo.r + f * (hi.r - lo.r)
-  const m = lo.m + f * (hi.m - lo.m)
+        // low-mass override, matches the fix already made in starRadius.js
+        if (m <= 0.15) {
+          const bhac = bhac15Lookup(Math.max(0.075, m));
+          if (bhac) {
+            teff = bhac.teff;
+            l = bhac.l;
+            r = bhac.r;
+          }
+        }
 
-  // low-mass override, matches the fix already made in starRadius.js
-  if (m <= 0.15) {
-    const bhac = bhac15Lookup(Math.max(0.075, m))
-    if (bhac) {
-      teff = bhac.teff
-      l = bhac.l
-      r = bhac.r
-    }
-  }
+        return { letter, subtype, teff, l, r, m };
+      }
 
-  return { letter, subtype, teff, l, r, m }
-}
+      function generateMainSequenceStar(letter) {
+        const star = randomStarOfClass(letter);
+        const absMagV = calcMbol(star.l) - calcBCV(star.teff);
+        const subLabel = Math.min(9, Math.round(star.subtype));
+        const specClass = star.letter + subLabel + "V";
+        return {
+          specClass,
+          massSol: star.m,
+          radSol: star.r,
+          teffK: star.teff,
+          absMagV,
+        };
+      }
 
-// Torres (2010) / Flower (1996) bolometric correction, piecewise in
-// log Teff. Lets apparent magnitude fall out of the same Teff and L
-// every other column is built from, instead of being picked separately.
-function calcBCV(teff) {
-  const lt = Math.log10(teff)
-  if (lt < 3.7) {
-    const a = -19053.7291496456, b = 15514.4866764412, c = -4212.78819301717, d = 381.476328422343
-    return a + b * lt + c * lt * lt + d * lt * lt * lt
-  }
-  if (lt <= 3.9) {
-    const a = -37051.0203809015, b = 38567.2629965804, c = -15065.1486316025, d = 2617.24637119416, e = -170.623810323864
-    return a + b * lt + c * lt * lt + d * lt * lt * lt + e * lt * lt * lt * lt
-  }
-  const a = -118115.450538963, b = 137145.973583929, c = -63623.3812100225, d = 14741.2923562646, e = -1705.87278406872, f = 78.873172180499
-  return a + b * lt + c * lt * lt + d * lt * lt * lt + e * lt * lt * lt * lt + f * lt * lt * lt * lt * lt
-}
+      // ============================================================
+      // Post-main-sequence giants and supergiants
+      // Parameterised ranges from PARSEC (Bressan et al. 2012) and empirical
+      // compilations (Dumm & Schild 1998, Levesque et al. 2005, Gratton et al.
+      // 2010), same source as starRadius.js's post-MS calculator.
+      // ============================================================
+      const POST_MS_PHASES = {
+        SG: {
+          massMin: 0.8,
+          massMax: 8.0,
+          Teff_range: [4500, 7000],
+          R_range: [1.5, 5],
+          L_range: [3, 50],
+        },
+        RGB: {
+          massMin: 0.6,
+          massMax: 8.0,
+          Teff_range: [3500, 5200],
+          R_range: [5, 200],
+          L_range: [10, 2000],
+        },
+        HB: {
+          massMin: 0.5,
+          massMax: 3.0,
+          Teff_range: [4500, 25000],
+          R_range: [1, 15],
+          L_range: [40, 80],
+        },
+        AGB: {
+          massMin: 0.8,
+          massMax: 8.0,
+          Teff_range: [2500, 4000],
+          R_range: [50, 500],
+          L_range: [1000, 50000],
+        },
+        RSG: {
+          massMin: 8.0,
+          massMax: 30.0,
+          Teff_range: [3400, 4500],
+          R_range: [200, 1700],
+          L_range: [30000, 600000],
+        },
+        BSG: {
+          massMin: 8.0,
+          massMax: 60.0,
+          Teff_range: [8000, 50000],
+          R_range: [15, 100],
+          L_range: [50000, 1000000],
+        },
+      };
 
-function calcMbol(l) {
-  return 4.74 - 2.5 * Math.log10(l)
-}
+      const GIANT_PHASE_WEIGHTS = {
+        SG: 30,
+        RGB: 35,
+        HB: 15,
+        AGB: 10,
+        RSG: 5,
+        BSG: 5,
+      };
 
-// Log-uniform, not linear, since the default range covers nearby stars
-// through to nearby galaxies. Linear would pack almost every star near
-// the top end of that range.
-function randomLogUniform(min, max) {
-  const logMin = Math.log(min)
-  const logMax = Math.log(max)
-  return Math.exp(logMin + Math.random() * (logMax - logMin))
-}
+      function postMsEstimate(phase, massSun) {
+        const p = POST_MS_PHASES[phase];
+        const f = Math.max(
+          0,
+          Math.min(
+            1,
+            (massSun - p.massMin) / Math.max(1, p.massMax - p.massMin),
+          ),
+        );
+        let R, L, Teff;
+        switch (phase) {
+          case "SG":
+            R = p.R_range[0] + f * (p.R_range[1] - p.R_range[0]);
+            L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+            Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]);
+            break;
+          case "RGB":
+            R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
+            L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+            Teff = 3700 + f * 400;
+            break;
+          case "HB":
+            L = 50 + f * 20;
+            R = p.R_range[0] + f * (p.R_range[1] - p.R_range[0]);
+            Teff = 5000;
+            break;
+          case "AGB":
+            R =
+              p.R_range[0] *
+              Math.pow(p.R_range[1] / p.R_range[0], 0.5 + f * 0.5);
+            L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+            Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]);
+            break;
+          case "RSG":
+            R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
+            L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+            Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]);
+            break;
+          case "BSG":
+            R = p.R_range[0] + f * (p.R_range[1] - p.R_range[0]);
+            L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+            Teff = p.Teff_range[0] + f * (p.Teff_range[1] - p.Teff_range[0]);
+            break;
+        }
+        Teff = Math.max(p.Teff_range[0], Math.min(p.Teff_range[1], Teff));
+        return { Teff, L, R };
+      }
 
-function buildStarRow(index, totalDigits, catName, sep, basePc, minLy, maxLy) {
-  const star = randomStar()
+      // SpaceEngine gives every class except white dwarfs a luminosity class;
+      // subgiants get IV, ordinary giants get III, and supergiants split into
+      // Ia/Ib/II by how luminous they actually turned out.
+      function luminosityClassFor(phase, l) {
+        if (phase === "SG") return "IV";
+        if (phase === "RGB" || phase === "HB" || phase === "AGB") return "III";
+        if (l > 100000) return "Ia";
+        if (l > 10000) return "Ib";
+        return "II";
+      }
 
-  const mbol = calcMbol(star.l)
-  const bcv = calcBCV(star.teff)
-  const absMagV = mbol - bcv
+      function generateGiant() {
+        const phase = weightedPick(GIANT_PHASE_WEIGHTS);
+        const p = POST_MS_PHASES[phase];
+        const mass = p.massMin + Math.random() * (p.massMax - p.massMin);
+        const est = postMsEstimate(phase, mass);
+        const label = teffToLabel(est.Teff);
+        const specClass =
+          label.letter + label.subtype + luminosityClassFor(phase, est.L);
+        const absMagV = calcMbol(est.L) - calcBCV(est.Teff);
+        return {
+          specClass,
+          massSol: mass,
+          radSol: est.R,
+          teffK: est.Teff,
+          absMagV,
+        };
+      }
 
-  const starLy = randomLogUniform(minLy, maxLy)
-  const distPc = basePc + starLy / LY_PER_PC
-  const appMagn = absMagV + 5 * Math.log10(distPc) - 5
+      // ============================================================
+      // Wolf-Rayet stars
+      // Crowther (2007) ARA&A review; Hamann et al. (2019).
+      // ============================================================
+      const WR_SUBTYPES = {
+        "WN2-4": {
+          Teff_range: [100000, 150000],
+          R_range: [0.7, 3.0],
+          L_range: [2e4, 2e5],
+          M_range: [10, 20],
+        },
+        "WN5-6": {
+          Teff_range: [60000, 100000],
+          R_range: [1.5, 6.0],
+          L_range: [1e5, 5e5],
+          M_range: [15, 30],
+        },
+        "WN7-8": {
+          Teff_range: [35000, 60000],
+          R_range: [3.0, 15.0],
+          L_range: [2e5, 1e6],
+          M_range: [15, 40],
+        },
+        "WN9-11": {
+          Teff_range: [25000, 35000],
+          R_range: [10.0, 30.0],
+          L_range: [3e5, 1e6],
+          M_range: [20, 80],
+        },
+        "WC4-6": {
+          Teff_range: [60000, 120000],
+          R_range: [0.8, 4.0],
+          L_range: [1e5, 4e5],
+          M_range: [10, 20],
+        },
+        "WC7-9": {
+          Teff_range: [35000, 60000],
+          R_range: [3.0, 10.0],
+          L_range: [1e5, 3e5],
+          M_range: [10, 20],
+        },
+        "WO1-2": {
+          Teff_range: [120000, 200000],
+          R_range: [0.5, 2.0],
+          L_range: [2e5, 5e5],
+          M_range: [10, 20],
+        },
+      };
 
-  // uniform over the celestial sphere, not just uniform in raw degrees,
-  // so stars don't bunch up near the poles
-  const ra = Math.random() * 24
-  const dec = Math.asin(Math.random() * 2 - 1) * 180 / Math.PI
+      const WR_PICK_WEIGHTS = {
+        "WN2-4": 10,
+        "WN5-6": 30,
+        "WN7-8": 20,
+        "WN9-11": 10,
+        "WC4-6": 15,
+        "WC7-9": 13,
+        "WO1-2": 2,
+      };
 
-  const subLabel = Math.min(9, Math.round(star.subtype))
-  const specClass = star.letter + subLabel + "V"
+      function generateWolfRayet() {
+        const key = weightedPick(WR_PICK_WEIGHTS);
+        const wt = WR_SUBTYPES[key];
+        const mass =
+          wt.M_range[0] + Math.random() * (wt.M_range[1] - wt.M_range[0]);
+        const f = (mass - wt.M_range[0]) / (wt.M_range[1] - wt.M_range[0]);
+        const r = wt.R_range[0] + f * (wt.R_range[1] - wt.R_range[0]);
+        const l = wt.L_range[0] * Math.pow(wt.L_range[1] / wt.L_range[0], f);
+        const teff =
+          wt.Teff_range[0] + f * (wt.Teff_range[1] - wt.Teff_range[0]);
 
-  const name = catName + sep + String(index).padStart(totalDigits, "0")
+        const match = key.match(/^([A-Z]+)(\d+)-(\d+)$/);
+        const lo = Number(match[2]),
+          hi = Number(match[3]);
+        const specClass = match[1] + Math.round(lo + Math.random() * (hi - lo));
 
-  return [name, ra, dec, distPc, appMagn, specClass, star.m, star.r, Math.round(star.teff)].join(",")
-}
+        const absMagV = calcMbol(l) - calcBCV(teff);
+        return { specClass, massSol: mass, radSol: r, teffK: teff, absMagV };
+      }
 
-const form = document.querySelector("#genForm")
-const errorMsg = document.querySelector("#errorMsg")
-const progressSection = document.querySelector("#progressSection")
-const progressBar = document.querySelector("#progressBar")
-const progressText = document.querySelector("#progressText")
-const resultSection = document.querySelector("#resultSection")
-const doneMsg = document.querySelector("#doneMsg")
-const csvOutput = document.querySelector("#csvOutput")
-const downloadBtn = document.querySelector("#downloadBtn")
+      // ============================================================
+      // White dwarfs
+      // Mass-radius: Nauenberg (1972), verified by Tremblay et al. (2017).
+      // Cooling: Mestel (1952) L ~ t^(-7/5) approximation, same as
+      // starRadius.js, so a young WD comes out hot and an old one cool.
+      // ============================================================
+      const WD_R0 = 0.0112;
+      const WD_MCH = 1.44;
+      const WD_TYPE_WEIGHTS = { DA: 70, DB: 15, DC: 8, DQ: 4, DZ: 2, DO: 1 };
 
-// mirrors the placeholder text shown in each input, so a blank field
-// behaves the same as typing the placeholder value in yourself
-const DEFAULTS = { count: 1000, catName: "GEN", sep: " ", baseLy: 0, minLy: 4, maxLy: 2000000 }
+      function wdRadius(massSun) {
+        if (massSun >= WD_MCH) return 0;
+        const x = WD_MCH / massSun;
+        return WD_R0 * Math.sqrt(Math.pow(x, 2 / 3) - Math.pow(1 / x, 2 / 3));
+      }
 
-let lastCsv = ""
-let lastCatName = "catalogue"
+      function wdLuminosity(massSun, ageGyr) {
+        const lRef = 0.0012 * Math.pow(massSun / 0.6, 0.7);
+        return lRef * Math.pow(Math.max(0.001, ageGyr), -7 / 5);
+      }
 
-form.addEventListener("submit", (e) => {
-  e.preventDefault()
-  errorMsg.hidden = true
+      function generateWhiteDwarf() {
+        const mass = 0.17 + Math.random() * (1.33 - 0.17);
+        const age = randomLogUniform(0.001, 12);
+        const r = wdRadius(mass);
+        const l = wdLuminosity(mass, age);
+        const teff = calcTeff(l, r);
 
-  const countRaw = document.querySelector("#starCount").value.trim()
-  const count = countRaw === "" ? DEFAULTS.count : parseInt(countRaw, 10)
+        const type = weightedPick(WD_TYPE_WEIGHTS);
+        // SpaceEngine's own white dwarf subclass index: 50400 / Teff, one decimal, 0-9
+        const index = Math.max(
+          0,
+          Math.min(9, Math.round((50400 / teff) * 10) / 10),
+        );
+        const specClass = type + index;
 
-  const catNameRaw = document.querySelector("#catName").value.trim()
-  const catName = (catNameRaw === "" ? DEFAULTS.catName : catNameRaw).replace(/,/g, "")
+        const absMagV = calcMbol(l) - calcBCV(teff);
+        return { specClass, massSol: mass, radSol: r, teffK: teff, absMagV };
+      }
 
-  const sepRaw = document.querySelector("#sepChar").value
-  const sep = (sepRaw === "" ? DEFAULTS.sep : sepRaw).replace(/,/g, "")
+      // ============================================================
+      // Neutron stars
+      // Radius: Dittmann et al. (2024) multi-messenger fit, same three-segment
+      // piecewise formula as starRadius.js.
+      // Cooling: Page et al. (2004) / Yakovlev & Pethick (2004) two-phase model,
+      // so a young NS is a million-plus kelvin and an old one has cooled way down.
+      // ============================================================
+      function nsRadiusKm(massSun) {
+        if (massSun <= 1.4)
+          return Math.max(10.5, 12.33 + 0.1 * (1.4 - massSun));
+        if (massSun <= 1.8)
+          return Math.max(10.5, 12.33 - 0.15 * (massSun - 1.4));
+        return Math.max(10.5, 12.27 - 0.1 * (massSun - 1.8));
+      }
 
-  const baseDistRaw = document.querySelector("#baseDist").value.trim()
-  const baseLy = baseDistRaw === "" ? DEFAULTS.baseLy : parseFloat(baseDistRaw)
+      function nsTeff(ageKyr) {
+        const tSwitch = 100;
+        if (ageKyr < tSwitch) return 1.0e6 * Math.pow(ageKyr, -0.47);
+        const tAtSwitch = 1.0e6 * Math.pow(tSwitch, -0.47);
+        return tAtSwitch * Math.pow(ageKyr / tSwitch, -0.23);
+      }
 
-  const minDistRaw = document.querySelector("#minDist").value.trim()
-  const minLy = minDistRaw === "" ? DEFAULTS.minLy : parseFloat(minDistRaw)
+      function generateNeutronStar() {
+        const mass = 1.1 + Math.random() * (2.35 - 1.1);
+        const ageKyr = randomLogUniform(0.1, 1e7);
+        const rKm = nsRadiusKm(mass);
+        const rSun = rKm / R_SUN_KM;
+        const teff = nsTeff(ageKyr);
+        // NS radiate mostly in X-rays, so an optical BC_V magnitude isn't
+        // meaningful here (matches how starRadius.js treats this case)
+        return {
+          specClass: "Q",
+          massSol: mass,
+          radSol: rSun,
+          teffK: teff,
+          absMagV: null,
+        };
+      }
 
-  const maxDistRaw = document.querySelector("#maxDist").value.trim()
-  const maxLy = maxDistRaw === "" ? DEFAULTS.maxLy : parseFloat(maxDistRaw)
+      // ============================================================
+      // Black holes
+      // Schwarzschild radius only, no spin, since the CSV format has no
+      // field for it anyway. No meaningful surface temperature or optical
+      // brightness, so both are left blank.
+      // ============================================================
+      function bhRadiusKm(massSun) {
+        return (2 * G_CONST * massSun * M_SUN_KG) / (C_LIGHT * C_LIGHT) / 1000;
+      }
 
-  const badInput = !count || count < 1 || !catName || !(baseLy >= 0) || !(minLy > 0) || !(maxLy > minLy)
-  if (badInput) {
-    errorMsg.textContent = "Check your inputs. Star count needs to be at least 1, catalogue name can't be empty, and max distance needs to be bigger than min distance."
-    errorMsg.hidden = false
-    return
-  }
+      function generateBlackHole() {
+        const mass = randomLogUniform(5, 100);
+        const rSun = bhRadiusKm(mass) / R_SUN_KM;
+        return {
+          specClass: "X",
+          massSol: mass,
+          radSol: rSun,
+          teffK: null,
+          absMagV: null,
+        };
+      }
 
-  resultSection.hidden = true
-  progressSection.hidden = false
-  progressBar.value = 0
-  progressBar.max = count
-  progressText.textContent = `0 / ${count}`
+      // ============================================================
+      // Brown dwarfs
+      // Baraffe et al. (2003) COND tracks, same formulas as starRadius.js,
+      // so a young 50 M_Jup object comes out hot (L-type) and the same mass
+      // at an old age comes out much cooler (T-type).
+      // ============================================================
+      const BD_TEFF = {
+        L: { teffMax: 2200, teffMin: 1300 },
+        T: { teffMax: 1300, teffMin: 500 },
+        Y: { teffMax: 500, teffMin: 250 },
+      };
 
-  const basePc = baseLy / LY_PER_PC
-  const totalDigits = String(count).length
-  const rows = new Array(count)
-  let done = 0
+      function bdRadiusRsun(massJup, ageGyr) {
+        const t = Math.max(0.001, ageGyr);
+        const r =
+          0.1008 * Math.pow(massJup / 40, -0.055) * Math.pow(t, -0.0229);
+        return Math.max(0.08, Math.min(0.15, r));
+      }
 
-  // generate in batches so the progress bar actually updates instead
-  // of the tab freezing until the whole catalogue is done
-  function chunk() {
-    const batchEnd = Math.min(done + 500, count)
-    for (let i = done; i < batchEnd; i++) {
-      rows[i] = buildStarRow(i + 1, totalDigits, catName, sep, basePc, minLy, maxLy)
-    }
-    done = batchEnd
-    progressBar.value = done
-    progressText.textContent = `${done} / ${count}`
+      function bdLuminosity(massJup, ageGyr) {
+        return (
+          3.959e-5 *
+          Math.pow(massJup / 40, 3.082) *
+          Math.pow(Math.max(0.001, ageGyr), -0.7659)
+        );
+      }
 
-    if (done < count) {
-      setTimeout(chunk, 0)
-    } else {
-      finish(rows, catName)
-    }
-  }
+      function bdTeff(massJup, ageGyr) {
+        return (
+          843.35 *
+          Math.pow(massJup / 40, 1.3601) *
+          Math.pow(Math.max(0.001, ageGyr), -0.2183)
+        );
+      }
 
-  chunk()
-})
+      function bdClassFromTeff(teff) {
+        if (teff > 1300) return "L";
+        if (teff > 500) return "T";
+        return "Y";
+      }
 
-function finish(rows, catName) {
-  const header = "Name,RA,Dec,Dist,AppMagn,SpecClass,MassSol,RadSol,Temperature"
-  lastCsv = header + "\n" + rows.join("\n") + "\n"
-  lastCatName = catName || "catalogue"
+      function bdSubtypeFromTeff(teff) {
+        const bc = BD_TEFF[bdClassFromTeff(teff)];
+        const raw = ((bc.teffMax - teff) / (bc.teffMax - bc.teffMin)) * 9;
+        const clamped = Math.max(0, Math.min(9, raw));
+        const rounded = Math.round(clamped * 10) / 10;
+        return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+      }
 
-  doneMsg.textContent = `Done. Generated ${rows.length} stars.`
-  csvOutput.value = lastCsv
-  resultSection.hidden = false
-}
+      // Empirical BC_V for brown dwarfs (Golimowski et al. 2004, Filippazzo et
+      // al. 2015), since the Flower/Torres polynomial breaks down below ~2900 K.
+      function bdAbsMagV(l, teff) {
+        if (teff >= 2900) return calcMbol(l) - calcBCV(teff);
+        if (teff >= 1300) return calcMbol(l) - (-5.5 - 0.005 * (2200 - teff));
+        return (
+          calcMbol(l) - (-5.5 - 0.005 * (2200 - 1300) - 0.008 * (1300 - teff))
+        );
+      }
 
-downloadBtn.addEventListener("click", () => {
-  const blob = new Blob([lastCsv], { type: "text/csv" })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `${lastCatName}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
-})
-</script>
+      function generateBrownDwarf() {
+        const massJup = 13 + Math.random() * (80 - 13);
+        const ageGyr = randomLogUniform(0.001, 10);
+        const l = bdLuminosity(massJup, ageGyr);
+        const r = bdRadiusRsun(massJup, ageGyr);
+        const teff = bdTeff(massJup, ageGyr);
+        const specClass = bdClassFromTeff(teff) + bdSubtypeFromTeff(teff);
+        const absMagV = bdAbsMagV(l, teff);
+        return {
+          specClass,
+          massSol: massJup * M_JUP_IN_MSUN,
+          radSol: r,
+          teffK: teff,
+          absMagV,
+        };
+      }
 
-</body>
+      // ============================================================
+      // Star type mix — realistic, equal, or user-set custom weights
+      // ============================================================
+      const LEAF_TYPES = [
+        { key: "O", label: "O-type (hottest, bluest)" },
+        { key: "B", label: "B-type (blue-white)" },
+        { key: "A", label: "A-type" },
+        { key: "F", label: "F-type" },
+        { key: "G", label: "G-type (Sun-like)" },
+        { key: "K", label: "K-type (orange)" },
+        { key: "M", label: "M-type (red, most common)" },
+        { key: "GIANT", label: "Giants and supergiants" },
+        { key: "WD", label: "White dwarfs" },
+        { key: "NS", label: "Neutron stars" },
+        { key: "BH", label: "Black holes" },
+        { key: "WR", label: "Wolf-Rayet stars" },
+        { key: "BD", label: "Brown dwarfs" },
+      ];
+
+      // Rough real-world population mix: ~90% of stars are still on the main
+      // sequence, dominated by M dwarfs, with giants, white dwarfs, brown
+      // dwarfs, and the rarer remnants making up the rest. These are
+      // illustrative proportions, not a single formal citation.
+      const REALISTIC_WEIGHTS = {
+        O: 0.00003,
+        B: 0.12,
+        A: 0.54,
+        F: 2.7,
+        G: 6.8,
+        K: 10.9,
+        M: 69,
+        GIANT: 1.5,
+        WD: 5,
+        BD: 3,
+        NS: 0.03,
+        WR: 0.005,
+        BH: 0.02,
+      };
+
+      const EQUAL_WEIGHTS = {};
+      for (const t of LEAF_TYPES) EQUAL_WEIGHTS[t.key] = 1;
+
+      const customWeights = {};
+      for (const t of LEAF_TYPES) customWeights[t.key] = 10;
+
+      let mixMode = "realistic";
+
+      function pickLeafType() {
+        const weights =
+          mixMode === "equal"
+            ? EQUAL_WEIGHTS
+            : mixMode === "custom"
+              ? customWeights
+              : REALISTIC_WEIGHTS;
+        return weightedPick(weights);
+      }
+
+      function generateStar() {
+        const type = pickLeafType();
+        switch (type) {
+          case "GIANT":
+            return generateGiant();
+          case "WD":
+            return generateWhiteDwarf();
+          case "NS":
+            return generateNeutronStar();
+          case "BH":
+            return generateBlackHole();
+          case "WR":
+            return generateWolfRayet();
+          case "BD":
+            return generateBrownDwarf();
+          default:
+            return generateMainSequenceStar(type);
+        }
+      }
+
+      // ============================================================
+      // Sky positions, kept spread apart
+      // ============================================================
+
+      // A minimum separation stops stars from landing on top of each other by
+      // chance, which at small distances would look like a cluster. Points are
+      // bucketed into a spatial hash so each check only looks at nearby cells,
+      // not the whole catalogue so far.
+      const MIN_SEPARATION_LY = 1;
+
+      function cellKeyOf(x, y, z) {
+        return (
+          Math.floor(x / MIN_SEPARATION_LY) +
+          "," +
+          Math.floor(y / MIN_SEPARATION_LY) +
+          "," +
+          Math.floor(z / MIN_SEPARATION_LY)
+        );
+      }
+
+      function tooClose(grid, x, y, z) {
+        const cx = Math.floor(x / MIN_SEPARATION_LY);
+        const cy = Math.floor(y / MIN_SEPARATION_LY);
+        const cz = Math.floor(z / MIN_SEPARATION_LY);
+        for (let dx = -1; dx <= 1; dx++) {
+          for (let dy = -1; dy <= 1; dy++) {
+            for (let dz = -1; dz <= 1; dz++) {
+              const points = grid.get(
+                cx + dx + "," + (cy + dy) + "," + (cz + dz),
+              );
+              if (!points) continue;
+              for (const p of points) {
+                const ddx = p[0] - x,
+                  ddy = p[1] - y,
+                  ddz = p[2] - z;
+                if (
+                  ddx * ddx + ddy * ddy + ddz * ddz <
+                  MIN_SEPARATION_LY * MIN_SEPARATION_LY
+                )
+                  return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      function addToGrid(grid, x, y, z) {
+        const key = cellKeyOf(x, y, z);
+        if (!grid.has(key)) grid.set(key, []);
+        grid.get(key).push([x, y, z]);
+      }
+
+      function pickSpreadOutPosition(grid, minLy, maxLy, baseLy) {
+        const maxAttempts = 30;
+        let ra, dec, finalDistLy, x, y, z;
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          finalDistLy = baseLy + randomLogUniform(minLy, maxLy);
+          ra = Math.random() * 24;
+          dec = (Math.asin(Math.random() * 2 - 1) * 180) / Math.PI;
+          const raRad = (ra / 24) * 2 * Math.PI;
+          const decRad = (dec * Math.PI) / 180;
+          x = finalDistLy * Math.cos(decRad) * Math.cos(raRad);
+          y = finalDistLy * Math.cos(decRad) * Math.sin(raRad);
+          z = finalDistLy * Math.sin(decRad);
+          if (!tooClose(grid, x, y, z)) break;
+        }
+        addToGrid(grid, x, y, z);
+        return { ra, dec, finalDistLy };
+      }
+
+      function buildStarRow(index, catName, sep, baseLy, minLy, maxLy, grid) {
+        const star = generateStar();
+        const pos = pickSpreadOutPosition(grid, minLy, maxLy, baseLy);
+        const distPc = pos.finalDistLy / LY_PER_PC;
+
+        const appMagn =
+          star.absMagV === null
+            ? ""
+            : star.absMagV + 5 * Math.log10(distPc) - 5;
+        const temperature = star.teffK === null ? "" : Math.round(star.teffK);
+        const name = catName + sep + String(index);
+
+        return [
+          name,
+          pos.ra,
+          pos.dec,
+          distPc,
+          appMagn,
+          star.specClass,
+          star.massSol,
+          star.radSol,
+          temperature,
+        ].join(",");
+      }
+
+      // ============================================================
+      // Settings dialog wiring
+      // ============================================================
+      const settingsDialog = document.querySelector("#settingsDialog");
+      const openSettingsBtn = document.querySelector("#openSettingsBtn");
+      const closeSettingsBtn = document.querySelector("#closeSettings");
+      const customSlidersEl = document.querySelector("#customSliders");
+
+      for (const t of LEAF_TYPES) {
+        const row = document.createElement("div");
+        row.className = "slider-row";
+
+        const label = document.createElement("label");
+        label.setAttribute("for", "weight-" + t.key);
+        label.textContent = t.label;
+
+        const input = document.createElement("input");
+        input.type = "range";
+        input.id = "weight-" + t.key;
+        input.min = "0";
+        input.max = "50";
+        input.step = "1";
+        input.value = String(customWeights[t.key]);
+
+        const valSpan = document.createElement("span");
+        valSpan.className = "sliderVal";
+        valSpan.textContent = input.value;
+
+        input.addEventListener("input", () => {
+          customWeights[t.key] = Number(input.value);
+          valSpan.textContent = input.value;
+        });
+
+        row.appendChild(label);
+        row.appendChild(input);
+        row.appendChild(valSpan);
+        customSlidersEl.appendChild(row);
+      }
+
+      openSettingsBtn.addEventListener("click", () =>
+        settingsDialog.showModal(),
+      );
+      closeSettingsBtn.addEventListener("click", () => settingsDialog.close());
+
+      document.querySelectorAll('input[name="mixMode"]').forEach((radio) => {
+        radio.addEventListener("change", () => {
+          mixMode = radio.value;
+          customSlidersEl.hidden = mixMode !== "custom";
+        });
+      });
+
+      // ============================================================
+      // Form wiring
+      // ============================================================
+      const form = document.querySelector("#genForm");
+      const errorMsg = document.querySelector("#errorMsg");
+      const progressSection = document.querySelector("#progressSection");
+      const progressBar = document.querySelector("#progressBar");
+      const progressText = document.querySelector("#progressText");
+      const resultSection = document.querySelector("#resultSection");
+      const doneMsg = document.querySelector("#doneMsg");
+      const downloadBtn = document.querySelector("#downloadBtn");
+
+      // mirrors the placeholder text shown in each input, so a blank field
+      // behaves the same as typing the placeholder value in yourself
+      const DEFAULTS = {
+        count: 1000,
+        catName: "GEN",
+        sep: " ",
+        baseLy: 0,
+        minLy: 4,
+        maxLy: 2000000,
+      };
+
+      let lastCsv = "";
+      let lastCatName = "catalogue";
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        errorMsg.hidden = true;
+
+        const countRaw = document.querySelector("#starCount").value.trim();
+        const count = countRaw === "" ? DEFAULTS.count : parseInt(countRaw, 10);
+
+        const catNameRaw = document.querySelector("#catName").value.trim();
+        const catName = (
+          catNameRaw === "" ? DEFAULTS.catName : catNameRaw
+        ).replace(/,/g, "");
+
+        const sepRaw = document.querySelector("#sepChar").value;
+        const sep = (sepRaw === "" ? DEFAULTS.sep : sepRaw).replace(/,/g, "");
+
+        const baseDistRaw = document.querySelector("#baseDist").value.trim();
+        const baseLy =
+          baseDistRaw === "" ? DEFAULTS.baseLy : parseFloat(baseDistRaw);
+
+        const minDistRaw = document.querySelector("#minDist").value.trim();
+        const minLy =
+          minDistRaw === "" ? DEFAULTS.minLy : parseFloat(minDistRaw);
+
+        const maxDistRaw = document.querySelector("#maxDist").value.trim();
+        const maxLy =
+          maxDistRaw === "" ? DEFAULTS.maxLy : parseFloat(maxDistRaw);
+
+        const badInput =
+          !count ||
+          count < 1 ||
+          !catName ||
+          !(baseLy >= 0) ||
+          !(minLy > 0) ||
+          !(maxLy > minLy);
+        if (badInput) {
+          errorMsg.textContent =
+            "Check your inputs. Star count needs to be at least 1, catalogue name can't be empty, and max distance needs to be bigger than min distance.";
+          errorMsg.hidden = false;
+          return;
+        }
+
+        resultSection.hidden = true;
+        progressSection.hidden = false;
+        progressBar.value = 0;
+        progressBar.max = count;
+        progressText.textContent = `0 / ${count}`;
+
+        const rows = new Array(count);
+        const grid = new Map();
+        let done = 0;
+
+        // generate in batches so the progress bar actually updates instead
+        // of the tab freezing until the whole catalogue is done
+        function chunk() {
+          const batchEnd = Math.min(done + 500, count);
+          for (let i = done; i < batchEnd; i++) {
+            rows[i] = buildStarRow(
+              i + 1,
+              catName,
+              sep,
+              baseLy,
+              minLy,
+              maxLy,
+              grid,
+            );
+          }
+          done = batchEnd;
+          progressBar.value = done;
+          progressText.textContent = `${done} / ${count}`;
+
+          if (done < count) {
+            setTimeout(chunk, 0);
+          } else {
+            finish(rows, catName);
+          }
+        }
+
+        chunk();
+      });
+
+      function finish(rows, catName) {
+        const header =
+          "Name,RA,Dec,Dist,AppMagn,SpecClass,MassSol,RadSol,Temperature";
+        lastCsv = header + "\n" + rows.join("\n") + "\n";
+        lastCatName = catName || "catalogue";
+
+        doneMsg.textContent = `Done. Generated ${rows.length} stars.`;
+        resultSection.hidden = false;
+      }
+
+      downloadBtn.addEventListener("click", () => {
+        const blob = new Blob([lastCsv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${lastCatName}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    </script>
+  </body>
 </html>
