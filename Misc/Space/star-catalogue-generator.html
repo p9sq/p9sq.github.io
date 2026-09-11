@@ -320,9 +320,10 @@
         <p class="hint">
           These set how far each star sits from the center point, sampled on a
           log scale since the default range spans nearby stars to nearby
-          galaxies. Direction from the center point is uniform over the whole
-          sky. Stars are kept at least a light-year apart from each other so
-          they don't pile up like a cluster.
+          galaxies. Stars spread out flat, like a slice of a galaxy, instead of
+          filling a sphere, so a large catalogue doesn't read as one round
+          cluster from a distance. Stars are kept at least a light-year apart
+          from each other too.
         </p>
 
         <button type="button" id="openSettingsBtn" class="secondary">
@@ -1023,11 +1024,17 @@
       }
 
       function bdTeff(massJup, ageGyr) {
-        return (
+        const raw =
           843.35 *
           Math.pow(massJup / 40, 1.3601) *
-          Math.pow(Math.max(0.001, ageGyr), -0.2183)
-        );
+          Math.pow(Math.max(0.001, ageGyr), -0.2183);
+        // The power-law fit runs too hot at very young ages (and too cold
+        // at very old ones) for the highest-mass draws, past what the
+        // BD_TEFF table below calls a brown dwarf at all. Clamp to that
+        // table's own L ceiling and Y floor, so the temperature always
+        // matches the class label instead of drifting into orange-dwarf
+        // or hotter territory while still getting called L0.
+        return Math.max(BD_TEFF.Y.teffMin, Math.min(BD_TEFF.L.teffMax, raw));
       }
 
       function bdClassFromTeff(teff) {
@@ -1226,14 +1233,18 @@
 
       function pickSpreadOutPosition(grid, minLy, maxLy, basePos) {
         const maxAttempts = 30;
+        // A sphere reads as a round cluster from a distance no matter how
+        // the radius is sampled. Flattening height to a slice of the max
+        // spread, like a galaxy disk, breaks up that round look.
+        const diskHalfThickness = maxLy * 0.05;
         let x, y, z;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          const offsetLy = randomLogUniform(minLy, maxLy);
-          const dirRaRad = Math.random() * 2 * Math.PI;
-          const dirDecRad = Math.asin(Math.random() * 2 - 1);
-          x = basePos.x + offsetLy * Math.cos(dirDecRad) * Math.cos(dirRaRad);
-          y = basePos.y + offsetLy * Math.cos(dirDecRad) * Math.sin(dirRaRad);
-          z = basePos.z + offsetLy * Math.sin(dirDecRad);
+          const planarLy = randomLogUniform(minLy, maxLy);
+          const azimuthRad = Math.random() * 2 * Math.PI;
+          const heightLy = (Math.random() * 2 - 1) * diskHalfThickness;
+          x = basePos.x + planarLy * Math.cos(azimuthRad);
+          y = basePos.y + planarLy * Math.sin(azimuthRad);
+          z = basePos.z + heightLy;
           if (!tooClose(grid, x, y, z)) break;
         }
         addToGrid(grid, x, y, z);
