@@ -318,12 +318,14 @@
           </div>
         </div>
         <p class="hint">
-          These set how far each star sits from the center point, sampled on a
-          log scale since the default range spans nearby stars to nearby
-          galaxies, in every direction from the center point. A scatter of
-          random density clumps makes the field uneven, loose groupings with
-          thinner space between, rather than one smooth ball of stars. Stars are
-          kept at least a light-year apart from each other too.
+          Density stays flat with distance, matching real Hipparcos data for the
+          solar neighborhood, in every direction from the center point. Past
+          50,000 ly, real space thins out fast once you leave a galaxy, so that
+          reach gets a deliberately thin slice of the star count instead of the
+          same density. A scatter of random density clumps also makes the field
+          uneven, loose groupings with thinner space between, rather than one
+          smooth ball of stars. Stars are kept at least a light-year apart from
+          each other too.
         </p>
 
         <button type="button" id="openSettingsBtn" class="secondary">
@@ -1283,11 +1285,46 @@
         return baseFloor + (1 - baseFloor) * Math.min(1, raw);
       }
 
+      // Real Hipparcos data shows this directly: within the well-sampled
+      // local neighborhood (about 20-50 ly, where even faint M dwarfs are
+      // still bright enough to catch), star density holds close to flat.
+      // The steep falloff at bigger distances in the raw catalogue is a
+      // brightness-limit artifact, not real space thinning out, since
+      // fainter stars drop out of view first. This generator draws every
+      // star by its true rarity regardless of brightness, so it should
+      // match the real flat density, not the catalogue's falloff.
+      // Uniform density in volume needs the radius drawn from r^3, not r.
+      function randomVolumeUniformRadius(minLy, maxLy) {
+        const minCubed = Math.pow(minLy, 3);
+        const maxCubed = Math.pow(maxLy, 3);
+        const u = Math.random();
+        return Math.cbrt(minCubed + u * (maxCubed - minCubed));
+      }
+
+      // Flat density stops being realistic once a range reaches past the
+      // Milky Way's own disk, roughly 50,000 ly out from any point inside
+      // it. Real space past that is close to empty until another galaxy's
+      // own stars start. A max distance beyond that edge still needs some
+      // presence out there for the "reaches to nearby galaxies" case this
+      // tool is built for, so it gets a deliberately thin, fixed share of
+      // the star budget instead of the same density as the inner region.
+      const GALAXY_RADIUS_LY = 50000;
+      const BEYOND_GALAXY_SHARE = 0.05;
+
+      function randomGalaxyAwareRadius(minLy, maxLy) {
+        if (maxLy <= GALAXY_RADIUS_LY || minLy >= GALAXY_RADIUS_LY) {
+          return randomVolumeUniformRadius(minLy, maxLy);
+        }
+        return Math.random() < BEYOND_GALAXY_SHARE
+          ? randomVolumeUniformRadius(GALAXY_RADIUS_LY, maxLy)
+          : randomVolumeUniformRadius(minLy, GALAXY_RADIUS_LY);
+      }
+
       function pickSpreadOutPosition(grid, seeds, minLy, maxLy, basePos) {
         const maxAttempts = 30;
         let x, y, z;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          const radiusLy = randomLogUniform(minLy, maxLy);
+          const radiusLy = randomGalaxyAwareRadius(minLy, maxLy);
           const raRad = Math.random() * 2 * Math.PI;
           const decRad = Math.asin(Math.random() * 2 - 1);
           x = basePos.x + radiusLy * Math.cos(decRad) * Math.cos(raRad);
