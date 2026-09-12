@@ -394,7 +394,17 @@
       // log Teff. Lets apparent magnitude fall out of the same Teff and L
       // every other column is built from, instead of being picked separately.
       function calcBCV(teff) {
-        const lt = Math.log10(teff);
+        // This fit was calibrated against real stars, which top out around
+        // 50,000-60,000K. Past that it is extrapolation, and the hot
+        // branch actually reverses and swings positive above about
+        // 100,000K, which flips absMagV from correctly very negative
+        // (bright) to catastrophically more negative (impossibly bright).
+        // White dwarfs and Wolf-Rayet stars both commonly run hotter than
+        // that by design, so clamp the lookup at 60,000K, right where this
+        // branch reaches its real minimum, instead of running off the end
+        // of the fit. Only the correction uses the clamp, the star's own
+        // reported Teff column is untouched.
+        const lt = Math.log10(Math.min(teff, 60000));
         if (lt < 3.7) {
           const a = -19053.7291496456,
             b = 15514.4866764412,
@@ -915,7 +925,14 @@
 
       function wdLuminosity(massSun, ageGyr) {
         const lRef = 0.0012 * Math.pow(massSun / 0.6, 0.7);
-        return lRef * Math.pow(Math.max(0.001, ageGyr), -7 / 5);
+        const raw = lRef * Math.pow(Math.max(0.001, ageGyr), -7 / 5);
+        // The Mestel cooling law has no ceiling built in, so it keeps
+        // climbing as age approaches the floor above. Real cooling-track
+        // grids top out around 5-10 solar luminosities even for the
+        // youngest, hottest white dwarfs right after formation, so cap it
+        // there instead of letting the youngest, most massive draws come
+        // out brighter than the Sun.
+        return Math.min(10, raw);
       }
 
       function generateWhiteDwarf() {
