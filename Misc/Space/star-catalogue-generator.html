@@ -390,6 +390,15 @@
         return Math.pow(l / (4 * Math.PI * r * r * SIGMA), 0.25);
       }
 
+      // Stefan-Boltzmann the other way around from calcTeff, for the rare
+      // case a star's Teff and radius are already fixed and luminosity
+      // still needs computing (neutron stars, below).
+      function calcLuminosity(teffK, radiusSun) {
+        const r = radiusSun * R_SUN_M;
+        const lWatts = 4 * Math.PI * r * r * SIGMA * Math.pow(teffK, 4);
+        return lWatts / L_SUN;
+      }
+
       // Torres (2010) / Flower (1996) bolometric correction, piecewise in
       // log Teff. Lets apparent magnitude fall out of the same Teff and L
       // every other column is built from, instead of being picked separately.
@@ -399,12 +408,20 @@
         // branch actually reverses and swings positive above about
         // 100,000K, which flips absMagV from correctly very negative
         // (bright) to catastrophically more negative (impossibly bright).
-        // White dwarfs and Wolf-Rayet stars both commonly run hotter than
-        // that by design, so clamp the lookup at 60,000K, right where this
-        // branch reaches its real minimum, instead of running off the end
-        // of the fit. Only the correction uses the clamp, the star's own
-        // reported Teff column is untouched.
-        const lt = Math.log10(Math.min(teff, 60000));
+        // The visual band sits deep in the Rayleigh-Jeans tail for
+        // anything this hot, where the V-band flux only grows linearly
+        // with temperature while total output keeps growing as Teff^4, so
+        // the true correction keeps dropping well past 60,000K instead of
+        // levelling off. White dwarfs, Wolf-Rayet stars, and neutron
+        // stars all commonly run hotter than that, so past 60,000K this
+        // switches to that Rayleigh-Jeans falloff, anchored to match the
+        // fit's own value right at 60,000K instead of running off the end
+        // of it. The star's own reported Teff column is untouched either
+        // way, only this correction lookup changes.
+        if (teff > 60000) {
+          return -4.758 - 7.5 * Math.log10(teff / 60000);
+        }
+        const lt = Math.log10(teff);
         if (lt < 3.7) {
           const a = -19053.7291496456,
             b = 15514.4866764412,
@@ -982,14 +999,18 @@
         const rKm = nsRadiusKm(mass);
         const rSun = rKm / R_SUN_KM;
         const teff = nsTeff(ageKyr);
-        // NS radiate mostly in X-rays, so an optical BC_V magnitude isn't
-        // meaningful here (matches how starRadius.js treats this case)
+        // NS radiate mostly in X-rays, so almost none of the light is in
+        // V band, but "almost none" still comes out as a real (very
+        // faint) number once run through calcBCV's Rayleigh-Jeans branch,
+        // rather than nothing at all.
+        const l = calcLuminosity(teff, rSun);
+        const absMagV = calcMbol(l) - calcBCV(teff);
         return {
           specClass: "Q",
           massSol: mass,
           radSol: rSun,
           teffK: teff,
-          absMagV: null,
+          absMagV,
         };
       }
 
