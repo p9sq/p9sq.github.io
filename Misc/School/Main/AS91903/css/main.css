@@ -1,5 +1,7 @@
+/* Import the fonts */
 @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&display=swap");
 
+/* Setup the colour variables */
 :root {
   --bg-color: rgb(11, 14, 26);
   --navbar-color: rgb(20, 27, 45);
@@ -9,10 +11,12 @@
   --accent-color: rgb(255, 200, 87);
 }
 
+/* Scroll behaviour */
 html {
   scroll-behavior: smooth;
 }
 
+/* Set the main fonts*/
 body {
   font-family: "Inter", sans-serif;
   background-color: var(--bg-color);
@@ -26,6 +30,7 @@ h3 {
   font-family: "Space Grotesk", sans-serif;
 }
 
+/* Navigation bar */
 .navbar {
   display: flex;
   flex-direction: row;
@@ -55,6 +60,7 @@ h3 {
   color: var(--accent-color);
 }
 
+/* Buttons/links */
 p a,
 li a,
 figcaption a {
@@ -69,6 +75,7 @@ figcaption a:hover {
   transition: 0.5s;
 }
 
+/* Title */
 #title {
   text-align: center;
   font-size: 4vh;
@@ -81,6 +88,7 @@ figcaption a:hover {
   margin-bottom: 0;
 }
 
+/* Main parts */
 .main,
 .overview {
   padding: 1%;
@@ -113,6 +121,7 @@ figcaption a:hover {
   margin-top: 0;
 }
 
+/* Interactive Solar System */
 .solsys-container {
   display: flex;
   justify-content: left;
@@ -123,12 +132,14 @@ figcaption a:hover {
   height: calc(100vh - 31.5vh);
 }
 
+/* The image row of planets */
 .planetsrow {
   margin-top: 10px;
   display: flex;
   flex-direction: row;
 }
 
+/* Inner and outer planets */
 #innerplanet img,
 #outerplanet img {
   height: 200px;
@@ -140,6 +151,7 @@ figcaption a:hover {
   text-align: center;
 }
 
+/* Solar System image chart */
 #sol-sys {
   text-align: center;
 }
@@ -153,6 +165,7 @@ figcaption a:hover {
   border-radius: 20px;
 }
 
+/* Planet/moon images */
 #planet-photo {
   float: right;
   font-size: 75%;
