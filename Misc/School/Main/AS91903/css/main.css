@@ -76,13 +76,13 @@ figcaption a:hover {
 }
 
 /* Title */
-#title {
+.title {
   text-align: center;
   font-size: 4vh;
   margin-bottom: 0;
 }
 
-#subtext {
+.subtext {
   text-align: center;
   margin-top: 0;
   margin-bottom: 0;
@@ -140,14 +140,14 @@ figcaption a:hover {
 }
 
 /* Inner and outer planets */
-#innerplanet img,
-#outerplanet img {
+.innerplanet img,
+.outerplanet img {
   height: 200px;
   border-radius: 20px;
 }
 
-#innerplanet figcaption,
-#outerplanet figcaption {
+.innerplanet figcaption,
+.outerplanet figcaption {
   text-align: center;
 }
 
@@ -166,13 +166,13 @@ figcaption a:hover {
 }
 
 /* Planet/moon images */
-#planet-photo {
+.planet-photo {
   float: right;
   font-size: 75%;
   text-align: center;
 }
 
-#planet-photo img {
+.planet-photo img {
   width: 350px;
   padding: 10px;
   border-radius: 20px;
