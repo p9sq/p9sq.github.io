@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orbital Chart Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root{
+    --bg-void:#0A0E16;
+    --bg-panel:#121826;
+    --bg-raised:#1A2332;
+    --bg-raised-2:#212C3D;
+    --line-orbit:#2A3650;
+    --line-soft:#1E2836;
+    --accent-stellar:#E8A94C;
+    --accent-stellar-soft:rgba(232,169,76,0.16);
+    --accent-barycenter:#5EEAD4;
+    --accent-barycenter-soft:rgba(94,234,212,0.14);
+    --text-primary:#E9EEF5;
+    --text-muted:#8494AC;
+    --text-faint:#54607A;
+    --danger:#E5626B;
+    --danger-soft:rgba(229,98,107,0.14);
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+    --radius-sm:6px;
+    --radius-md:10px;
+  }
+  html,body{height:100%;}
+  body{
+    margin:0; background-color:var(--bg-void); color:var(--text-primary); font-family:var(--font-body);
+    background-image:
+      radial-gradient(1px 1px at 40px 60px, rgba(233,238,245,0.55), transparent),
+      radial-gradient(1px 1px at 180px 25px, rgba(233,238,245,0.35), transparent),
+      radial-gradient(1.5px 1.5px at 300px 145px, rgba(233,238,245,0.3), transparent),
+      radial-gradient(1px 1px at 120px 195px, rgba(233,238,245,0.4), transparent),
+      radial-gradient(1px 1px at 260px 95px, rgba(233,238,245,0.22), transparent),
+      radial-gradient(1px 1px at 340px 210px, rgba(233,238,245,0.3), transparent);
+    background-size:360px 240px; background-repeat:repeat; background-attachment:fixed;
+    display:flex; flex-direction:column; min-height:100vh;
+  }
+  ::selection{ background:var(--accent-barycenter-soft); }
+  a{ color:var(--accent-barycenter); }
+  :focus-visible{ outline:2px solid var(--accent-barycenter); outline-offset:2px; border-radius:4px; }
+
+  /* ---------- Header ---------- */
+  .app-header{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 22px; border-bottom:1px solid var(--line-soft);
+    background:rgba(18,24,38,0.7); backdrop-filter:blur(6px);
+    position:sticky; top:0; z-index:20;
+  }
+  .header-left{ display:flex; align-items:center; gap:14px; min-width:0; }
+  .header-mark{ font-size:22px; color:var(--accent-barycenter); flex-shrink:0; }
+  .header-titles{ display:flex; flex-direction:column; min-width:0; }
+  .header-titles h1{ font-family:var(--font-display); font-size:16px; font-weight:600; margin:0; letter-spacing:0.02em; }
+  .header-sub{ font-size:11.5px; color:var(--text-faint); margin-top:1px; }
+  .system-name-input{
+    margin-top:3px; background:transparent; border:none; border-bottom:1px solid transparent;
+    color:var(--text-muted); font-family:var(--font-body); font-size:12.5px; padding:2px 0; max-width:280px;
+    transition:border-color .15s;
+  }
+  .system-name-input:hover, .system-name-input:focus{ border-bottom-color:var(--line-orbit); color:var(--text-primary); }
+  .header-right{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  .btn{
+    font-family:var(--font-body); font-size:12.5px; font-weight:500; color:var(--text-primary);
+    background:var(--bg-raised); border:1px solid var(--line-orbit); border-radius:var(--radius-sm);
+    padding:7px 12px; cursor:pointer; transition:background .15s, border-color .15s; white-space:nowrap;
+  }
+  .btn:hover{ background:var(--bg-raised-2); border-color:var(--accent-barycenter-soft); }
+  .btn-ghost{ background:transparent; }
+  .btn-ghost:hover{ background:var(--bg-raised); }
+  .btn-primary{ background:var(--accent-barycenter-soft); border-color:var(--accent-barycenter); color:var(--accent-barycenter); }
+  .btn-primary:hover{ background:rgba(94,234,212,0.24); }
+  .btn-danger-text{ color:var(--danger); }
+  .file-btn{ display:inline-flex; align-items:center; }
+
+  /* ---------- Mobile tabs ---------- */
+  .mobile-tabs{ display:none; gap:4px; padding:8px 14px; border-bottom:1px solid var(--line-soft); background:var(--bg-panel); }
+  .tab-btn{
+    flex:1; background:none; border:1px solid transparent; color:var(--text-muted); font-family:var(--font-body);
+    font-size:12.5px; font-weight:500; padding:8px 6px; border-radius:var(--radius-sm); cursor:pointer;
+  }
+  .tab-btn.active{ background:var(--bg-raised); color:var(--accent-barycenter); border-color:var(--line-orbit); }
+
+  /* ---------- Layout ---------- */
+  .layout{ flex:1; display:grid; grid-template-columns:340px 1fr 320px; min-height:0; }
+  .panel{ min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+  .panel-edit{ background:var(--bg-panel); border-right:1px solid var(--line-soft); overflow-y:auto; }
+  .panel-details{ background:var(--bg-panel); border-left:1px solid var(--line-soft); overflow-y:auto; }
+  .panel-diagram{ background:radial-gradient(ellipse at center, rgba(26,35,50,0.5), transparent 70%); }
+
+  .panel-block{ padding:16px 18px; border-bottom:1px solid var(--line-soft); }
+  .panel-block:last-child{ border-bottom:none; flex:1; }
+  .panel-heading{
+    font-family:var(--font-display); font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--text-faint); margin:0 0 12px 0;
+  }
+
+  .hint{ color:var(--text-faint); font-size:12.5px; line-height:1.5; margin:4px 0; }
+
+  /* ---------- Presets ---------- */
+  .preset-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .preset-btn{
+    background:var(--bg-raised); border:1px solid var(--line-orbit); color:var(--text-primary);
+    font-family:var(--font-body); font-size:12px; font-weight:500; padding:10px 8px; border-radius:var(--radius-sm);
+    cursor:pointer; text-align:left; transition:border-color .15s, transform .1s;
+  }
+  .preset-btn:hover{ border-color:var(--accent-stellar); transform:translateY(-1px); }
+  .preset-btn.wide{ grid-column:1 / -1; }
+
+  /* ---------- Tree list ---------- */
+  .tree-list{ display:flex; flex-direction:column; gap:1px; max-height:280px; overflow-y:auto; margin:-4px -6px; }
+  .tree-row{
+    display:flex; align-items:center; gap:7px; padding:6px 8px; border-radius:var(--radius-sm); cursor:pointer;
+    font-size:12.5px; border-left:2px solid transparent;
+  }
+  .tree-row:hover{ background:var(--bg-raised); }
+  .tree-row.selected{ background:var(--accent-barycenter-soft); border-left-color:var(--accent-barycenter); }
+  .tree-icon{ font-size:12px; width:14px; text-align:center; flex-shrink:0; }
+  .tree-name{ flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tag-primary{
+    font-family:var(--font-mono); font-size:9px; color:var(--accent-barycenter); background:var(--accent-barycenter-soft);
+    padding:1px 5px; border-radius:8px; letter-spacing:0.03em; flex-shrink:0;
+  }
+  .tree-actions{ display:flex; gap:2px; flex-shrink:0; }
+  .icon-btn{
+    background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:12px; padding:3px 5px; border-radius:4px;
+    line-height:1;
+  }
+  .icon-btn:hover{ color:var(--text-primary); background:var(--bg-raised-2); }
+  .del-btn:hover{ color:var(--danger); }
+
+  /* ---------- Form ---------- */
+  .node-form{ display:flex; flex-direction:column; gap:11px; }
+  .node-form label{ display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--text-muted); }
+  .field-row{ display:flex; gap:8px; }
+  .field-row > label{ flex:1; min-width:0; }
+  .field-row .unit-select{ flex:0 0 auto; width:auto; }
+  input[type="text"], input[type="number"], textarea, select{
+    background:var(--bg-raised); border:1px solid var(--line-orbit); color:var(--text-primary);
+    font-family:var(--font-mono); font-size:12.5px; padding:7px 8px; border-radius:var(--radius-sm); width:100%;
+  }
+  .node-form label > input[type="text"], .node-form label > textarea{ font-family:var(--font-body); }
+  select{ font-family:var(--font-body); }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--accent-barycenter); }
+  input[type="color"]{
+    -webkit-appearance:none; appearance:none; width:100%; height:32px; border:1px solid var(--line-orbit);
+    border-radius:var(--radius-sm); background:var(--bg-raised); padding:2px; cursor:pointer;
+  }
+  input[type="color"]::-webkit-color-swatch{ border:none; border-radius:4px; }
+  textarea{ resize:vertical; font-size:12.5px; }
+  .field-note{ font-size:11px; color:var(--text-faint); font-family:var(--font-body); line-height:1.4; margin:0; }
+  .subsection{ border-top:1px dashed var(--line-orbit); padding-top:10px; margin-top:2px; display:flex; flex-direction:column; gap:11px; }
+  .subsection-label{ font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-faint); font-family:var(--font-display); }
+  .form-actions{ display:flex; gap:8px; margin-top:2px; }
+  .form-actions .btn{ flex:1; }
+
+  /* ---------- Diagram ---------- */
+  .diagram-toolbar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 18px;
+    border-bottom:1px solid var(--line-soft); flex-wrap:wrap;
+  }
+  .diagram-hint{ font-size:12px; color:var(--text-faint); }
+  .legend{ display:flex; gap:16px; font-size:11.5px; color:var(--text-muted); flex-shrink:0; }
+  .legend-item{ display:flex; align-items:center; gap:5px; }
+  .legend-swatch{ display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--accent-stellar); }
+  .legend-swatch.bary{ border-radius:0; background:none; border:1.5px solid var(--accent-barycenter); position:relative; width:10px; height:10px; }
+  .diagram-viewport{ flex:1; min-height:380px; display:flex; overflow:auto; }
+
+  .view-toggle{ display:flex; gap:3px; background:var(--bg-raised); border:1px solid var(--line-orbit); border-radius:20px; padding:3px; flex-shrink:0; }
+  .view-toggle-btn{
+    background:none; border:none; color:var(--text-muted); font-family:var(--font-body); font-size:11.5px; font-weight:500;
+    padding:5px 13px; border-radius:16px; cursor:pointer;
+  }
+  .view-toggle-btn.active{ background:var(--accent-barycenter-soft); color:var(--accent-barycenter); }
+
+  .lane-path{ fill:none; stroke:var(--line-orbit); stroke-width:1.2; }
+  .lane-au-label{ fill:var(--text-faint); font-family:var(--font-mono); font-size:11px; }
+  .hz-band{ fill:rgba(94,222,120,0.10); stroke:rgba(94,222,120,0.28); stroke-width:1; stroke-dasharray:3 3; }
+  .hz-label{ fill:rgba(120,222,140,0.7); font-family:var(--font-body); font-size:9.5px; letter-spacing:0.04em; text-transform:uppercase; }
+  .anchor-label{ fill:var(--text-muted); font-family:var(--font-body); font-size:11.5px; }
+  #diagram-svg{ width:100%; height:100%; }
+
+  .orbit-path{ fill:none; stroke:var(--line-orbit); stroke-width:1; }
+  .body-node{ stroke:rgba(0,0,0,0.25); stroke-width:1; cursor:pointer; }
+  .node-label{
+    fill:var(--text-muted); font-family:var(--font-body); font-size:11px; text-anchor:middle; pointer-events:none;
+  }
+  .body-node-group.selected .body-node{ stroke:var(--accent-barycenter); stroke-width:2; filter:drop-shadow(0 0 6px rgba(94,234,212,0.55)); }
+  .body-node-group.selected .node-label{ fill:var(--accent-barycenter); }
+  .bary-ring{ fill:none; stroke:var(--accent-barycenter); stroke-width:1.3; opacity:0.7; }
+  .bary-cross{ stroke:var(--accent-barycenter); stroke-width:1.5; }
+  .bary-label{ fill:var(--accent-barycenter); opacity:0.85; font-size:10.5px; }
+  .bary-marker{ cursor:pointer; }
+  .bary-marker.selected .bary-ring{ stroke-width:2; filter:drop-shadow(0 0 6px rgba(94,234,212,0.6)); opacity:1; }
+  .empty-diagram-text{ fill:var(--text-faint); font-family:var(--font-body); font-size:14px; }
+
+  /* ---------- Details panel ---------- */
+  .details-header{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .details-icon{ font-size:20px; }
+  .details-header h3{ font-family:var(--font-display); font-size:15px; margin:0; font-weight:600; }
+  .details-type{ font-size:11.5px; color:var(--text-faint); }
+  .stat-row{
+    display:flex; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--line-soft);
+    font-size:12px;
+  }
+  .stat-label{ color:var(--text-muted); }
+  .stat-val{ font-family:var(--font-mono); color:var(--text-primary); text-align:right; }
+  .tag-computed{
+    font-family:var(--font-body); font-size:9.5px; color:var(--accent-barycenter); background:var(--accent-barycenter-soft);
+    padding:1px 5px; border-radius:8px; margin-left:4px;
+  }
+  .details-notes{ margin-top:12px; font-size:12px; color:var(--text-muted); line-height:1.5; font-style:italic; }
+  .closeup-heading{
+    font-family:var(--font-display); font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-faint);
+    margin:18px 0 10px 0;
+  }
+  .closeup-svg{ width:100%; height:auto; display:block; }
+  .closeup-axis{ stroke:var(--line-orbit); stroke-width:1; stroke-dasharray:2 3; }
+  .crosshair-ring{ fill:none; stroke:var(--accent-barycenter); stroke-width:1; opacity:0.55; }
+  .barycenter-crosshair line{ stroke:var(--accent-barycenter); stroke-width:1.5; }
+  .closeup-label{ fill:var(--text-muted); font-family:var(--font-body); font-size:10.5px; text-anchor:middle; }
+  .closeup-status{ font-size:12px; color:var(--text-primary); line-height:1.5; margin:10px 0; padding:9px 10px;
+    background:var(--bg-raised); border-left:2px solid var(--accent-barycenter); border-radius:4px; }
+  .closeup-stats{ display:flex; flex-direction:column; gap:2px; }
+  .closeup-stats > div{ display:flex; justify-content:space-between; font-size:11.5px; padding:5px 0; border-bottom:1px solid var(--line-soft); }
+  .closeup-stats .stat-label{ color:var(--text-muted); }
+  .closeup-stats .stat-val{ font-family:var(--font-mono); }
+
+  /* ---------- Scrollbars ---------- */
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--line-orbit); border-radius:5px; }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--bg-raised-2); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:900px){
+    .mobile-tabs{ display:flex; }
+    .layout{ grid-template-columns:1fr; }
+    .panel{ display:none; }
+    .panel.active-panel{ display:flex; }
+    .panel-diagram{ min-height:60vh; }
+    .header-right{ display:none; }
+  }
+  @media (min-width:901px){
+    .panel{ display:flex !important; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-left">
+      <span class="header-mark">✛</span>
+      <div class="header-titles">
+        <h1>Orbital Chart Builder</h1>
+        <input id="system-name-input" class="system-name-input" value="Untitled System" aria-label="System name" />
+      </div>
+    </div>
+    <div class="header-right">
+      <button id="btn-export" class="btn btn-ghost" type="button">Export JSON</button>
+      <label class="btn btn-ghost file-btn">Import JSON<input type="file" id="import-file" accept="application/json" hidden></label>
+      <button id="btn-new" class="btn btn-ghost btn-danger-text" type="button">New system</button>
+    </div>
+  </header>
+
+  <nav class="mobile-tabs">
+    <button class="tab-btn active" data-tab="edit" type="button">Build</button>
+    <button class="tab-btn" data-tab="diagram" type="button">Chart</button>
+    <button class="tab-btn" data-tab="details" type="button">Details</button>
+  </nav>
+
+  <main class="layout">
+
+    <section class="panel panel-edit active-panel" data-panel="edit">
+      <div class="panel-block">
+        <h2 class="panel-heading">Presets</h2>
+        <div class="preset-grid">
+          <button class="preset-btn" data-preset="solarSystem" type="button">Solar System</button>
+          <button class="preset-btn" data-preset="blank" type="button">Blank canvas</button>
+        </div>
+      </div>
+
+      <div class="panel-block">
+        <h2 class="panel-heading">Hierarchy</h2>
+        <div id="tree-list" class="tree-list"></div>
+      </div>
+
+      <div class="panel-block">
+        <h2 class="panel-heading" id="form-heading">Add a body</h2>
+        <form id="node-form" class="node-form">
+          <label>Name
+            <input type="text" id="f-name" required maxlength="60" placeholder="e.g. Arventia" />
+          </label>
+
+          <label>Type
+            <select id="f-type">
+              <option value="star">Star</option>
+              <option value="planet" selected>Planet</option>
+              <option value="moon">Moon</option>
+              <option value="barycenter">Barycenter (computed center of mass)</option>
+              <option value="other">Other body</option>
+            </select>
+          </label>
+
+          <label id="f-subtype-wrap">Class / spectral type <span style="color:var(--text-faint)">(optional)</span>
+            <input type="text" id="f-subtype" maxlength="40" placeholder="e.g. G7V, hot Neptune" />
+          </label>
+
+          <label>Parent
+            <select id="f-parent"></select>
+          </label>
+
+          <div id="f-body-fields" style="display:flex; flex-direction:column; gap:11px;">
+            <div class="field-row">
+              <label>Mass
+                <input type="number" id="f-mass" step="any" min="0" />
+              </label>
+              <label class="unit-select">Unit
+                <select id="f-mass-unit">
+                  <option value="Msun">M☉ solar</option>
+                  <option value="Mjup">M♃ Jupiter</option>
+                  <option value="Mearth" selected>M⊕ Earth</option>
+                  <option value="Mmoon">M☾ Lunar</option>
+                  <option value="kg">kg</option>
+                </select>
+              </label>
+            </div>
+            <div class="field-row">
+              <label>Radius
+                <input type="number" id="f-radius" step="any" min="0" />
+              </label>
+              <label class="unit-select">Unit
+                <select id="f-radius-unit">
+                  <option value="Rsun">R☉ solar</option>
+                  <option value="Rjup">R♃ Jupiter</option>
+                  <option value="Rearth" selected>R⊕ Earth</option>
+                  <option value="Rmoon">R☾ Lunar</option>
+                  <option value="km">km</option>
+                </select>
+              </label>
+            </div>
+            <label>Color
+              <input type="color" id="f-color" value="#5B8FB9" />
+            </label>
+          </div>
+
+          <div id="f-orbit-fields" class="subsection">
+            <span class="subsection-label">Orbit around parent</span>
+            <div id="f-orbit-inputs" style="display:flex; flex-direction:column; gap:11px;">
+              <div class="field-row">
+                <label>Distance from parent
+                  <input type="number" id="f-orbit-a" step="any" min="0" />
+                </label>
+                <label class="unit-select">Unit
+                  <select id="f-orbit-unit">
+                    <option value="km">km</option>
+                    <option value="AU" selected>AU</option>
+                    <option value="LD">LD (lunar dist.)</option>
+                  </select>
+                </label>
+              </div>
+              <label>Orbital eccentricity <span style="color:var(--text-faint)">(0 = circular)</span>
+                <input type="number" id="f-orbit-e" step="0.001" min="0" max="0.99" value="0" />
+              </label>
+            </div>
+            <p id="f-orbit-computed-note" class="field-note" hidden>This body is one of the barycenter's primary pair, so its distance from the barycenter is computed automatically from mass ratio and separation (set below) — no need to enter it here.</p>
+          </div>
+
+          <div id="f-separation-fields" class="subsection" hidden>
+            <span class="subsection-label">Primary pair separation</span>
+            <div class="field-row">
+              <label>Separation between the two primary bodies
+                <input type="number" id="f-separation" step="any" min="0" />
+              </label>
+              <label class="unit-select">Unit
+                <select id="f-separation-unit">
+                  <option value="km" selected>km</option>
+                  <option value="AU">AU</option>
+                  <option value="LD">LD (lunar dist.)</option>
+                </select>
+              </label>
+            </div>
+            <label>Mutual orbit eccentricity
+              <input type="number" id="f-pair-e" step="0.001" min="0" max="0.99" value="0" />
+            </label>
+            <p class="field-note">The first two bodies you add with this barycenter as their parent become the primary pair. Their individual distances from the barycenter are computed from their masses and this separation. Any additional bodies added under this barycenter orbit it directly at a distance you specify (for low-mass satellites that don't meaningfully shift the barycenter).</p>
+          </div>
+
+          <label>Notes <span style="color:var(--text-faint)">(optional)</span>
+            <textarea id="f-notes" rows="2" maxlength="240"></textarea>
+          </label>
+
+          <div class="form-actions">
+            <button type="submit" id="f-submit" class="btn btn-primary">Add to system</button>
+            <button type="button" id="f-cancel" class="btn" hidden>Cancel edit</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel panel-diagram" data-panel="diagram">
+      <div class="diagram-toolbar">
+        <span class="diagram-hint">Click any body to see its details.</span>
+        <div class="view-toggle" role="group" aria-label="Chart style">
+          <button type="button" class="view-toggle-btn active" data-view="radial">Radial</button>
+          <button type="button" class="view-toggle-btn" data-view="linear">Linear</button>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch"></span> Physical body</span>
+          <span class="legend-item"><span class="legend-swatch bary"></span> Barycenter</span>
+        </div>
+      </div>
+      <div class="diagram-viewport">
+        <svg id="diagram-svg" viewBox="-300 -300 600 600" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Orbital hierarchy chart"></svg>
+      </div>
+    </section>
+
+    <section class="panel panel-details" data-panel="details">
+      <div class="panel-block" style="border-bottom:none; flex:1;">
+        <div id="details-content"><p class="hint">Select a body in the chart or hierarchy list to see its details here — including, for barycenters, exactly where the center of mass falls and whether it's inside or outside the primary body.</p></div>
+      </div>
+    </section>
+
+  </main>
+
+<script>
+(function(){
+  'use strict';
+
+  /* =========================================================
+     Units
+     ========================================================= */
+  var MASS_UNITS = { kg:1, Msun:1.98892e30, Mjup:1.89813e27, Mearth:5.9722e24, Mmoon:7.342e22 };
+  var MASS_LABELS = { kg:'kg', Msun:'M☉', Mjup:'M♃', Mearth:'M⊕', Mmoon:'M☾' };
+  var DIST_UNITS = { km:1, AU:1.495978707e8, LD:384400 };
+  var DIST_LABELS = { km:'km', AU:'AU', LD:'LD' };
+  var RADIUS_UNITS = { km:1, Rsun:696000, Rjup:69911, Rearth:6371, Rmoon:1737.4 };
+  var RADIUS_LABELS = { km:'km', Rsun:'R☉', Rjup:'R♃', Rearth:'R⊕', Rmoon:'R☾' };
+
+  var TYPE_META = {
+    star:{ label:'Star' },
+    planet:{ label:'Planet' },
+    moon:{ label:'Moon' },
+    barycenter:{ label:'Barycenter' },
+    other:{ label:'Other body' }
+  };
+
+  function typeMassUnit(type){ return type==='star' ? 'Msun' : 'Mearth'; }
+  function typeRadiusUnit(type){ return type==='star' ? 'Rsun' : 'Rearth'; }
+  function typeIcon(type){ return {star:'✦',planet:'●',moon:'☾',barycenter:'✛',other:'◆'}[type] || '●'; }
+  function bestDistUnitForOrbit(km){ return km >= 1e7 ? 'AU' : 'km'; }
+
+  /* =========================================================
+     State
+     ========================================================= */
+  var state = {
+    systemName: 'Untitled System',
+    rootId: null,
+    nodes: {},
+    selectedId: null,
+    editingId: null,
+    nextIdNum: 1
+  };
+  var currentViewMode = 'radial'; // 'radial' | 'linear' — kept separate from `state` so it survives preset/import loads
+
+  function uid(){ return 'n' + (state.nextIdNum++); }
+  function getNode(id){ return id ? state.nodes[id] : null; }
+  function getChildren(id){
+    var out = [];
+    for (var k in state.nodes){ if (state.nodes[k].parentId === id) out.push(state.nodes[k]); }
+    return out;
+  }
+  function getDescendantIds(id){
+    var out = [];
+    getChildren(id).forEach(function(c){ out.push(c.id); out = out.concat(getDescendantIds(c.id)); });
+    return out;
+  }
+  function getEffectiveMass(id){
+    var n = getNode(id); if (!n) return 0;
+    if (n.type === 'barycenter'){
+      return getChildren(id).reduce(function(sum,c){ return sum + getEffectiveMass(c.id); }, 0);
+    }
+    return n.mass_kg || 0;
+  }
+  function isPrimaryMember(childId){
+    var child = getNode(childId); if (!child) return false;
+    var parent = getNode(child.parentId);
+    if (!parent || parent.type !== 'barycenter') return false;
+    return (parent.primaryChildIds || []).indexOf(childId) !== -1;
+  }
+  function computeOrbitRadiusKm(childId){
+    var child = getNode(childId); if (!child) return 0;
+    var parent = getNode(child.parentId);
+    if (!parent) return 0;
+    if (parent.type === 'barycenter' && isPrimaryMember(childId)){
+      var pair = parent.primaryChildIds || [];
+      var aId = pair[0], bId = pair[1];
+      if (!aId || !bId) return 0;
+      var massA = getEffectiveMass(aId), massB = getEffectiveMass(bId);
+      var total = massA + massB;
+      if (total <= 0) return 0;
+      var sep = parent.separation_km || 0;
+      var otherMass = (childId === aId) ? massB : massA;
+      return sep * (otherMass / total);
+    }
+    return child.orbit_a_km || 0;
+  }
+
+  function addNode(data){
+    var id = uid();
+    var base = {
+      id:id, name:'New body', type:'planet', subtype:'', mass_kg:0, radius_km:0,
+      color:'#5B8FB9', parentId:null, orbit_a_km:0, orbit_e:0,
+      separation_km:0, pair_e:0, primaryChildIds:[], notes:''
+    };
+    state.nodes[id] = Object.assign(base, data, { id:id });
+    if (state.nodes[id].parentId){
+      var parent = getNode(state.nodes[id].parentId);
+      if (parent && parent.type === 'barycenter'){
+        parent.primaryChildIds = parent.primaryChildIds || [];
+        if (parent.primaryChildIds.length < 2) parent.primaryChildIds.push(id);
+      }
+    }
+    if (!state.rootId) state.rootId = id;
+    return id;
+  }
+
+  function updateNode(id, data){
+    var n = getNode(id); if (!n) return;
+    var oldParentId = n.parentId;
+    Object.assign(n, data);
+    if (n.parentId !== oldParentId){
+      var op = getNode(oldParentId);
+      if (op && op.primaryChildIds) op.primaryChildIds = op.primaryChildIds.filter(function(x){ return x !== id; });
+      var np = getNode(n.parentId);
+      if (np && np.type === 'barycenter'){
+        np.primaryChildIds = np.primaryChildIds || [];
+        if (np.primaryChildIds.indexOf(id) === -1 && np.primaryChildIds.length < 2) np.primaryChildIds.push(id);
+      }
+    }
+  }
+
+  function deleteNode(id){
+    var toDelete = [id].concat(getDescendantIds(id));
+    toDelete.forEach(function(delId){
+      delete state.nodes[delId];
+      for (var k in state.nodes){
+        var n = state.nodes[k];
+        if (n.primaryChildIds) n.primaryChildIds = n.primaryChildIds.filter(function(x){ return x !== delId; });
+      }
+    });
+    if (state.rootId && toDelete.indexOf(state.rootId) !== -1){
+      var remaining = Object.keys(state.nodes);
+      state.rootId = null;
+      for (var i=0;i<remaining.length;i++){
+        if (!getNode(remaining[i]).parentId){ state.rootId = remaining[i]; break; }
+      }
+      if (!state.rootId && remaining.length) state.rootId = remaining[0];
+    }
+    if (state.selectedId && toDelete.indexOf(state.selectedId) !== -1) state.selectedId = null;
+  }
+
+  /* =========================================================
+     Formatting helpers
+     ========================================================= */
+  function escapeXml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function trimNum(n, sig){
+    sig = sig || 6;
+    if (!isFinite(n)) return '0';
+    var r = Number(n.toPrecision(sig));
+    return String(r);
+  }
+  function fmtNumber(n, maxDecimals){
+    maxDecimals = maxDecimals == null ? 2 : maxDecimals;
+    if (n === 0) return '0';
+    var abs = Math.abs(n);
+    if (abs >= 1e6 || abs < 1e-3) return n.toExponential(3);
+    return n.toLocaleString(undefined, { maximumFractionDigits:maxDecimals });
+  }
+  function fmtMass(mass_kg, unit){
+    var val = (mass_kg||0) / MASS_UNITS[unit];
+    return fmtNumber(val, val < 10 ? 4 : 2) + ' ' + MASS_LABELS[unit];
+  }
+  function fmtDist(km, unit){
+    var val = (km||0) / DIST_UNITS[unit];
+    return fmtNumber(val, val < 10 ? 4 : 1) + ' ' + DIST_LABELS[unit];
+  }
+  function fmtRadius(km, unit){
+    var val = (km||0) / RADIUS_UNITS[unit];
+    return fmtNumber(val, val < 10 ? 3 : 1) + ' ' + RADIUS_LABELS[unit];
+  }
+
+  /* =========================================================
+     Layout (radial, log-scaled per sibling group)
+     ========================================================= */
+  function computeLayout(){
+    var pos = {};
+    function place(id, cx, cy, depth){
+      pos[id] = pos[id] || {};
+      pos[id].x = cx; pos[id].y = cy; pos[id].depth = depth;
+      var node = getNode(id);
+      var children = getChildren(id);
+      if (!children.length) return;
+
+      // A barycenter's primary pair must be treated as a rigid, always-opposite
+      // unit — independent of whatever else (planets, satellites) also orbits
+      // that same barycenter. Everything else keeps the old "spread visually"
+      // treatment, just computed only among itself.
+      var primaryIds = [];
+      if (node && node.type === 'barycenter'){
+        primaryIds = (node.primaryChildIds || []).filter(function(pid){
+          return children.some(function(c){ return c.id === pid; });
+        });
+      }
+      var primaryChildren = children.filter(function(c){ return primaryIds.indexOf(c.id) !== -1; });
+      var otherChildren = children.filter(function(c){ return primaryIds.indexOf(c.id) === -1; });
+
+      // Depth 0→1 is the "system" tier (the root's direct children — planets,
+      // or a barycenter's own members). Anything nested deeper is a
+      // "satellite" tier (moons, tertiary barycenter members) and always gets
+      // a small, fixed local radius — not a fraction of the whole canvas —
+      // so it stays visually attached to its immediate parent no matter how
+      // many other planets/moons exist elsewhere in the system.
+      var isSystemTier = (depth === 0);
+      var pxMin = isSystemTier ? 58 : 15;
+      var pxMax = isSystemTier ? 200 : 38;
+      var floorPx = isSystemTier ? 46 : 12;
+      var baseAngle = depth * 0.65 + 0.3;
+
+      if (primaryChildren.length === 2){
+        var pA = primaryChildren[0], pB = primaryChildren[1];
+        var dA = computeOrbitRadiusKm(pA.id), dB = computeOrbitRadiusKm(pB.id);
+        var maxD = Math.max(dA, dB, 1);
+        var rA = Math.max((dA / maxD) * pxMax, floorPx);
+        var rB = Math.max((dB / maxD) * pxMax, floorPx);
+        var xA = cx + rA * Math.cos(baseAngle), yA = cy + rA * Math.sin(baseAngle);
+        var xB = cx - rB * Math.cos(baseAngle), yB = cy - rB * Math.sin(baseAngle);
+        pos[pA.id] = { x:xA, y:yA, depth:depth + 1, orbitPxR:rA, orbitCx:cx, orbitCy:cy };
+        pos[pB.id] = { x:xB, y:yB, depth:depth + 1, orbitPxR:rB, orbitCx:cx, orbitCy:cy };
+        place(pA.id, xA, yA, depth + 1);
+        place(pB.id, xB, yB, depth + 1);
+      } else if (primaryChildren.length === 1){
+        var only = primaryChildren[0];
+        var xO = cx + pxMax * Math.cos(baseAngle), yO = cy + pxMax * Math.sin(baseAngle);
+        pos[only.id] = { x:xO, y:yO, depth:depth + 1, orbitPxR:pxMax, orbitCx:cx, orbitCy:cy };
+        place(only.id, xO, yO, depth + 1);
+      }
+
+      if (otherChildren.length){
+        var dists = otherChildren.map(function(c){ return computeOrbitRadiusKm(c.id); });
+        var logs = dists.map(function(d){ return d > 0 ? Math.log10(d) : 0; });
+        var minLog = Math.min.apply(null, logs), maxLog = Math.max.apply(null, logs);
+        var angleOffset = primaryChildren.length > 0 ? baseAngle + Math.PI / 2 : baseAngle;
+        otherChildren.forEach(function(c, i){
+          var pxR;
+          if (otherChildren.length === 1 || maxLog === minLog) pxR = (pxMin + pxMax) / 2;
+          else pxR = pxMin + (logs[i] - minLog) / (maxLog - minLog) * (pxMax - pxMin);
+          var angle = angleOffset + (2 * Math.PI * i / otherChildren.length);
+          var x = cx + pxR * Math.cos(angle);
+          var y = cy + pxR * Math.sin(angle);
+          pos[c.id] = { x:x, y:y, depth:depth + 1, orbitPxR:pxR, orbitCx:cx, orbitCy:cy };
+          place(c.id, x, y, depth + 1);
+        });
+      }
+    }
+    if (state.rootId && state.nodes[state.rootId]) place(state.rootId, 0, 0, 0);
+    return pos;
+  }
+
+  function nodePixelSize(n){
+    var r = n.radius_km || 500;
+    var logR = Math.log10(Math.max(r, 1));
+    var minLog = 2.5, maxLog = 6.0;
+    var t = Math.min(Math.max((logR - minLog) / (maxLog - minLog), 0), 1);
+    return 4 + t * 22;
+  }
+
+  /* =========================================================
+     Rendering: hierarchy tree
+     ========================================================= */
+  function renderTree(){
+    var container = document.getElementById('tree-list');
+    if (!state.rootId || !state.nodes[state.rootId]){
+      container.innerHTML = '<p class="hint">Nothing here yet — add a body below or load a preset above.</p>';
+      return;
+    }
+    var html = '';
+    (function walk(id, depth){
+      var n = getNode(id); if (!n) return;
+      var selected = id === state.selectedId;
+      var parent = n.parentId ? getNode(n.parentId) : null;
+      var primaryTag = (parent && parent.type === 'barycenter' && (parent.primaryChildIds||[]).indexOf(id) !== -1)
+        ? '<span class="tag-primary">primary</span>' : '';
+      html += '<div class="tree-row ' + (selected?'selected':'') + '" style="padding-left:' + (10+depth*16) + 'px" data-id="' + id + '">' +
+        '<span class="tree-icon" style="color:' + (n.type==='barycenter' ? 'var(--accent-barycenter)' : (n.color||'var(--accent-stellar)')) + '">' + typeIcon(n.type) + '</span>' +
+        '<span class="tree-name">' + escapeXml(n.name) + '</span>' +
+        primaryTag +
+        '<span class="tree-actions">' +
+          '<button type="button" class="icon-btn edit-btn" data-id="' + id + '" title="Edit" aria-label="Edit ' + escapeXml(n.name) + '">✎</button>' +
+          '<button type="button" class="icon-btn del-btn" data-id="' + id + '" title="Delete" aria-label="Delete ' + escapeXml(n.name) + '">✕</button>' +
+        '</span>' +
+      '</div>';
+      getChildren(id).slice().sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(c){ walk(c.id, depth+1); });
+    })(state.rootId, 0);
+    container.innerHTML = html;
+    container.querySelectorAll('.tree-row').forEach(function(el){
+      el.addEventListener('click', function(){ selectNode(el.getAttribute('data-id')); });
+    });
+    container.querySelectorAll('.edit-btn').forEach(function(el){
+      el.addEventListener('click', function(e){ e.stopPropagation(); fillFormForEdit(el.getAttribute('data-id')); });
+    });
+    container.querySelectorAll('.del-btn').forEach(function(el){
+      el.addEventListener('click', function(e){ handleDeleteClick(el.getAttribute('data-id'), e); });
+    });
+  }
+
+  /* =========================================================
+     Rendering: main diagram
+     ========================================================= */
+  function barycenterMarkerSVG(x, y, selected, id, name, r){
+    r = r || 10;
+    var shortName = name.replace(/ Barycenter$/i, '');
+    return '<g class="node-hit bary-marker ' + (selected?'selected':'') + '" data-id="' + id + '">' +
+      '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" class="bary-ring"/>' +
+      '<line x1="' + (x-r*0.6) + '" y1="' + y + '" x2="' + (x+r*0.6) + '" y2="' + y + '" class="bary-cross"/>' +
+      '<line x1="' + x + '" y1="' + (y-r*0.6) + '" x2="' + x + '" y2="' + (y+r*0.6) + '" class="bary-cross"/>' +
+      '<text x="' + x + '" y="' + (y - r - 8) + '" class="node-label bary-label">' + escapeXml(shortName) + '</text>' +
+    '</g>';
+  }
+
+  function wireNodeHitHandlers(svg){
+    svg.querySelectorAll('.node-hit').forEach(function(el){
+      el.addEventListener('click', function(){
+        selectNode(el.getAttribute('data-id'));
+        if (window.innerWidth < 900) switchTab('details');
+      });
+    });
+  }
+
+  // Moons don't get a permanent text label — with dozens of bodies on screen
+  // at once, labeling every satellite is what made the chart unreadable.
+  // They stay fully identifiable via hover tooltip and click-to-select.
+  function bodyNodeSVG(x, y, n, id, labelBelowOffset, sizeOverride){
+    var selected = id === state.selectedId;
+    var size = sizeOverride != null ? sizeOverride : nodePixelSize(n);
+    var showLabel = n.type !== 'moon';
+    var labelY = y + size + (labelBelowOffset != null ? labelBelowOffset : 15);
+    return '<g class="node-hit body-node-group ' + (selected?'selected':'') + '" data-id="' + id + '">' +
+      (showLabel ? '' : '<title>' + escapeXml(n.name) + '</title>') +
+      '<circle cx="' + x + '" cy="' + y + '" r="' + size + '" fill="' + n.color + '" class="body-node"/>' +
+      (showLabel ? '<text x="' + x + '" y="' + labelY + '" class="node-label">' + escapeXml(n.name) + '</text>' : '') +
+    '</g>';
+  }
+
+  function renderDiagram(){
+    var svg = document.getElementById('diagram-svg');
+    if (!state.rootId || !state.nodes[state.rootId]){
+      svg.setAttribute('viewBox', '-200 -200 400 400');
+      svg.innerHTML = '<text x="0" y="0" class="empty-diagram-text" text-anchor="middle">No system yet — add a body or load a preset</text>';
+      return;
+    }
+    if (currentViewMode === 'linear') renderDiagramLinear(svg);
+    else renderDiagramRadial(svg);
+  }
+
+  function renderDiagramRadial(svg){
+    var pos = computeLayout();
+    var xs = Object.keys(pos).map(function(k){ return pos[k].x; });
+    var ys = Object.keys(pos).map(function(k){ return pos[k].y; });
+    var pad = 70;
+    var minX = Math.min.apply(null, xs) - pad, maxX = Math.max.apply(null, xs) + pad;
+    var minY = Math.min.apply(null, ys) - pad, maxY = Math.max.apply(null, ys) + pad;
+    var w = Math.max(maxX - minX, 320), h = Math.max(maxY - minY, 320);
+    var cx0 = (minX+maxX)/2, cy0 = (minY+maxY)/2;
+    svg.setAttribute('viewBox', (cx0-w/2) + ' ' + (cy0-h/2) + ' ' + w + ' ' + h);
+
+    var content = '';
+    Object.keys(pos).forEach(function(id){
+      var p = pos[id];
+      if (p.orbitPxR != null) content += '<circle class="orbit-path" cx="' + p.orbitCx + '" cy="' + p.orbitCy + '" r="' + p.orbitPxR + '" />';
+    });
+    Object.keys(pos).forEach(function(id){
+      var p = pos[id]; var n = getNode(id); if (!n) return;
+      var selected = id === state.selectedId;
+      if (n.type === 'barycenter'){
+        content += barycenterMarkerSVG(p.x, p.y, selected, id, n.name);
+      } else {
+        content += bodyNodeSVG(p.x, p.y, n, id);
+      }
+    });
+    svg.innerHTML = content;
+    wireNodeHitHandlers(svg);
+  }
+
+  /* ---- Linear / orthographic system view: log-scaled AU lanes, star(s) as
+     the fixed left anchor, moons and barycenter pairs clustered on their lane. ---- */
+  function computeAnchorMassForHZ(){
+    var root = getNode(state.rootId);
+    if (!root) return 0;
+    return root.type === 'barycenter' ? getEffectiveMass(root.id) : (root.mass_kg || 0);
+  }
+
+  function renderDiagramLinear(svg){
+    var root = getNode(state.rootId);
+    var allChildren = getChildren(state.rootId);
+    var anchorBodies = [];
+    var laneChildren = allChildren;
+
+    if (root.type === 'barycenter'){
+      var primaryIds = (root.primaryChildIds || []).filter(function(pid){ return getNode(pid); });
+      anchorBodies = primaryIds.map(getNode);
+      laneChildren = allChildren.filter(function(c){ return primaryIds.indexOf(c.id) === -1; });
+    } else {
+      anchorBodies = [root];
+    }
+
+    var lanes = laneChildren.map(function(c){
+      var distKm = computeOrbitRadiusKm(c.id);
+      return { node:c, auDist: Math.max(distKm / DIST_UNITS.AU, 0.005) };
+    }).sort(function(a,b){ return a.auDist - b.auDist; });
+
+    var leftMargin = 60, anchorGap = 80, pxPerDecade = 260;
+    var minAU = lanes.length ? lanes[0].auDist : 1;
+    function xForAU(au){ return leftMargin + anchorGap + (Math.log10(au) - Math.log10(minAU)) * pxPerDecade; }
+
+    var halfHeight = 240;
+    var maxX = lanes.length ? xForAU(lanes[lanes.length-1].auDist) : (leftMargin + anchorGap);
+    var totalWidth = Math.max(maxX + 140, 360);
+
+    var content = '';
+
+    // Estimated habitable zone band (rough L ∝ M^3.5 approximation; illustrative, not precise)
+    var hzMass = computeAnchorMassForHZ();
+    if (hzMass > 0 && lanes.length){
+      var relL = Math.pow(hzMass / MASS_UNITS.Msun, 3.5);
+      var hzInner = 0.95 * Math.sqrt(relL), hzOuter = 1.37 * Math.sqrt(relL);
+      var hzX1 = xForAU(Math.max(hzInner, minAU * 0.15));
+      var hzX2 = xForAU(hzOuter);
+      if (hzX2 > leftMargin && hzX1 < totalWidth){
+        content += '<rect x="' + hzX1 + '" y="' + (-halfHeight) + '" width="' + Math.max(hzX2-hzX1, 2) + '" height="' + (halfHeight*2) + '" class="hz-band"/>';
+        content += '<text x="' + ((hzX1+hzX2)/2) + '" y="' + (-halfHeight+15) + '" class="hz-label" text-anchor="middle">habitable zone (est.)</text>';
+      }
+    }
+
+    // Anchor: the system's star, or its binary pair stacked vertically with a
+    // radius-aware gap so two large stars never visually overlap
+    if (anchorBodies.length === 2){
+      var sizeA = nodePixelSize(anchorBodies[0]), sizeB = nodePixelSize(anchorBodies[1]);
+      var vGap = 3;
+      content += bodyNodeSVG(leftMargin, -(sizeA+vGap), anchorBodies[0], anchorBodies[0].id, -(sizeA+8));
+      content += bodyNodeSVG(leftMargin, (sizeB+vGap), anchorBodies[1], anchorBodies[1].id, sizeB+16);
+    } else if (anchorBodies.length === 1){
+      content += bodyNodeSVG(leftMargin, 0, anchorBodies[0], anchorBodies[0].id);
+    }
+
+    // Each lane: a gently curved guide line, an AU label (staggered onto two
+    // rows when lanes sit close together), the body, and any moons /
+    // barycenter-pair members clustered right around it.
+    lanes.forEach(function(lane, laneIdx){
+      var x = xForAU(lane.auDist);
+      var n = lane.node;
+      var bow = 16;
+      var closePacked = laneIdx > 0 && (x - xForAU(lanes[laneIdx-1].auDist)) < 70;
+      var auLabelY = closePacked && laneIdx % 2 === 1 ? (-halfHeight-24) : (-halfHeight-10);
+      content += '<path d="M ' + x + ' ' + (-halfHeight) + ' Q ' + (x+bow) + ' 0 ' + x + ' ' + halfHeight + '" class="lane-path"/>';
+      content += '<text x="' + x + '" y="' + auLabelY + '" class="lane-au-label" text-anchor="middle">' + fmtNumber(lane.auDist, lane.auDist<10?2:0) + ' AU</text>';
+
+      if (n.type === 'barycenter'){
+        var pids = (n.primaryChildIds || []).filter(function(pid){ return getNode(pid); });
+        var members = pids.map(getNode);
+        if (members.length === 2){
+          var rA = nodePixelSize(members[0]), rB = nodePixelSize(members[1]);
+          var hGap = 3;
+          content += bodyNodeSVG(x - rA - hGap, 0, members[0], members[0].id, rA + 15);
+          content += bodyNodeSVG(x + rB + hGap, 0, members[1], members[1].id, rB + 15);
+          content += barycenterMarkerSVG(x, 0, state.selectedId === n.id, n.id, n.name, 6);
+        }
+        var tertiary = getChildren(n.id).filter(function(c){ return pids.indexOf(c.id) === -1; });
+        tertiary.forEach(function(t, ti){
+          var side = (ti % 2 === 0) ? 1 : -1;
+          var yOff = side * (36 + Math.floor(ti/2) * 15);
+          content += bodyNodeSVG(x, yOff, t, t.id, 0, Math.max(nodePixelSize(t) * 0.55, 2.5));
+        });
+      } else {
+        var extraPush = closePacked && laneIdx % 2 === 1 ? 17 : 0;
+        content += bodyNodeSVG(x, 0, n, n.id, 15 + extraPush);
+        getChildren(n.id).forEach(function(m, mi){
+          var side = (mi % 2 === 0) ? 1 : -1;
+          var yOff = side * (nodePixelSize(n) + 24 + Math.floor(mi/2) * 15);
+          var xOff = x + (mi % 2 === 0 ? 9 : -9);
+          content += bodyNodeSVG(xOff, yOff, m, m.id, 0, Math.max(nodePixelSize(m) * 0.55, 2.5));
+        });
+      }
+    });
+
+    svg.setAttribute('viewBox', '0 ' + (-halfHeight-50) + ' ' + totalWidth + ' ' + (halfHeight*2+100));
+    svg.innerHTML = content;
+    wireNodeHitHandlers(svg);
+  }
+
+  /* =========================================================
+     Rendering: barycenter closeup (the signature view)
+     ========================================================= */
+  function renderBarycenterCloseup(baryId){
+    var bary = getNode(baryId);
+    var ids = bary.primaryChildIds || [];
+    if (ids.length < 2 || !getNode(ids[0]) || !getNode(ids[1])){
+      return '<p class="hint">Add two primary bodies under this barycenter to see the computed offset.</p>';
+    }
+    var a = getNode(ids[0]), b = getNode(ids[1]);
+    var massA = getEffectiveMass(a.id), massB = getEffectiveMass(b.id);
+    var total = massA + massB;
+    var sep = bary.separation_km || 0;
+    var distA = total > 0 ? sep * (massB/total) : 0;
+    var distB = total > 0 ? sep * (massA/total) : 0;
+    var rA = a.radius_km || 0, rB = b.radius_km || 0;
+    var span = Math.max(distA + rA, distB + rB, 1);
+    var scale = 150 / span;
+    var cx = 180, cy = 100;
+    var ax = -distA * scale, bx = distB * scale;
+    var rAd = Math.max(rA * scale, 3), rBd = Math.max(rB * scale, 3);
+    var insideA = distA < rA, insideB = distB < rB;
+    var statusText;
+    if (insideA) statusText = 'The barycenter lies inside ' + escapeXml(a.name) + ', about ' + fmtNumber(rA-distA,0) + ' km below its surface.';
+    else if (insideB) statusText = 'The barycenter lies inside ' + escapeXml(b.name) + ', about ' + fmtNumber(rB-distB,0) + ' km below its surface.';
+    else statusText = 'The barycenter lies in open space, about ' + fmtNumber(distA-rA,0) + ' km above ' + escapeXml(a.name) + '\u2019s surface.';
+
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var anim = reduceMotion ? '' : '<animateTransform attributeName="transform" type="rotate" from="0 ' + cx + ' ' + cy + '" to="360 ' + cx + ' ' + cy + '" dur="14s" repeatCount="indefinite"/>';
+
+    var svg = '<svg viewBox="0 0 360 200" class="closeup-svg" aria-hidden="true">' +
+      '<line x1="15" y1="' + cy + '" x2="345" y2="' + cy + '" class="closeup-axis"/>' +
+      '<g class="closeup-orbit-group">' +
+        '<circle cx="' + (cx+ax) + '" cy="' + cy + '" r="' + rAd + '" fill="' + a.color + '"/>' +
+        '<text x="' + (cx+ax) + '" y="' + (cy+rAd+16) + '" class="closeup-label">' + escapeXml(a.name) + '</text>' +
+        '<circle cx="' + (cx+bx) + '" cy="' + cy + '" r="' + rBd + '" fill="' + b.color + '"/>' +
+        '<text x="' + (cx+bx) + '" y="' + (cy+rBd+16) + '" class="closeup-label">' + escapeXml(b.name) + '</text>' +
+        anim +
+      '</g>' +
+      '<g class="barycenter-crosshair">' +
+        '<line x1="' + (cx-7) + '" y1="' + cy + '" x2="' + (cx+7) + '" y2="' + cy + '"/>' +
+        '<line x1="' + cx + '" y1="' + (cy-7) + '" x2="' + cx + '" y2="' + (cy+7) + '"/>' +
+        '<circle cx="' + cx + '" cy="' + cy + '" r="12" class="crosshair-ring"/>' +
+      '</g>' +
+    '</svg>';
+
+    var stats = '<div class="closeup-stats">' +
+      '<div><span class="stat-label">' + escapeXml(a.name) + ' → barycenter</span><span class="stat-val">' + fmtDist(distA, bestDistUnitForOrbit(distA)) + '</span></div>' +
+      '<div><span class="stat-label">' + escapeXml(b.name) + ' → barycenter</span><span class="stat-val">' + fmtDist(distB, bestDistUnitForOrbit(distB)) + '</span></div>' +
+      '<div><span class="stat-label">Total separation</span><span class="stat-val">' + fmtDist(sep, bestDistUnitForOrbit(sep)) + '</span></div>' +
+      '<div><span class="stat-label">Combined mass</span><span class="stat-val">' + fmtMass(total, typeMassUnit(a.type==='star'?'star':'planet')) + '</span></div>' +
+    '</div>';
+
+    return svg + '<p class="closeup-status">' + statusText + '</p>' + stats;
+  }
+
+  /* =========================================================
+     Rendering: details panel
+     ========================================================= */
+  function renderDetails(){
+    var container = document.getElementById('details-content');
+    var n = state.selectedId ? getNode(state.selectedId) : null;
+    if (!n){
+      container.innerHTML = '<p class="hint">Select a body in the chart or hierarchy list to see its details here — including, for barycenters, exactly where the center of mass falls and whether it\u2019s inside or outside the primary body.</p>';
+      return;
+    }
+    var html = '<div class="details-header">' +
+      '<span class="details-icon" style="color:' + (n.type==='barycenter' ? 'var(--accent-barycenter)' : n.color) + '">' + typeIcon(n.type) + '</span>' +
+      '<div><h3>' + escapeXml(n.name) + '</h3><span class="details-type">' + TYPE_META[n.type].label + (n.subtype ? ' · ' + escapeXml(n.subtype) : '') + '</span></div>' +
+    '</div>';
+
+    if (n.type === 'barycenter'){
+      var totalMass = getEffectiveMass(n.id);
+      var massUnitGuess = totalMass > 5e25 ? 'Msun' : 'Mearth';
+      html += '<div class="stat-row"><span class="stat-label">Combined mass</span><span class="stat-val">' + fmtMass(totalMass, massUnitGuess) + '</span></div>';
+      if (n.parentId && getNode(n.parentId)){
+        var du = bestDistUnitForOrbit(n.orbit_a_km || 0);
+        html += '<div class="stat-row"><span class="stat-label">Distance from ' + escapeXml(getNode(n.parentId).name) + '</span><span class="stat-val">' + fmtDist(n.orbit_a_km, du) + '</span></div>';
+      }
+      html += '<h4 class="closeup-heading">Barycenter offset</h4>' + renderBarycenterCloseup(n.id);
+    } else {
+      html += '<div class="stat-row"><span class="stat-label">Mass</span><span class="stat-val">' + fmtMass(n.mass_kg, typeMassUnit(n.type)) + '</span></div>';
+      html += '<div class="stat-row"><span class="stat-label">Radius</span><span class="stat-val">' + fmtRadius(n.radius_km, typeRadiusUnit(n.type)) + '</span></div>';
+      var parent = n.parentId ? getNode(n.parentId) : null;
+      if (parent){
+        var primary = isPrimaryMember(n.id);
+        var dist = computeOrbitRadiusKm(n.id);
+        var du2 = bestDistUnitForOrbit(dist);
+        html += '<div class="stat-row"><span class="stat-label">Distance from ' + escapeXml(parent.name) + (primary ? ' barycenter' : '') + '</span><span class="stat-val">' + fmtDist(dist, du2) + (primary ? ' <span class="tag-computed">computed</span>' : '') + '</span></div>';
+        if (!primary && n.orbit_e) html += '<div class="stat-row"><span class="stat-label">Eccentricity</span><span class="stat-val">' + n.orbit_e + '</span></div>';
+      }
+    }
+    if (n.notes) html += '<div class="details-notes">' + escapeXml(n.notes) + '</div>';
+    container.innerHTML = html;
+  }
+
+  /* =========================================================
+     Form handling
+     ========================================================= */
+  function populateParentOptions(excludeId){
+    var sel = document.getElementById('f-parent');
+    var current = sel.value;
+    var excluded = {};
+    if (excludeId){ excluded[excludeId] = true; getDescendantIds(excludeId).forEach(function(d){ excluded[d] = true; }); }
+    var opts = '<option value="">— None (root) —</option>';
+    Object.keys(state.nodes).forEach(function(id){
+      if (excluded[id]) return;
+      var n = state.nodes[id];
+      opts += '<option value="' + id + '">' + escapeXml(n.name) + ' (' + TYPE_META[n.type].label + ')</option>';
+    });
+    sel.innerHTML = opts;
+    if (current && !excluded[current] && state.nodes[current]) sel.value = current;
+  }
+
+  function updateFormVisibility(){
+    var type = document.getElementById('f-type').value;
+    var parentId = document.getElementById('f-parent').value;
+    var isBary = type === 'barycenter';
+    document.getElementById('f-body-fields').style.display = isBary ? 'none' : 'flex';
+    document.getElementById('f-separation-fields').hidden = !isBary;
+    document.getElementById('f-subtype-wrap').style.display = isBary ? 'none' : 'flex';
+    document.getElementById('f-orbit-fields').hidden = !parentId;
+
+    var computed = false;
+    if (parentId && !isBary){
+      var parent = getNode(parentId);
+      if (parent && parent.type === 'barycenter'){
+        var already = (parent.primaryChildIds || []).indexOf(state.editingId) !== -1;
+        computed = already || (parent.primaryChildIds || []).length < 2;
+      }
+    }
+    document.getElementById('f-orbit-inputs').hidden = computed;
+    document.getElementById('f-orbit-computed-note').hidden = !computed;
+  }
+
+  function clearForm(){
+    state.editingId = null;
+    document.getElementById('node-form').reset();
+    document.getElementById('form-heading').textContent = 'Add a body';
+    document.getElementById('f-submit').textContent = 'Add to system';
+    document.getElementById('f-cancel').hidden = true;
+    populateParentOptions(null);
+    document.getElementById('f-mass-unit').value = typeMassUnit('planet');
+    document.getElementById('f-radius-unit').value = typeRadiusUnit('planet');
+    document.getElementById('f-color').value = '#5B8FB9';
+    updateFormVisibility();
+  }
+
+  function fillFormForEdit(id){
+    var n = getNode(id); if (!n) return;
+    state.editingId = id;
+    populateParentOptions(id);
+    document.getElementById('f-name').value = n.name;
+    document.getElementById('f-type').value = n.type;
+    document.getElementById('f-subtype').value = n.subtype || '';
+    document.getElementById('f-parent').value = n.parentId || '';
+    document.getElementById('f-notes').value = n.notes || '';
+
+    if (n.type !== 'barycenter'){
+      var mu = typeMassUnit(n.type);
+      document.getElementById('f-mass').value = n.mass_kg ? trimNum(n.mass_kg / MASS_UNITS[mu]) : '';
+      document.getElementById('f-mass-unit').value = mu;
+      var ru = typeRadiusUnit(n.type);
+      document.getElementById('f-radius').value = n.radius_km ? trimNum(n.radius_km / RADIUS_UNITS[ru]) : '';
+      document.getElementById('f-radius-unit').value = ru;
+      document.getElementById('f-color').value = n.color || '#5B8FB9';
+    }
+    var du = bestDistUnitForOrbit(n.orbit_a_km || 0);
+    document.getElementById('f-orbit-a').value = n.orbit_a_km ? trimNum(n.orbit_a_km / DIST_UNITS[du]) : '';
+    document.getElementById('f-orbit-unit').value = du;
+    document.getElementById('f-orbit-e').value = n.orbit_e || 0;
+
+    if (n.type === 'barycenter'){
+      document.getElementById('f-separation').value = n.separation_km ? trimNum(n.separation_km / DIST_UNITS.km, 8) : '';
+      document.getElementById('f-separation-unit').value = 'km';
+      document.getElementById('f-pair-e').value = n.pair_e || 0;
+    }
+
+    document.getElementById('form-heading').textContent = 'Edit body';
+    document.getElementById('f-submit').textContent = 'Save changes';
+    document.getElementById('f-cancel').hidden = false;
+    updateFormVisibility();
+    var formEl = document.getElementById('node-form');
+    if (formEl.scrollIntoView) formEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  function handleFormSubmit(e){
+    e.preventDefault();
+    var type = document.getElementById('f-type').value;
+    var name = document.getElementById('f-name').value.trim() || 'Unnamed body';
+    var subtype = document.getElementById('f-subtype').value.trim();
+    var parentId = document.getElementById('f-parent').value || null;
+    var notes = document.getElementById('f-notes').value.trim();
+    var data = { name:name, type:type, subtype:subtype, parentId:parentId, notes:notes };
+
+    if (type !== 'barycenter'){
+      var massVal = parseFloat(document.getElementById('f-mass').value);
+      var massUnit = document.getElementById('f-mass-unit').value;
+      var radiusVal = parseFloat(document.getElementById('f-radius').value);
+      var radiusUnit = document.getElementById('f-radius-unit').value;
+      data.mass_kg = (isFinite(massVal) && massVal > 0) ? massVal * MASS_UNITS[massUnit] : 0;
+      data.radius_km = (isFinite(radiusVal) && radiusVal > 0) ? radiusVal * RADIUS_UNITS[radiusUnit] : 0;
+      data.color = document.getElementById('f-color').value;
+
+      var parentIsBary = parentId && getNode(parentId) && getNode(parentId).type === 'barycenter';
+      var wouldBePrimary = false;
+      if (parentIsBary){
+        var already = (getNode(parentId).primaryChildIds || []).indexOf(state.editingId) !== -1;
+        wouldBePrimary = already || (getNode(parentId).primaryChildIds || []).length < 2;
+      }
+      if (!(parentIsBary && wouldBePrimary)){
+        var orbitVal = parseFloat(document.getElementById('f-orbit-a').value);
+        var orbitUnit = document.getElementById('f-orbit-unit').value;
+        data.orbit_a_km = (isFinite(orbitVal) && orbitVal >= 0) ? orbitVal * DIST_UNITS[orbitUnit] : 0;
+        data.orbit_e = parseFloat(document.getElementById('f-orbit-e').value) || 0;
+      } else {
+        data.orbit_a_km = 0; data.orbit_e = 0;
+      }
+    } else {
+      var sepVal = parseFloat(document.getElementById('f-separation').value);
+      var sepUnit = document.getElementById('f-separation-unit').value;
+      data.separation_km = (isFinite(sepVal) && sepVal >= 0) ? sepVal * DIST_UNITS[sepUnit] : 0;
+      data.pair_e = parseFloat(document.getElementById('f-pair-e').value) || 0;
+      var orbitVal2 = parseFloat(document.getElementById('f-orbit-a').value);
+      var orbitUnit2 = document.getElementById('f-orbit-unit').value;
+      data.orbit_a_km = (isFinite(orbitVal2) && orbitVal2 >= 0) ? orbitVal2 * DIST_UNITS[orbitUnit2] : 0;
+      data.orbit_e = parseFloat(document.getElementById('f-orbit-e').value) || 0;
+      data.mass_kg = 0; data.radius_km = 0; data.color = 'transparent';
+    }
+
+    if (state.editingId){
+      updateNode(state.editingId, data);
+      state.selectedId = state.editingId;
+    } else {
+      state.selectedId = addNode(data);
+    }
+    clearForm();
+    renderAll();
+  }
+
+  function handleDeleteClick(id, e){
+    if (e) e.stopPropagation();
+    var n = getNode(id); if (!n) return;
+    var descCount = getDescendantIds(id).length;
+    var msg = descCount > 0
+      ? 'Delete "' + n.name + '" and its ' + descCount + ' descendant' + (descCount===1?'':'s') + '?'
+      : 'Delete "' + n.name + '"?';
+    if (!window.confirm(msg)) return;
+    var wasEditing = state.editingId === id;
+    deleteNode(id);
+    if (wasEditing) clearForm();
+    renderAll();
+  }
+
+  function selectNode(id){
+    state.selectedId = id;
+    renderTree();
+    renderDiagram();
+    renderDetails();
+  }
+
+  function switchTab(tab){
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab') === tab); });
+    document.querySelectorAll('.panel').forEach(function(p){ p.classList.toggle('active-panel', p.getAttribute('data-panel') === tab); });
+  }
+
+  /* =========================================================
+     Export / Import
+     ========================================================= */
+  function exportJSON(){
+    var data = { version:1, systemName: state.systemName, rootId: state.rootId, nodes: state.nodes, nextIdNum: state.nextIdNum };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (state.systemName || 'system').replace(/[^a-z0-9\-_]+/gi, '_') + '.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function importJSONFile(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var data = JSON.parse(e.target.result);
+        if (!data.nodes) throw new Error('missing nodes');
+        state = {
+          systemName: data.systemName || 'Imported System',
+          rootId: data.rootId || null,
+          nodes: data.nodes || {},
+          selectedId: null,
+          editingId: null,
+          nextIdNum: data.nextIdNum || (Object.keys(data.nodes||{}).length + 1)
+        };
+        document.getElementById('system-name-input').value = state.systemName;
+        clearForm();
+        renderAll();
+      } catch(err){
+        window.alert('Could not read that file — make sure it\'s a system exported from this tool.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  /* =========================================================
+     Presets
+     ========================================================= */
+  var SM = MASS_UNITS.Msun, EM = MASS_UNITS.Mearth, AU = DIST_UNITS.AU;
+  var RE = RADIUS_UNITS.Rearth, RJ = RADIUS_UNITS.Rjup, RS = RADIUS_UNITS.Rsun;
+  var PRESETS = {
+    solarSystem: {
+      systemName: 'Solar System',
+      rootId: 'sun',
+      nodes: [
+        { id:'sun', name:'Sun', type:'star', subtype:'G2V', mass_kg:1*SM, radius_km:1*RS, color:'#FDB813', parentId:null },
+
+        { id:'mercury', name:'Mercury', type:'planet', subtype:'Terran', mass_kg:0.0553*EM, radius_km:0.383*RE, color:'#9C9A94', parentId:'sun', orbit_a_km:0.387*AU, orbit_e:0.2056 },
+        { id:'venus', name:'Venus', type:'planet', subtype:'Terran', mass_kg:0.815*EM, radius_km:0.9499*RE, color:'#E8D9A8', parentId:'sun', orbit_a_km:0.723*AU, orbit_e:0.0068 },
+
+        { id:'embary', name:'Earth–Moon Barycenter', type:'barycenter', parentId:'sun',
+          separation_km:384400, pair_e:0.0549, primaryChildIds:['earth','moon'],
+          orbit_a_km:1*AU, orbit_e:0.0167, notes:'Barycenter lies ~4,670 km from Earth\u2019s center — inside Earth.' },
+        { id:'earth', name:'Earth', type:'planet', subtype:'Terran', mass_kg:5.9722e24, radius_km:6371, color:'#4A90A4', parentId:'embary' },
+        { id:'moon', name:'Moon', type:'moon', subtype:'Rocky satellite', mass_kg:7.342e22, radius_km:1737.4, color:'#9AA5B1', parentId:'embary' },
+
+        { id:'mars', name:'Mars', type:'planet', subtype:'Terran', mass_kg:0.107*EM, radius_km:0.532*RE, color:'#C1440E', parentId:'sun', orbit_a_km:1.524*AU, orbit_e:0.0934 },
+        { id:'phobos', name:'Phobos', type:'moon', mass_kg:1.0659e16, radius_km:11.1, color:'#6B6459', parentId:'mars', orbit_a_km:9376 },
+        { id:'deimos', name:'Deimos', type:'moon', mass_kg:1.4762e15, radius_km:6.2, color:'#71685C', parentId:'mars', orbit_a_km:23463 },
+
+        { id:'jupiter', name:'Jupiter', type:'planet', subtype:'Gas giant', mass_kg:1*MASS_UNITS.Mjup, radius_km:1*RJ, color:'#D8A873', parentId:'sun', orbit_a_km:5.204*AU, orbit_e:0.0489 },
+        { id:'io', name:'Io', type:'moon', subtype:'Galilean moon', mass_kg:8.9319e22, radius_km:1821.6, color:'#E8D44D', parentId:'jupiter', orbit_a_km:421700 },
+        { id:'europa', name:'Europa', type:'moon', subtype:'Galilean moon', mass_kg:4.7998e22, radius_km:1560.8, color:'#DCD3C0', parentId:'jupiter', orbit_a_km:671034 },
+        { id:'ganymede', name:'Ganymede', type:'moon', subtype:'Galilean moon', mass_kg:1.4819e23, radius_km:2634.1, color:'#8B8378', parentId:'jupiter', orbit_a_km:1070412 },
+        { id:'callisto', name:'Callisto', type:'moon', subtype:'Galilean moon', mass_kg:1.0759e23, radius_km:2410.3, color:'#6B6357', parentId:'jupiter', orbit_a_km:1882709 },
+
+        { id:'saturn', name:'Saturn', type:'planet', subtype:'Gas giant', mass_kg:5.6834e26, radius_km:58232, color:'#E8D4A0', parentId:'sun', orbit_a_km:9.583*AU, orbit_e:0.0565, notes:'Ring system not modeled as a body.' },
+        { id:'titan', name:'Titan', type:'moon', subtype:'Largest moon', mass_kg:1.3452e23, radius_km:2574.7, color:'#D9944A', parentId:'saturn', orbit_a_km:1221870 },
+        { id:'rhea', name:'Rhea', type:'moon', mass_kg:2.3065e21, radius_km:763.8, color:'#C4C4C4', parentId:'saturn', orbit_a_km:527108 },
+
+        { id:'uranus', name:'Uranus', type:'planet', subtype:'Ice giant', mass_kg:8.6810e25, radius_km:25362, color:'#AFDBF5', parentId:'sun', orbit_a_km:19.19*AU, orbit_e:0.0457 },
+        { id:'neptune', name:'Neptune', type:'planet', subtype:'Ice giant', mass_kg:1.02413e26, radius_km:24622, color:'#4166F5', parentId:'sun', orbit_a_km:30.07*AU, orbit_e:0.0113 },
+        { id:'triton', name:'Triton', type:'moon', subtype:'Retrograde moon', mass_kg:2.139e22, radius_km:1353.4, color:'#E0C9C0', parentId:'neptune', orbit_a_km:354759 },
+
+        { id:'pcbary', name:'Pluto–Charon Barycenter', type:'barycenter', parentId:'sun',
+          separation_km:19596, pair_e:0.0002, primaryChildIds:['pluto','charon'],
+          orbit_a_km:39.48*AU, orbit_e:0.2488, notes:'Barycenter lies ~2,126 km from Pluto\u2019s center — outside Pluto, in open space.' },
+        { id:'pluto', name:'Pluto', type:'planet', subtype:'Dwarf planet', mass_kg:1.303e22, radius_km:1188.3, color:'#C9B79C', parentId:'pcbary' },
+        { id:'charon', name:'Charon', type:'moon', subtype:'Binary companion', mass_kg:1.586e21, radius_km:606, color:'#8B8D91', parentId:'pcbary' },
+        { id:'nix', name:'Nix', type:'moon', mass_kg:4.5e16, radius_km:22, color:'#7C8794', parentId:'pcbary', orbit_a_km:48694 },
+        { id:'hydra', name:'Hydra', type:'moon', mass_kg:4.8e16, radius_km:20, color:'#7A8998', parentId:'pcbary', orbit_a_km:64738 }
+      ]
+    }
+  };
+
+  function loadPreset(name){
+    if (name === 'blank'){
+      state = { systemName:'Untitled System', rootId:null, nodes:{}, selectedId:null, editingId:null, nextIdNum:1 };
+      document.getElementById('system-name-input').value = state.systemName;
+      clearForm(); renderAll(); return;
+    }
+    var preset = PRESETS[name]; if (!preset) return;
+    var nodes = {};
+    preset.nodes.forEach(function(n){
+      nodes[n.id] = Object.assign({
+        subtype:'', notes:'', orbit_a_km:0, orbit_e:0, separation_km:0, pair_e:0,
+        primaryChildIds:[], color:'#5B8FB9', mass_kg:0, radius_km:0
+      }, n);
+    });
+    state = { systemName:preset.systemName, rootId:preset.rootId, nodes:nodes, selectedId:null, editingId:null, nextIdNum:preset.nodes.length + 1 };
+    document.getElementById('system-name-input').value = state.systemName;
+    clearForm();
+    renderAll();
+  }
+
+  /* =========================================================
+     Render everything / init
+     ========================================================= */
+  function renderAll(){
+    renderTree();
+    renderDiagram();
+    renderDetails();
+    populateParentOptions(state.editingId);
+    document.title = (state.systemName || 'Untitled System') + ' — Orbital Chart Builder';
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('node-form').addEventListener('submit', handleFormSubmit);
+    document.getElementById('f-type').addEventListener('change', function(){
+      var type = document.getElementById('f-type').value;
+      if (type !== 'barycenter'){
+        document.getElementById('f-mass-unit').value = typeMassUnit(type);
+        document.getElementById('f-radius-unit').value = typeRadiusUnit(type);
+        var defaultColor = { star:'#E8A94C', planet:'#5B8FB9', moon:'#9AA5B1', other:'#C77DFF' }[type];
+        if (defaultColor) document.getElementById('f-color').value = defaultColor;
+      }
+      updateFormVisibility();
+    });
+    document.getElementById('f-parent').addEventListener('change', updateFormVisibility);
+    document.getElementById('f-cancel').addEventListener('click', clearForm);
+    document.querySelectorAll('.preset-btn').forEach(function(b){
+      b.addEventListener('click', function(){ loadPreset(b.getAttribute('data-preset')); });
+    });
+    document.getElementById('btn-export').addEventListener('click', exportJSON);
+    document.getElementById('import-file').addEventListener('change', function(e){
+      if (e.target.files[0]) importJSONFile(e.target.files[0]);
+      e.target.value = '';
+    });
+    document.getElementById('btn-new').addEventListener('click', function(){
+      if (window.confirm('Start a new blank system? Export first if you want to keep the current one.')) loadPreset('blank');
+    });
+    document.getElementById('system-name-input').addEventListener('input', function(e){
+      state.systemName = e.target.value;
+      document.title = state.systemName + ' — Orbital Chart Builder';
+    });
+    document.querySelectorAll('.tab-btn').forEach(function(b){
+      b.addEventListener('click', function(){ switchTab(b.getAttribute('data-tab')); });
+    });
+    document.querySelectorAll('.view-toggle-btn').forEach(function(b){
+      b.addEventListener('click', function(){
+        currentViewMode = b.getAttribute('data-view');
+        document.querySelectorAll('.view-toggle-btn').forEach(function(x){ x.classList.toggle('active', x === b); });
+        renderDiagram();
+      });
+    });
+
+    loadPreset('solarSystem');
+  });
+
+})();
+</script>
+</body>
+</html>

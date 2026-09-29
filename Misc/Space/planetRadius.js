@@ -8,11 +8,11 @@ const readline = require("readline");
 // ---------------------------------------------------------------------------
 // Physical constants
 // ---------------------------------------------------------------------------
-const EARTH_RADIUS_KM = 6371; // IAU volumetric mean radius of Earth (km)
-const EARTH_DENSITY = 5.5136; // Earth mean density (g/cm³), using volumetric mean radius
+const EARTH_RADIUS_KM = 6378.137; // IAU equatorial radius of Earth (km)
+const EARTH_DENSITY = 5.5136; // Earth mean density (g/cm³)
 const M_JUP = 317.8; // Jupiter mass in Earth masses
-const R_JUP_RE = 10.9733; // Jupiter volumetric mean radius in R_Earth
-const MAX_R_EARTH = 2.0 * R_JUP_RE; // ~21.95 R_Earth — physical upper limit for hot Jupiters
+const R_JUP_RE = 71492 / EARTH_RADIUS_KM; // Jupiter equatorial radius (71492 km) in R_Earth
+const MAX_R_EARTH = 2.3 * R_JUP_RE; // physical upper limit for hot Jupiters (~2.3 RJ, above HAT-P-67 Ab at ~2.14 RJ)
 const AU_M = 1.496e11; // 1 AU in metres
 const SIGMA = 5.6704e-8; // Stefan-Boltzmann constant (W/m²/K⁴)
 const L_SUN = 3.828e26; // Solar luminosity (W)
@@ -63,14 +63,24 @@ const COMPOSITIONS = {
   },
   predIcy: {
     // Two-segment model — the segments are intentionally discontinuous at 0.002 M_Earth:
-    //   <= 0.002 M_Earth: calibrated to Tethys/Dione/Rhea
+    //   <= 0.002 M_Earth: power law calibrated by least-squares to Tethys, Dione, Rhea
+    //     (volumetric mean radii from NASA fact sheets):
+    //       Tethys: 0.000103 ME → 529 km (0.0830 RE), ρ = 0.984 g/cm³
+    //       Dione:  0.000185 ME → 622 km (0.0977 RE), ρ = 1.476 g/cm³
+    //       Rhea:   0.000377 ME → 762 km (0.1196 RE), ρ = 1.233 g/cm³
+    //     Model reproduces all three to within <1%. Valid down to ~Tethys mass (~1e-4 ME).
+    //     Below that it extrapolates — at Proteus scale (7e-6 ME) use rockyIcy instead.
+    //     Note: at sub-moon masses (< ~0.001 ME) predIcy density exceeds the rocky model
+    //     because both power laws extrapolate far below their calibration ranges. This is
+    //     a known limitation, not a bug — real icy moons and rocky moons overlap in density
+    //     at small sizes (Tethys 0.98, Dione 1.48, Rhea 1.23 g/cm³ vs. rocky model ~1.0–1.5).
     //   >  0.002 M_Earth: extended fit for high-ice-fraction larger bodies
     //     -> at 1 M_Earth:  R~1.41 R_E, ρ~1.97 g/cm³ (less dense than water world)
     //     -> at 10 M_Earth: R~2.81 R_E, ρ~2.48 g/cm³
     label:
       "Predominantly icy (Tethys/Dione/Rhea-like, extended to super-Earths)",
-    scale: 1.1013,
-    exponent: 0.2854,
+    scale: 1.1008,
+    exponent: 0.2816,
     scaleExt: 1.41,
     exponentExt: 0.3,
   },
@@ -428,7 +438,7 @@ function radiusToMass(key, radiusEarth) {
       // rBoundary is the EXTENDED segment's radius at the 0.002 M_Earth crossover.
       // R ≤ rBoundary → small segment (masses up to ~0.002 M_Earth)
       // R > rBoundary → extended segment (masses above 0.002 M_Earth)
-      // There is a ~202 km model gap between the two segments at the boundary mass.
+      // There is a ~174 km model gap between the two segments at the boundary mass.
       const rBoundSmall = comp.scale * Math.pow(0.002, comp.exponent); // ~0.1869
       const rBoundLarge = comp.scaleExt * Math.pow(0.002, comp.exponentExt); // ~0.2185
       if (radiusEarth <= rBoundLarge) {
@@ -454,10 +464,68 @@ function radiusToMass(key, radiusEarth) {
 
 // ---------------------------------------------------------------------------
 // Density: ρ = ρ_Earth × (M/M_Earth) / (R/R_Earth)³
-// Reference: Earth at (1 M_E, 1 R_E) = 5.5136 g/cm³ using volumetric mean radius 6371 km.
+// Reference: Earth at (1 M_E, 1 R_E) = 5.5136 g/cm³ using equatorial radius 6378.137 km.
 // ---------------------------------------------------------------------------
 function calcDensity(massEarth, radiusEarth) {
   return EARTH_DENSITY * (massEarth / Math.pow(radiusEarth, 3));
+}
+
+// ---------------------------------------------------------------------------
+// Random radius variation
+// Per-type 1σ fractional spread reflecting real planet-to-planet scatter at
+// fixed mass (composition variation, age uncertainty, model scatter).
+// ---------------------------------------------------------------------------
+const VARIATION_SIGMA = {
+  iron:          0.03,
+  rocky:         0.04,
+  water:         0.07,
+  icyBody:       0.07,
+  rockyIcy:      0.06,
+  carbon:        0.05,
+  predIcy:       0.07,
+  miniNeptune:   0.10,
+  iceGiant:      0.11,
+  gasGiant:      0.12,
+  hotJupiter:    0.13,
+  chthonian:     0.04,
+  youngGiant:    0.12,
+  rockyAsteroid: 0.20,
+  icyAsteroid:   0.22,
+};
+
+// Box-Muller: one standard normal sample
+function randNormal() {
+  let u, v;
+  do { u = Math.random(); } while (u === 0);
+  do { v = Math.random(); } while (v === 0);
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// Prompt to optionally apply Gaussian random variation to a nominal radius.
+// onDone(variedRE, variedKm) is called with either the original or varied values.
+function applyVariation(key, nominalRE, massEarth, onDone) {
+  const sigma = VARIATION_SIGMA[key] ?? 0.08;
+  const pct = (sigma * 100).toFixed(0);
+  rl.question(
+    `\nApply random variation? (±${pct}% 1σ — Enter to skip, y to apply): `,
+    (ans) => {
+      if (ans.trim().toLowerCase() !== "y") {
+        return onDone(nominalRE, nominalRE * EARTH_RADIUS_KM);
+      }
+      const z = randNormal();
+      const variedRE = nominalRE * (1 + z * sigma);
+      const variedKm = variedRE * EARTH_RADIUS_KM;
+      const variedDensity = calcDensity(massEarth, variedRE);
+      const sign = z >= 0 ? "+" : "";
+      console.log(
+        `\nVaried result  [${sign}${(z * sigma * 100).toFixed(1)}%  z = ${z.toFixed(2)}σ]:`,
+      );
+      console.log(`Estimated radius: ${variedKm} km`);
+      console.log(`In Earth radii:   ${variedRE} R_Earth`);
+      console.log(`Mean density:     ${variedDensity} g/cm³`);
+      onDone(variedRE, variedKm);
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -466,7 +534,9 @@ function calcDensity(massEarth, radiusEarth) {
 function internalLuminosity(massJupiter, ageGyr) {
   const M = massJupiter;
   const t = Math.max(ageGyr, 0.001);
-  const lnScale = Math.log(Math.max(M, 0.1)) / Math.log(30); // extended to 30 MJ
+  // log(13) base preserves original Baraffe calibration at M=1 and M=13.
+  // Extends naturally beyond 13 MJ since log(M)/log(13) > 1 for M > 13.
+  const lnScale = Math.log(Math.max(M, 0.1)) / Math.log(13);
   const A = -5.8063 + 1.1865 * lnScale;
   const B = -0.6455 + 0.1817 * lnScale;
   return Math.pow(10, A + B * Math.log10(t)); // L_Sun
@@ -524,7 +594,7 @@ function youngGiantRadius(massJupiter, ageGyr) {
 // ---------------------------------------------------------------------------
 function formatMass(mass) {
   if (mass === 0) return "0";
-  if (mass < 5e-7) return mass.toExponential(4);
+  if (mass <= 5e-7) return mass.toExponential(4);
   const decimals = Math.max(6, Math.ceil(-Math.log10(mass)) + 4);
   return mass.toFixed(decimals);
 }
@@ -658,7 +728,7 @@ function printChthonianResult(mass, radiusEarth, radiusKm, dens, stellar) {
       );
     }
   }
-  askRepeat();
+  applyVariation("chthonian", radiusEarth, mass, () => askRepeat());
 }
 
 // ---------------------------------------------------------------------------
@@ -801,7 +871,7 @@ function computeAndPrintHotJupiter(mass, L_solar, a_AU, A) {
   console.log(`In Jupiter radii: ${rFinal / R_JUP_RE} R_Jupiter`);
   console.log(`Mean density:     ${density.toFixed(3)} g/cm³`);
 
-  askRepeat();
+  applyVariation("hotJupiter", rFinal, mass, () => askRepeat());
 }
 
 // ---------------------------------------------------------------------------
@@ -976,7 +1046,7 @@ function askYoungGiantInputs(mode) {
                 );
               }
 
-              askRepeat();
+              applyVariation("youngGiant", radiusEarth, massEarth, () => askRepeat());
             }
 
             const sm = stellarMode.trim();
@@ -1066,33 +1136,54 @@ function askYoungGiantInputs(mode) {
                 return askRepeat();
               }
 
-              // Check model bounds before bisecting
-              const rMin = youngGiantRadius(0.1, age);
-              const rMax = youngGiantRadius(30.0, age);
-              if (radiusEarth < rMin || radiusEarth > rMax) {
+              // youngGiantRadius is monotonically increasing for M ≤ 13 MJ at all ages.
+              // For M > 13 MJ the cold floor R2 decreases with mass (electron degeneracy),
+              // so at older ages that segment produces SMALLER radii for LARGER masses.
+              // This creates an ambiguous overlap: radii between rAt30 and rAt13 can map
+              // to both a M ≤ 13 solution and a M > 13 solution.
+              // Default: always return the lower-mass (M ≤ 13) solution and warn about
+              // the super-Jovian alternative when it exists.
+
+              const rAt0p1 = youngGiantRadius(0.1,  age);
+              const rAt13  = youngGiantRadius(13.0, age);
+              const rAt30  = youngGiantRadius(30.0, age);
+
+              if (radiusEarth < rAt30 || radiusEarth > rAt0p1) {
                 console.log(
-                  `\n⚠️  Radius ${radiusEarth / R_JUP_RE} R_Jupiter is outside the` +
+                  `\n⚠️  Radius ${(radiusEarth / R_JUP_RE).toFixed(4)} R_Jupiter is outside the` +
                     ` model range at ${age} Gyr`,
                 );
                 console.log(
-                  `   (valid: ${rMin / R_JUP_RE}–${rMax / R_JUP_RE}` +
-                    ` R_Jupiter for 0.1–13 M_Jupiter).`,
+                  `   (valid: ${(rAt30 / R_JUP_RE).toFixed(4)}–${(rAt0p1 / R_JUP_RE).toFixed(4)}` +
+                    ` R_Jupiter for 0.1–30 M_Jupiter at this age).`,
                 );
               }
 
-              // Bisection: R increases with M → rMid < target ⟹ lo = mid
-              let lo = 0.1,
-                hi = 30.0,
-                mid = 0,
-                rMid = 0;
+              // Always bisect in the M ≤ 13 segment first (monotone increasing).
+              // Clamp target to the reachable range of this segment to avoid runaway.
+              const rTargetClamped = Math.max(rAt0p1, Math.min(rAt13, radiusEarth));
+              let lo2 = 0.1, hi2 = 13.0, mid = 0;
               for (let i = 0; i < 60; i++) {
-                mid = (lo + hi) / 2;
-                rMid = youngGiantRadius(mid, age);
-                if (rMid < radiusEarth) {
-                  lo = mid; // need larger mass
-                } else {
-                  hi = mid; // need smaller mass
+                mid = (lo2 + hi2) / 2;
+                const rMid = youngGiantRadius(mid, age);
+                if (rMid < rTargetClamped) { lo2 = mid; } else { hi2 = mid; }
+              }
+
+              // If the target is also reachable from the M > 13 segment, note the ambiguity.
+              if (radiusEarth >= rAt30 && radiusEarth <= rAt13) {
+                // Find the super-Jovian solution too (bisect in decreasing direction)
+                let loS = 13.0, hiS = 30.0, midS = 0;
+                for (let i = 0; i < 60; i++) {
+                  midS = (loS + hiS) / 2;
+                  const rMid = youngGiantRadius(midS, age);
+                  if (rMid > radiusEarth) { loS = midS; } else { hiS = midS; }
                 }
+                console.log(
+                  `\nNote: this radius is ambiguous at ${age} Gyr. Two solutions exist:` +
+                  `\n  Sub-13 MJ solution (returned): ~${mid.toFixed(3)} M_Jupiter` +
+                  `\n  Super-Jovian solution:          ~${midS.toFixed(3)} M_Jupiter` +
+                  `\n  Choose based on what you know about the object.`,
+                );
               }
 
               const massJup = mid;
@@ -1174,9 +1265,12 @@ function askAsteroidInputs(key, mode) {
           console.log(`Mean density:     ${density} g/cm³`);
           console.log(
             `\nNote: assumes uniform bulk density of ${comp.densityGcm3} g/cm³.` +
-              ` Real small bodies vary widely (rocky: 0.5–3.5, icy: 0.3–1.0 g/cm³).`,
+              ` Real small bodies vary widely (rocky: 0.5–3.5, icy: 0.3–1.0 g/cm³).` +
+              `\n      The Predominantly icy option uses a different model (power law fit to` +
+              `\n      Tethys/Dione/Rhea) and will give a different radius for the same mass — both are valid` +
+              `\n      for different physical assumptions (constant porosity vs. moon-calibrated scaling).`,
           );
-          askRepeat();
+          applyVariation(key, radiusEarth, massEarth, () => askRepeat());
         });
       },
     );
@@ -1331,6 +1425,12 @@ function startCalculation() {
                   `\n      lower than the Water/ocean world model — suitable for high-ice-fraction bodies.`,
               );
             }
+            if (key === "predIcy" && mass < 0.0001) {
+              console.log(
+                `\n⚠️  ${mass} M_Earth is below the predIcy calibration range (~0.0001 M_Earth = Tethys scale).` +
+                  `\n   At this mass the model extrapolates — consider Rocky-icy (rockyIcy) instead.`,
+              );
+            }
 
             if (key === "gasGiant" && (mass < 50 || mass > M_JUP * 30)) {
               console.log(
@@ -1348,7 +1448,7 @@ function startCalculation() {
               );
             }
 
-            askRepeat();
+            applyVariation(key, radiusEarth, mass, () => askRepeat());
           });
         } else {
           // --- Inverse: radius → mass ---
