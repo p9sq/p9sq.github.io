@@ -1964,8 +1964,15 @@
         const randomSpread = spreadRaw !== "" ? parseFloat(spreadRaw) : 4.5;
 
         const moonCount = parseInt(countRaw);
-        if (!moonCount || moonCount < 1 || !Number.isInteger(parseFloat(countRaw)))
-          return showError("l", "Please enter a valid moon count (≥ 1, whole number).");
+        if (
+          !moonCount ||
+          moonCount < 1 ||
+          !Number.isInteger(parseFloat(countRaw))
+        )
+          return showError(
+            "l",
+            "Please enter a valid moon count (≥ 1, whole number).",
+          );
         if (!parentMass || parentMass <= 0)
           return showError("l", "Please enter a valid parent body mass.");
         if (!ratioDenominator || ratioDenominator < 1)
@@ -1973,7 +1980,10 @@
             "l",
             "Please enter a valid moon mass ratio denominator (≥ 1).",
           );
-        if (style === "galilean" && (isNaN(randomSpread) || randomSpread < 1.01))
+        if (
+          style === "galilean" &&
+          (isNaN(randomSpread) || randomSpread < 1.01)
+        )
           return showError(
             "l",
             "Please enter a valid target spread (≥ 1.01) for Galilean-like style.",

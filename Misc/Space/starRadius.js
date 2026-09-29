@@ -2123,13 +2123,18 @@ function wdMenu() {
         });
       });
     } else {
-      askFloat("Enter WD mass (M_Sun, typical 0.17–1.33): ", 0.01, 1.43, (mass) => {
-        ask("Enter cooling age in Gyr [Enter to skip]: ", (ageIn) => {
-          const age = ageIn.trim() === "" ? null : parseFloat(ageIn.trim());
-          printWD(mass, isNaN(age) ? null : age);
-          askRepeat();
-        });
-      });
+      askFloat(
+        "Enter WD mass (M_Sun, typical 0.17–1.33): ",
+        0.01,
+        1.43,
+        (mass) => {
+          ask("Enter cooling age in Gyr [Enter to skip]: ", (ageIn) => {
+            const age = ageIn.trim() === "" ? null : parseFloat(ageIn.trim());
+            printWD(mass, isNaN(age) ? null : age);
+            askRepeat();
+          });
+        },
+      );
     }
   });
 }
