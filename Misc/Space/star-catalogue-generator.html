@@ -256,6 +256,15 @@
           GEN 2, GEN 3.
         </p>
 
+        <label class="mode-row">
+          <input
+            type="checkbox"
+            id="useParsecs"
+            style="width: auto; margin-right: 8px"
+          />
+          Use parsecs instead of light-years for the distance fields below
+        </label>
+
         <div class="row">
           <div class="field">
             <label for="baseDist">Base distance (ly)</label>
@@ -292,7 +301,13 @@
         </div>
         <p class="hint">
           These three set the center point stars spread from. Default keeps the
-          center at the Sun, at 0 ly, RA 0, Dec 0.
+          center at the Sun, at 0 ly, RA 0, Dec 0. The min/max distance fields
+          below measure outward from this center point, not from the Sun, so
+          a catalogue centered far from the Sun still needs those two
+          narrowed down if the stars should sit close together around it.
+          Leaving them at the default range means stars spread up to 2
+          million ly from the center in every direction, which swamps a
+          center only a few thousand or a few hundred thousand ly out.
         </p>
 
         <div class="row">
@@ -1284,23 +1299,30 @@
       // between them, closer to how real star fields look (associations,
       // loose clusters, voids) than a perfectly smooth density falloff.
       // Seeds are rebuilt fresh for each generation run.
-      function buildDensitySeeds(maxLy, count) {
+      function buildDensitySeeds(minLy, maxLy, basePos, count) {
         const numSeeds = Math.max(
           12,
           Math.min(60, Math.round(Math.sqrt(count))),
         );
         const seeds = [];
         for (let i = 0; i < numSeeds; i++) {
-          // seeds fill the sphere isotropically too (cube root keeps them
-          // from bunching up near the center), so clumps land anywhere
-          const r = maxLy * Math.cbrt(Math.random());
+          // Seeds need to follow the same center point and the same
+          // galaxy-aware falloff the stars themselves use. Placing them
+          // around the Sun instead of the chosen center, as a previous
+          // version did, meant a catalogue centered somewhere else got no
+          // clumping at all near where its stars actually are. Seed size
+          // scales with how far out a given seed landed too, so a clump
+          // near the center stays local-sized while one out in the thin
+          // region spans a proportionally wider stretch, rather than
+          // every clump sharing one size tied only to the overall max.
+          const r = randomGalaxyAwareRadius(minLy, maxLy);
           const raRad = Math.random() * 2 * Math.PI;
           const decRad = Math.asin(Math.random() * 2 - 1);
           seeds.push({
-            x: r * Math.cos(decRad) * Math.cos(raRad),
-            y: r * Math.cos(decRad) * Math.sin(raRad),
-            z: r * Math.sin(decRad),
-            radius: maxLy * (0.02 + Math.random() * 0.13),
+            x: basePos.x + r * Math.cos(decRad) * Math.cos(raRad),
+            y: basePos.y + r * Math.cos(decRad) * Math.sin(raRad),
+            z: basePos.z + r * Math.sin(decRad),
+            radius: r * (0.1 + Math.random() * 0.4),
           });
         }
         return seeds;
@@ -1490,6 +1512,46 @@
       let lastCsv = "";
       let lastCatName = "catalogue";
 
+      // ============================================================
+      // Light-year / parsec toggle for the three distance fields.
+      // Internally everything still runs in light-years; this only
+      // changes how a typed number gets read in and what the
+      // placeholders show, so flipping it mid-session is safe even with
+      // values already typed in (those get reinterpreted in the new
+      // unit, matching what the label now says).
+      // ============================================================
+      const useParsecsCheckbox = document.querySelector("#useParsecs");
+      const baseDistLabel = document.querySelector('label[for="baseDist"]');
+      const minDistLabel = document.querySelector('label[for="minDist"]');
+      const maxDistLabel = document.querySelector('label[for="maxDist"]');
+      const baseDistInput = document.querySelector("#baseDist");
+      const minDistInput = document.querySelector("#minDist");
+      const maxDistInput = document.querySelector("#maxDist");
+
+      function roundForDisplay(n) {
+        return Math.round(n * 10000) / 10000;
+      }
+
+      function refreshDistanceUnitUI() {
+        const useParsecs = useParsecsCheckbox.checked;
+        const unit = useParsecs ? "pc" : "ly";
+        baseDistLabel.textContent = `Base distance (${unit})`;
+        minDistLabel.textContent = `Minimum star distance (${unit})`;
+        maxDistLabel.textContent = `Maximum star distance (${unit})`;
+        baseDistInput.placeholder = useParsecs
+          ? roundForDisplay(DEFAULTS.baseLy / LY_PER_PC)
+          : DEFAULTS.baseLy;
+        minDistInput.placeholder = useParsecs
+          ? roundForDisplay(DEFAULTS.minLy / LY_PER_PC)
+          : DEFAULTS.minLy;
+        maxDistInput.placeholder = useParsecs
+          ? roundForDisplay(DEFAULTS.maxLy / LY_PER_PC)
+          : DEFAULTS.maxLy;
+      }
+
+      useParsecsCheckbox.addEventListener("change", refreshDistanceUnitUI);
+      refreshDistanceUnitUI();
+
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         errorMsg.hidden = true;
@@ -1509,9 +1571,19 @@
         const sepRaw = document.querySelector("#sepChar").value;
         const sep = (sepRaw === "" ? DEFAULTS.sep : sepRaw).replace(/,/g, "");
 
+        // a typed value is in whichever unit the checkbox currently shows;
+        // a blank field falls back to the fixed ly default regardless, so
+        // the unit toggle never changes what "left blank" means
+        const useParsecs = useParsecsCheckbox.checked;
+        const toLy = (raw, defaultLy) =>
+          raw === ""
+            ? defaultLy
+            : useParsecs
+              ? parseFloat(raw) * LY_PER_PC
+              : parseFloat(raw);
+
         const baseDistRaw = document.querySelector("#baseDist").value.trim();
-        const baseLy =
-          baseDistRaw === "" ? DEFAULTS.baseLy : parseFloat(baseDistRaw);
+        const baseLy = toLy(baseDistRaw, DEFAULTS.baseLy);
 
         const baseRARaw = document.querySelector("#baseRA").value.trim();
         const baseRA =
@@ -1522,12 +1594,10 @@
           baseDecRaw === "" ? DEFAULTS.baseDec : parseFloat(baseDecRaw);
 
         const minDistRaw = document.querySelector("#minDist").value.trim();
-        const minLy =
-          minDistRaw === "" ? DEFAULTS.minLy : parseFloat(minDistRaw);
+        const minLy = toLy(minDistRaw, DEFAULTS.minLy);
 
         const maxDistRaw = document.querySelector("#maxDist").value.trim();
-        const maxLy =
-          maxDistRaw === "" ? DEFAULTS.maxLy : parseFloat(maxDistRaw);
+        const maxLy = toLy(maxDistRaw, DEFAULTS.maxLy);
 
         const badInput =
           !count ||
@@ -1555,7 +1625,7 @@
         const rows = new Array(count);
         const grid = new Map();
         const basePos = raDecDistToXyz(baseRA, baseDec, baseLy);
-        const seeds = buildDensitySeeds(maxLy, count);
+        const seeds = buildDensitySeeds(minLy, maxLy, basePos, count);
         let done = 0;
 
         // generate in batches so the progress bar actually updates instead
