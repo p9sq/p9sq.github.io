@@ -476,32 +476,28 @@ function calcDensity(massEarth, radiusEarth) {
 // fixed mass (composition variation, age uncertainty, model scatter).
 // ---------------------------------------------------------------------------
 const VARIATION_SIGMA = {
-  iron: 0.03,
-  rocky: 0.04,
-  water: 0.07,
-  icyBody: 0.07,
-  rockyIcy: 0.06,
-  carbon: 0.05,
-  predIcy: 0.07,
-  miniNeptune: 0.1,
-  iceGiant: 0.11,
-  gasGiant: 0.12,
-  hotJupiter: 0.13,
-  chthonian: 0.04,
-  youngGiant: 0.12,
-  rockyAsteroid: 0.2,
-  icyAsteroid: 0.22,
+  iron:          0.03,
+  rocky:         0.04,
+  water:         0.07,
+  icyBody:       0.07,
+  rockyIcy:      0.06,
+  carbon:        0.05,
+  predIcy:       0.07,
+  miniNeptune:   0.10,
+  iceGiant:      0.11,
+  gasGiant:      0.12,
+  hotJupiter:    0.13,
+  chthonian:     0.04,
+  youngGiant:    0.12,
+  rockyAsteroid: 0.20,
+  icyAsteroid:   0.22,
 };
 
 // Box-Muller: one standard normal sample
 function randNormal() {
   let u, v;
-  do {
-    u = Math.random();
-  } while (u === 0);
-  do {
-    v = Math.random();
-  } while (v === 0);
+  do { u = Math.random(); } while (u === 0);
+  do { v = Math.random(); } while (v === 0);
   return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }
 
@@ -1050,9 +1046,7 @@ function askYoungGiantInputs(mode) {
                 );
               }
 
-              applyVariation("youngGiant", radiusEarth, massEarth, () =>
-                askRepeat(),
-              );
+              applyVariation("youngGiant", radiusEarth, massEarth, () => askRepeat());
             }
 
             const sm = stellarMode.trim();
@@ -1150,9 +1144,9 @@ function askYoungGiantInputs(mode) {
               // Default: always return the lower-mass (M ≤ 13) solution and warn about
               // the super-Jovian alternative when it exists.
 
-              const rAt0p1 = youngGiantRadius(0.1, age);
-              const rAt13 = youngGiantRadius(13.0, age);
-              const rAt30 = youngGiantRadius(30.0, age);
+              const rAt0p1 = youngGiantRadius(0.1,  age);
+              const rAt13  = youngGiantRadius(13.0, age);
+              const rAt30  = youngGiantRadius(30.0, age);
 
               if (radiusEarth < rAt30 || radiusEarth > rAt0p1) {
                 console.log(
@@ -1167,43 +1161,28 @@ function askYoungGiantInputs(mode) {
 
               // Always bisect in the M ≤ 13 segment first (monotone increasing).
               // Clamp target to the reachable range of this segment to avoid runaway.
-              const rTargetClamped = Math.max(
-                rAt0p1,
-                Math.min(rAt13, radiusEarth),
-              );
-              let lo2 = 0.1,
-                hi2 = 13.0,
-                mid = 0;
+              const rTargetClamped = Math.max(rAt0p1, Math.min(rAt13, radiusEarth));
+              let lo2 = 0.1, hi2 = 13.0, mid = 0;
               for (let i = 0; i < 60; i++) {
                 mid = (lo2 + hi2) / 2;
                 const rMid = youngGiantRadius(mid, age);
-                if (rMid < rTargetClamped) {
-                  lo2 = mid;
-                } else {
-                  hi2 = mid;
-                }
+                if (rMid < rTargetClamped) { lo2 = mid; } else { hi2 = mid; }
               }
 
               // If the target is also reachable from the M > 13 segment, note the ambiguity.
               if (radiusEarth >= rAt30 && radiusEarth <= rAt13) {
                 // Find the super-Jovian solution too (bisect in decreasing direction)
-                let loS = 13.0,
-                  hiS = 30.0,
-                  midS = 0;
+                let loS = 13.0, hiS = 30.0, midS = 0;
                 for (let i = 0; i < 60; i++) {
                   midS = (loS + hiS) / 2;
                   const rMid = youngGiantRadius(midS, age);
-                  if (rMid > radiusEarth) {
-                    loS = midS;
-                  } else {
-                    hiS = midS;
-                  }
+                  if (rMid > radiusEarth) { loS = midS; } else { hiS = midS; }
                 }
                 console.log(
                   `\nNote: this radius is ambiguous at ${age} Gyr. Two solutions exist:` +
-                    `\n  Sub-13 MJ solution (returned): ~${mid.toFixed(3)} M_Jupiter` +
-                    `\n  Super-Jovian solution:          ~${midS.toFixed(3)} M_Jupiter` +
-                    `\n  Choose based on what you know about the object.`,
+                  `\n  Sub-13 MJ solution (returned): ~${mid.toFixed(3)} M_Jupiter` +
+                  `\n  Super-Jovian solution:          ~${midS.toFixed(3)} M_Jupiter` +
+                  `\n  Choose based on what you know about the object.`,
                 );
               }
 

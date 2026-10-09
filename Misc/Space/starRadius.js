@@ -493,6 +493,24 @@ function massToSubtype(massSun) {
   };
 }
 
+// T_eff → spectral type — finds the nearest MS_SEQUENCE entry by Teff.
+// Returns { classKey, subtypeVal, subtypeStr } matching the closest tabulated type.
+function teffToSpectralType(teff) {
+  let best = MS_SEQUENCE[0];
+  let bestDist = Math.abs(MS_SEQUENCE[0].Teff - teff);
+  for (const e of MS_SEQUENCE) {
+    const d = Math.abs(e.Teff - teff);
+    if (d < bestDist) { bestDist = d; best = e; }
+  }
+  return {
+    classKey:   best.letter,
+    subtypeVal: best.subtype,
+    subtypeStr: Number.isInteger(best.subtype)
+      ? String(best.subtype)
+      : best.subtype.toFixed(1),
+  };
+}
+
 // Implied mass from class + subtype (linear interpolation)
 function subtypeImpliedMass(classKey, subtypeVal) {
   const r = msLookup(classKey, subtypeVal);
@@ -551,7 +569,9 @@ function ageAdjust(massSun, L_ZAMS, R_ZAMS, ageGyr) {
   return { L: L_ZAMS * (1 + 0.4 * f), R: R_ZAMS * (1 + 0.1 * f), t_MS };
 }
 
-function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr) {
+// fromMass: when true, spectral type is derived from the computed Teff rather than
+// the passed-in classKey/subtypeStr (which were only used as a ZAMS lookup anchor).
+function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr, fromMass) {
   const zams = msLookup(classKey, subtypeVal, massSun);
 
   // For low-mass stars ≤ 0.15 M_Sun, msLookup returns BHAC15 10 Gyr isochrone values
@@ -575,10 +595,23 @@ function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr) {
 
   const Teff = useBHAC15 ? zams.Teff : calcTeff(L, R); // BHAC15 uses model atmosphere Teff
   const density = calcDensity(massSun, R);
-  const label = `${classKey}${subtypeStr}`;
+
+  // When entered by mass, derive spectral type from Teff — temperature defines the type,
+  // not mass. This correctly handles cases like young stars that are hotter than their
+  // ZAMS mass would suggest.
+  let displayClass, displaySub;
+  if (fromMass) {
+    const derived = teffToSpectralType(Teff);
+    displayClass  = derived.classKey;
+    displaySub    = derived.subtypeStr;
+  } else {
+    displayClass  = classKey;
+    displaySub    = subtypeStr;
+  }
+  const label = `${displayClass}${displaySub}`;
 
   console.log(`\nEvolutionary phase:    Main sequence (luminosity class V)`);
-  console.log(`Spectral class:        ${label}V`);
+  console.log(`Spectral class:        ${label}V${fromMass ? "  (derived from T_eff)" : ""}`);
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
   console.log(`MS lifetime:           ${fmtLifetime(t_MS)}`);
   if (useBHAC15) {
@@ -1900,64 +1933,27 @@ function msFromSpectralType() {
 }
 
 function msFromMass() {
-  console.log("\nSpectral class:");
-  MS_CLASS_KEYS.forEach((k, i) => {
-    const c = MS_CLASSES[k];
-    console.log(
-      `  ${i + 1}) ${c.label.padEnd(42)} [${c.Mmin}–${c.Mmax} M_Sun]`,
-    );
-  });
-  ask("Enter class number: ", (input) => {
-    const idx = parseInt(input.trim()) - 1;
-    if (isNaN(idx) || idx < 0 || idx >= MS_CLASS_KEYS.length) {
-      console.log("Invalid.");
+  // Mode 2 goes straight to mass — no class or subtype selection.
+  // Spectral type is derived automatically from the entered mass and shown in output.
+  ask("\nEnter star mass (M_Sun, 0.075–150): ", (massInput) => {
+    const mass = parseFloat(massInput.trim());
+    if (isNaN(mass) || mass <= 0) {
+      console.log("Invalid mass.");
       return msFromMass();
     }
-    const classKey = MS_CLASS_KEYS[idx];
-    const sc = MS_CLASSES[classKey];
-    askSubtype(classKey, false, (sub) => {
-      const impliedMass = sub ? (msLookup(classKey, sub.val) || {}).M : null;
-      const prompt = impliedMass
-        ? `\nEnter mass (M_Sun) [${classKey}${sub.str} implies ${fmt(impliedMass)}, Enter to use]: `
-        : `\nEnter mass (M_Sun) [typical ${classKey}: ${sc.Mmin}–${sc.Mmax}]: `;
-      ask(prompt, (massInput) => {
-        let mass;
-        if (massInput.trim() === "" && impliedMass) {
-          mass = impliedMass;
-          console.log(`  Using ${fmt(mass)} M_Sun`);
-        } else {
-          mass = parseFloat(massInput.trim());
-          if (isNaN(mass) || mass <= 0) {
-            console.log("Invalid.");
-            return msFromMass();
-          }
-          if (impliedMass) {
-            const dev = Math.abs(mass - impliedMass) / impliedMass;
-            if (dev > 0.1)
-              console.log(
-                `Note: ${fmt(mass)} M_Sun deviates ${fmtPct(dev * 100)}% from ${classKey}${sub.str}-implied ${fmt(impliedMass)} M_Sun.`,
-              );
-          }
-        }
-        // Auto subtype if not provided
-        const autoSub =
-          sub ||
-          (() => {
-            const s = massToSubtype(mass);
-            return { str: s.subtypeStr, val: s.subtypeVal };
-          })();
-        const autoClass = sub ? classKey : massToClass(mass);
-        const zams = msLookup(autoClass, autoSub.val);
-        const t_MS = mainSequenceLifetime(mass, zams ? zams.L : 1);
-        if (!sub)
-          console.log(
-            `  Calculated subtype: ${autoClass}${autoSub.str}  (from mass)`,
-          );
-        askAgeGyr(t_MS, (age) => {
-          printMS(autoClass, autoSub.str, autoSub.val, mass, age);
-          askRepeat();
-        });
-      });
+
+    // Derive spectral type from mass
+    const derived   = massToSubtype(mass);
+    const classKey  = derived.classKey;
+    const autoSub   = { str: derived.subtypeStr, val: derived.subtypeVal };
+
+    const zams  = msLookup(classKey, autoSub.val, mass);
+    const t_MS  = mainSequenceLifetime(mass, zams ? zams.L : 1);
+
+    askAgeGyr(t_MS, (age) => {
+      // Pass fromMass=true so printMS derives spectral type from T_eff, not mass
+      printMS(classKey, autoSub.str, autoSub.val, mass, age, true);
+      askRepeat();
     });
   });
 }
@@ -2123,18 +2119,13 @@ function wdMenu() {
         });
       });
     } else {
-      askFloat(
-        "Enter WD mass (M_Sun, typical 0.17–1.33): ",
-        0.01,
-        1.43,
-        (mass) => {
-          ask("Enter cooling age in Gyr [Enter to skip]: ", (ageIn) => {
-            const age = ageIn.trim() === "" ? null : parseFloat(ageIn.trim());
-            printWD(mass, isNaN(age) ? null : age);
-            askRepeat();
-          });
-        },
-      );
+      askFloat("Enter WD mass (M_Sun, typical 0.17–1.33): ", 0.01, 1.43, (mass) => {
+        ask("Enter cooling age in Gyr [Enter to skip]: ", (ageIn) => {
+          const age = ageIn.trim() === "" ? null : parseFloat(ageIn.trim());
+          printWD(mass, isNaN(age) ? null : age);
+          askRepeat();
+        });
+      });
     }
   });
 }
