@@ -493,8 +493,7 @@ function massToSubtype(massSun) {
   };
 }
 
-// T_eff → spectral type — finds the nearest MS_SEQUENCE entry by Teff.
-// Returns { classKey, subtypeVal, subtypeStr } matching the closest tabulated type.
+// T_eff → spectral type for MS stars — nearest Mamajek table entry by Teff.
 function teffToSpectralType(teff) {
   let best = MS_SEQUENCE[0];
   let bestDist = Math.abs(MS_SEQUENCE[0].Teff - teff);
@@ -569,8 +568,7 @@ function ageAdjust(massSun, L_ZAMS, R_ZAMS, ageGyr) {
   return { L: L_ZAMS * (1 + 0.4 * f), R: R_ZAMS * (1 + 0.1 * f), t_MS };
 }
 
-// fromMass: when true, spectral type is derived from the computed Teff rather than
-// the passed-in classKey/subtypeStr (which were only used as a ZAMS lookup anchor).
+// fromMass: when true, spectral type is derived from computed Teff, not passed-in classKey.
 function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr, fromMass) {
   const zams = msLookup(classKey, subtypeVal, massSun);
 
@@ -596,9 +594,7 @@ function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr, fromMass) {
   const Teff = useBHAC15 ? zams.Teff : calcTeff(L, R); // BHAC15 uses model atmosphere Teff
   const density = calcDensity(massSun, R);
 
-  // When entered by mass, derive spectral type from Teff — temperature defines the type,
-  // not mass. This correctly handles cases like young stars that are hotter than their
-  // ZAMS mass would suggest.
+  // Derive spectral type from Teff when entered by mass — temperature defines the type.
   let displayClass, displaySub;
   if (fromMass) {
     const derived = teffToSpectralType(Teff);
@@ -832,80 +828,151 @@ function printPMS(massSun, ageMyr) {
 // ============================================================
 
 const POST_MS_PHASES = {
-  SG: {
-    label: "Subgiant (IV)",
+  IV: {
+    label: "Subgiant (Class IV)",
+    lumClass: "IV",
     massMin: 0.8,
     massMax: 8.0,
-    Teff_range: [4500, 7000],
-    R_range: [1.5, 5],
-    L_range: [3, 50],
+    Teff_range: [4500, 7500],
+    R_range: [1.5, 10],
+    L_range: [3, 100],
+    fehCorrTeff: 200,
+    fehCorrL: 0.0,
     description:
       "H-shell burning begins; envelope expands, Teff drops. " +
-      "Duration ~10–15% of MS lifetime.",
+      "Duration ~10–15% of MS lifetime. Calibrated to Procyon A (F5 IV) and Eta Cep (K0 IV).",
   },
-  RGB: {
-    label: "Red Giant Branch (III)",
+  III: {
+    label: "Normal Giant (Class III)",
+    lumClass: "III",
     massMin: 0.6,
     massMax: 8.0,
-    Teff_range: [3500, 5200],
+    Teff_range: [3500, 6000],
     R_range: [5, 200],
     L_range: [10, 2000],
+    fehCorrTeff: 180,
+    fehCorrL: 0.19,
     description:
       "Degenerate He core; H-shell burning drives envelope expansion. " +
+      "Calibrated to Arcturus (K1.5 III) and Aldebaran (K5 III). " +
       "Tip of RGB: L ≈ 2000 L_Sun for solar mass.",
   },
-  HB: {
-    label: "Horizontal Branch",
-    massMin: 0.5,
-    massMax: 3.0,
-    Teff_range: [4500, 25000],
-    R_range: [1, 15],
-    L_range: [40, 80],
+  II: {
+    label: "Bright Giant (Class II)",
+    lumClass: "II",
+    massMin: 2.0,
+    massMax: 20.0,
+    Teff_range: [3500, 12000],
+    R_range: [20, 150],
+    L_range: [1000, 30000],
+    fehCorrTeff: 150,
+    fehCorrL: 0.0,
     description:
-      "He core burning. L ≈ 40–80 L_Sun nearly constant. " +
-      "Duration ~80–100 Myr. Blue HB stars can reach 25000 K.",
+      "Intermediate luminosity class between giants and supergiants. " +
+      "Typically post-core He-burning or shell-burning phase of 2–20 M_Sun stars.",
   },
-  AGB: {
-    label: "Asymptotic Giant Branch",
-    massMin: 0.8,
-    massMax: 8.0,
-    Teff_range: [2500, 4000],
-    R_range: [50, 500],
-    L_range: [1000, 50000],
-    description:
-      "He+H double-shell burning; intense pulsations, strong mass loss. " +
-      "Produces planetary nebula progenitor.",
-  },
-  RSG: {
-    label: "Red Supergiant",
+  Ib: {
+    label: "Supergiant (Class Ib)",
+    lumClass: "Ib",
     massMin: 8.0,
     massMax: 30.0,
-    Teff_range: [3400, 4500],
-    R_range: [200, 1700],
-    L_range: [30000, 600000],
+    Teff_range: [3400, 30000],
+    R_range: [30, 700],
+    L_range: [20000, 300000],
+    fehCorrTeff: 100,
+    fehCorrL: 0.0,
     description:
-      "Post-MS evolution of M > 8 M_Sun. Levesque et al. (2005) empirical " +
-      "Teff scale. Betelgeuse: ~14 M_Sun, ~700 R_Sun.",
+      "Less luminous supergiants. Span full OBAFGKM range; T_eff from mass formula " +
+      "is approximate — use direct T_eff entry when the real value is known.",
   },
-  BSG: {
-    label: "Blue/Yellow Supergiant",
-    massMin: 8.0,
-    massMax: 60.0,
-    Teff_range: [8000, 50000],
-    R_range: [15, 100],
-    L_range: [50000, 1000000],
+  Ia: {
+    label: "Supergiant (Class Ia)",
+    lumClass: "Ia",
+    massMin: 12.0,
+    massMax: 50.0,
+    Teff_range: [3400, 40000],
+    R_range: [100, 1500],
+    L_range: [100000, 1000000],
+    fehCorrTeff: 100,
+    fehCorrL: 0.0,
     description:
-      "Post-MS / blue loop phase of massive stars. " +
-      "Rigel: ~21 M_Sun, ~79 R_Sun, Teff ~12100 K.",
+      "Luminous supergiants. Span full OBAFGKM range; T_eff from mass formula " +
+      "is approximate — use direct T_eff entry when the real value is known.",
+  },
+  "Ia+": {
+    label: "Hypergiant (Class 0 / Ia+)",
+    lumClass: "Ia+",
+    massMin: 20.0,
+    massMax: 200.0,
+    Teff_range: [3000, 50000],
+    R_range: [400, 2100],
+    L_range: [500000, 5000000],
+    fehCorrTeff: 0,
+    fehCorrL: 0.0,
+    description:
+      "Extreme luminosity; near Eddington limit. Humphreys-Davidson instability strip. " +
+      "Use direct T_eff entry when the real value is known.",
+  },
+  C: {
+    label: "Carbon Star (C-type)",
+    lumClass: "III/II",
+    massMin: 0.8,
+    massMax: 8.0,
+    Teff_range: [2500, 4500],
+    R_range: [50, 500],
+    L_range: [1000, 30000],
+    fehCorrTeff: 0,
+    fehCorrL: 0.0,
+    description:
+      "AGB star with C/O > 1 after third dredge-up. Subtypes C-N (normal), C-R (warmer), " +
+      "C-J (isotopic), C-H (halo). Subtype scale C0–C9 from Bergeat et al. (2001).",
+  },
+  S: {
+    label: "S-type Star (Zirconium)",
+    lumClass: "III",
+    massMin: 0.8,
+    massMax: 6.0,
+    Teff_range: [2600, 3600],
+    R_range: [50, 400],
+    L_range: [500, 20000],
+    fehCorrTeff: 0,
+    fehCorrL: 0.0,
+    description:
+      "Transitional AGB star with C/O ≈ 1; ZrO and LaO bands. " +
+      "Subtype scale S0–S9 from Van Eck et al. (2017).",
   },
 };
 
-const POST_MS_KEYS = ["SG", "RGB", "HB", "AGB", "RSG", "BSG"];
+const POST_MS_KEYS = ["IV", "III", "II", "Ib", "Ia", "Ia+", "C", "S"];
 
-// Estimate representative post-MS values from mass and phase.
-// Returns { Teff, L, R, notes }
-// Uses empirical scaling relations from PARSEC isochrones.
-function postMsEstimate(phase, massSun, FeH) {
+// Map T_eff + luminosity class to a spectral type string for post-MS phases.
+function teffToGiantSpectralType(teff, phase) {
+  const p = POST_MS_PHASES[phase];
+  if (phase === "C") {
+    const sub = Math.max(0, Math.min(9, Math.round((4500 - teff) / 222)));
+    return `C${sub} (C-type Carbon Star)`;
+  }
+  if (phase === "S") {
+    const sub = Math.max(0, Math.min(9, Math.round((3600 - teff) / 111)));
+    return `S${sub}`;
+  }
+  // All other phases: nearest MS_SEQUENCE entry by T_eff, then append lum class.
+  let best = MS_SEQUENCE[0];
+  let bestDist = Math.abs(MS_SEQUENCE[0].Teff - teff);
+  for (const e of MS_SEQUENCE) {
+    const d = Math.abs(e.Teff - teff);
+    if (d < bestDist) { bestDist = d; best = e; }
+  }
+  const subStr = Number.isInteger(best.subtype)
+    ? String(best.subtype)
+    : best.subtype.toFixed(1);
+  return `${best.letter}${subStr} ${p.lumClass}`;
+}
+
+// Estimate representative post-MS values from mass, phase, and optional explicit T_eff.
+// Returns { Teff, L, R, TeffSB, feh, teffFromUser }
+// Uses empirical scaling relations from PARSEC isochrones and Levesque et al. (2005).
+function postMsEstimate(phase, massSun, FeH, userTeff) {
   const p = POST_MS_PHASES[phase];
   const feh = FeH !== null && FeH !== undefined ? FeH : 0.0;
   const f = Math.max(
@@ -914,62 +981,62 @@ function postMsEstimate(phase, massSun, FeH) {
   );
   let R, L, Teff;
   switch (phase) {
-    case "SG":
+    case "IV":
+      // Calibrated: Procyon A (F5 IV, 6540 K, 1.50 M_Sun) and Eta Cep (K0 IV, 5300 K, 1.6 M_Sun).
       R = p.R_range[0] + f * (p.R_range[1] - p.R_range[0]);
       L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
-      Teff =
-        p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]) + 200 * feh;
+      Teff = 5900 - f * 1000 + p.fehCorrTeff * feh;
       break;
-    case "RGB":
-      // More massive stars ascend the RGB to larger radii and higher luminosities.
-      // f = 0 at massMin (low mass), f → 1 at massMax (high mass), so R and L
-      // must increase with f.  The previous (1 - f*0.3) factor inverted this.
+    case "III":
+      // Calibrated: Arcturus (K1.5 III, 4286 K) and Aldebaran (K5 III, 3910 K).
       R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
-      L =
-        p.L_range[0] *
-        Math.pow(p.L_range[1] / p.L_range[0], f) *
-        Math.pow(10, 0.19 * feh);
-      Teff = 3700 + f * 400 + 180 * feh;
+      L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f) *
+          Math.pow(10, p.fehCorrL * feh);
+      Teff = 4300 - f * 500 + p.fehCorrTeff * feh;
       break;
-    case "HB":
-      L = 50 + f * 20;
+    case "II":
       R = p.R_range[0] + f * (p.R_range[1] - p.R_range[0]);
-      Teff = 5000 - 3500 * (feh / 2.0);
+      L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+      Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]) + p.fehCorrTeff * feh;
       break;
-    case "AGB":
-      R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], 0.5 + f * 0.5);
-      L =
-        p.L_range[0] *
-        Math.pow(p.L_range[1] / p.L_range[0], f) *
-        Math.pow(10, -0.2 * feh);
-      Teff =
-        p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]) + 150 * -feh;
-      break;
-    case "RSG":
+    case "Ib":
+    case "Ia":
       R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
       L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
-      Teff =
-        p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]) + 150 * -feh;
+      Teff = p.Teff_range[0] + f * (p.Teff_range[1] - p.Teff_range[0]) + p.fehCorrTeff * feh;
       break;
-    case "BSG":
-      R = p.R_range[0] + f * (p.R_range[1] - p.R_range[0]);
+    case "Ia+":
+      R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
       L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
       Teff = p.Teff_range[0] + f * (p.Teff_range[1] - p.Teff_range[0]);
       break;
+    case "C":
+      R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
+      L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+      Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]);
+      break;
+    case "S":
+      R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
+      L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+      Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]);
+      break;
     default:
-      R = 10;
-      L = 100;
-      Teff = 4000;
+      R = 10; L = 100; Teff = 4000;
   }
   Teff = Math.max(p.Teff_range[0], Math.min(p.Teff_range[1], Teff));
-  return { Teff, L, R, TeffSB: calcTeff(L, R), feh };
+  // User-supplied T_eff overrides the formula (Ib/Ia/Ia+ only).
+  const teffFromUser = userTeff !== null && userTeff !== undefined && !isNaN(userTeff);
+  if (teffFromUser) Teff = userTeff;
+  return { Teff, L, R, TeffSB: calcTeff(L, R), feh, teffFromUser };
 }
 
-function printPostMS(phase, massSun, FeH) {
+function printPostMS(phase, massSun, FeH, userTeff) {
   const p = POST_MS_PHASES[phase];
   const feh = FeH !== null && FeH !== undefined ? FeH : 0.0;
-  const est = postMsEstimate(phase, massSun, feh);
+  const est = postMsEstimate(phase, massSun, feh, userTeff);
   const fehStr = feh >= 0 ? `+${feh.toFixed(2)}` : feh.toFixed(2);
+  const showFeH = phase !== "C" && phase !== "S" && phase !== "Ia+";
+  const sType = teffToGiantSpectralType(est.Teff, phase);
 
   if (massSun < p.massMin || massSun > p.massMax)
     console.log(
@@ -977,11 +1044,13 @@ function printPostMS(phase, massSun, FeH) {
     );
 
   console.log(`\nEvolutionary phase:    ${p.label}`);
+  console.log(`Spectral type:         ${sType}${est.teffFromUser ? "  (derived from user T_eff)" : "  (derived from T_eff)"}`);
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
-  console.log(`Metallicity:           [Fe/H] = ${fehStr}`);
+  if (showFeH)
+    console.log(`Metallicity:           [Fe/H] = ${fehStr}`);
   console.log(`Phase description:     ${p.description}`);
   console.log(
-    `\n  -- Representative values for ${fmt(massSun)} M_Sun, [Fe/H] = ${fehStr} --`,
+    `\n  -- Representative values for ${fmt(massSun)} M_Sun${showFeH ? `, [Fe/H] = ${fehStr}` : ""} --`,
   );
   console.log(`  (Typical ranges shown in brackets)`);
   console.log(
@@ -990,40 +1059,33 @@ function printPostMS(phase, massSun, FeH) {
   console.log(`                       ${fmt(est.R * R_SUN_KM)} km`);
   printLumBlock(est.L, est.Teff);
   console.log(`  (Typical L range:    ${p.L_range[0]}–${p.L_range[1]} L_Sun)`);
-  console.log(
-    `T_eff (empirical):     ${fmtTeff(est.Teff)} K  [${p.Teff_range[0]}–${p.Teff_range[1]} K]`,
-  );
-  console.log(`T_eff (S-B back-check, not for SE): ${fmtTeff(est.TeffSB)} K`);
+  const teffLabel = est.teffFromUser ? "T_eff (user-supplied):" : "T_eff (estimated):    ";
+  console.log(`${teffLabel}  ${fmtTeff(est.Teff)} K  [${p.Teff_range[0]}–${p.Teff_range[1]} K]`);
+  if (!est.teffFromUser)
+    console.log(`T_eff (S-B back-check, not for SE): ${fmtTeff(est.TeffSB)} K`);
   console.log(
     `Mean density:          ${fmt(calcDensity(massSun, est.R))} g/cm³`,
   );
-  if (phase === "HB") {
-    if (feh <= -1.5)
-      console.log(
-        `\n[Fe/H] note: Metal-poor HB — expect blue HB morphology (Teff > 10000 K).`,
-      );
-    else if (feh <= -0.5)
-      console.log(
-        `\n[Fe/H] note: Intermediate metallicity — mixed blue/red HB (RR Lyrae strip).`,
-      );
-    else
-      console.log(
-        `\n[Fe/H] note: Metal-rich HB — expect red clump morphology (~5000 K).`,
-      );
-  }
-  if (phase === "RGB")
+  if (phase === "III")
     console.log(
       `\n[Fe/H] note: RGB tip L corrected via Salaris & Cassisi (2005).`,
     );
-  if (phase === "AGB")
+  if (phase === "C")
     console.log(
-      `\n[Fe/H] note: AGB L corrected via McDonald & Zijlstra (2015).`,
+      `\nSubtype note: C0–C9 scale from Bergeat et al. (2001); subtypes C-N, C-R, C-J, C-H based on spectra.`,
+    );
+  if (phase === "S")
+    console.log(
+      `\nSubtype note: S0–S9 scale from Van Eck et al. (2017); ZrO and LaO band strength.`,
     );
   console.log(
     `\nCalibration:  PARSEC (Bressan et al. 2012); Salaris & Cassisi (2005);`,
   );
   console.log(
-    `              Levesque et al. (2005); Gratton et al. (2010); McDonald & Zijlstra (2015).`,
+    `              Levesque et al. (2005); Bergeat et al. (2001); Van Eck et al. (2017);`,
+  );
+  console.log(
+    `              Humphreys & Davidson (1994); Smith et al. (2004).`,
   );
   console.log(
     `Uncertainty:  Representative values; depend on metallicity, mass loss, evolutionary state.`,
@@ -1933,25 +1995,18 @@ function msFromSpectralType() {
 }
 
 function msFromMass() {
-  // Mode 2 goes straight to mass — no class or subtype selection.
-  // Spectral type is derived automatically from the entered mass and shown in output.
   ask("\nEnter star mass (M_Sun, 0.075–150): ", (massInput) => {
     const mass = parseFloat(massInput.trim());
     if (isNaN(mass) || mass <= 0) {
       console.log("Invalid mass.");
       return msFromMass();
     }
-
-    // Derive spectral type from mass
-    const derived   = massToSubtype(mass);
-    const classKey  = derived.classKey;
-    const autoSub   = { str: derived.subtypeStr, val: derived.subtypeVal };
-
-    const zams  = msLookup(classKey, autoSub.val, mass);
-    const t_MS  = mainSequenceLifetime(mass, zams ? zams.L : 1);
-
+    const derived  = massToSubtype(mass);
+    const classKey = derived.classKey;
+    const autoSub  = { str: derived.subtypeStr, val: derived.subtypeVal };
+    const zams     = msLookup(classKey, autoSub.val, mass);
+    const t_MS     = mainSequenceLifetime(mass, zams ? zams.L : 1);
     askAgeGyr(t_MS, (age) => {
-      // Pass fromMass=true so printMS derives spectral type from T_eff, not mass
       printMS(classKey, autoSub.str, autoSub.val, mass, age, true);
       askRepeat();
     });
@@ -2041,23 +2096,50 @@ function postMsMenu() {
     }
     const phase = POST_MS_KEYS[idx];
     const p = POST_MS_PHASES[phase];
+    const skipFeH = phase === "C" || phase === "S" || phase === "Ia+";
+    // For supergiants, mass → T_eff is unreliable; allow direct T_eff entry.
+    const allowTeffOverride = phase === "Ib" || phase === "Ia" || phase === "Ia+";
+
     askFloat(
       `Enter mass (M_Sun, typical ${p.massMin}–${p.massMax}): `,
       0.3,
-      60,
+      200,
       (mass) => {
-        ask(
-          `Enter metallicity [Fe/H] (e.g. 0.0 = solar, -1.0 = metal-poor, +0.3 = metal-rich) [Enter for solar]: `,
-          (fehInput) => {
-            const raw = fehInput.trim();
-            const feh = raw === "" ? 0.0 : parseFloat(raw);
-            if (raw !== "" && isNaN(feh)) {
-              console.log("Invalid [Fe/H] — using solar (0.0).");
-            }
-            printPostMS(phase, mass, isNaN(feh) ? 0.0 : feh);
+        const askFeH = (cb) => {
+          if (skipFeH) return cb(0.0);
+          ask(
+            `Enter metallicity [Fe/H] (e.g. 0.0 = solar, -1.0 = metal-poor, +0.3 = metal-rich) [Enter for solar]: `,
+            (fehInput) => {
+              const raw = fehInput.trim();
+              const feh = raw === "" ? 0.0 : parseFloat(raw);
+              cb(isNaN(feh) ? 0.0 : feh);
+            },
+          );
+        };
+
+        const askTeff = (feh, cb) => {
+          if (!allowTeffOverride) return cb(feh, null);
+          ask(
+            `Enter T_eff (K) [Enter to estimate from mass, or supply known value e.g. 13480]: `,
+            (tInput) => {
+              const raw = tInput.trim();
+              if (raw === "") return cb(feh, null);
+              const t = parseFloat(raw);
+              if (isNaN(t) || t < 1000 || t > 100000) {
+                console.log("Invalid T_eff — estimating from mass.");
+                return cb(feh, null);
+              }
+              cb(feh, t);
+            },
+          );
+        };
+
+        askFeH((feh) => {
+          askTeff(feh, (feh2, userTeff) => {
+            printPostMS(phase, mass, feh2, userTeff);
             askRepeat();
-          },
-        );
+          });
+        });
       },
     );
   });
