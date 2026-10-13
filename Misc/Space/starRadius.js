@@ -885,6 +885,20 @@ const POST_MS_PHASES = {
       "Less luminous supergiants. Span full OBAFGKM range; T_eff from mass formula " +
       "is approximate — use direct T_eff entry when the real value is known.",
   },
+  Iab: {
+    label: "Supergiant (Class Iab)",
+    lumClass: "Iab",
+    massMin: 10.0,
+    massMax: 40.0,
+    Teff_range: [3400, 35000],
+    R_range: [50, 1000],
+    L_range: [40000, 600000],
+    fehCorrTeff: 100,
+    fehCorrL: 0.0,
+    description:
+      "Intermediate supergiant between Ib and Ia. Spans full OBAFGKM range; T_eff " +
+      "from mass formula is approximate — use direct T_eff entry when the real value is known.",
+  },
   Ia: {
     label: "Supergiant (Class Ia)",
     lumClass: "Ia",
@@ -943,7 +957,7 @@ const POST_MS_PHASES = {
   },
 };
 
-const POST_MS_KEYS = ["IV", "III", "II", "Ib", "Ia", "Ia+", "C", "S"];
+const POST_MS_KEYS = ["IV", "III", "II", "Ib", "Iab", "Ia", "Ia+", "C", "S"];
 
 // Map T_eff + luminosity class to a spectral type string for post-MS phases.
 function teffToGiantSpectralType(teff, phase) {
@@ -1000,6 +1014,7 @@ function postMsEstimate(phase, massSun, FeH, userTeff) {
       Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]) + p.fehCorrTeff * feh;
       break;
     case "Ib":
+    case "Iab":
     case "Ia":
       R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
       L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
@@ -2098,7 +2113,7 @@ function postMsMenu() {
     const p = POST_MS_PHASES[phase];
     const skipFeH = phase === "C" || phase === "S" || phase === "Ia+";
     // For supergiants, mass → T_eff is unreliable; allow direct T_eff entry.
-    const allowTeffOverride = phase === "Ib" || phase === "Ia" || phase === "Ia+";
+    const allowTeffOverride = phase === "Ib" || phase === "Iab" || phase === "Ia" || phase === "Ia+";
 
     askFloat(
       `Enter mass (M_Sun, typical ${p.massMin}–${p.massMax}): `,
