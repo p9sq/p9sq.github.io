@@ -210,6 +210,11 @@ const COMPOSITIONS = {
     exponent: 1 / 3,
     densityGcm3: 0.55,
   },
+  custom: {
+    // No fitted model. You type the bulk density and the radius follows from it.
+    // Handled by askCustomInputs().
+    label: "Custom (user-set bulk density)",
+  },
 };
 
 const TYPE_KEYS = [
@@ -228,6 +233,7 @@ const TYPE_KEYS = [
   "youngGiant",
   "rockyAsteroid",
   "icyAsteroid",
+  "custom", // last, so existing option numbers stay the same
 ];
 
 const rl = readline.createInterface({
@@ -623,6 +629,7 @@ function printMenu() {
   );
   console.log("14) Rocky asteroid (silicate/metallic body, ~2.0 g/cm³)");
   console.log("15) Icy asteroid   (cometary nucleus, ~0.55 g/cm³)");
+  console.log("16) Custom         (you enter the bulk density, g/cm³)");
 }
 
 function askRepeat() {
@@ -1326,6 +1333,83 @@ function askAsteroidInputs(key, mode) {
 }
 
 // ---------------------------------------------------------------------------
+// Custom density flow
+// Constant bulk density: R = (ρ_Earth * M / ρ)^(1/3). No compression model,
+// so the density you type is the density you get back. Random variation is
+// skipped because it would change that density.
+// ---------------------------------------------------------------------------
+function askCustomInputs(mode) {
+  const comp = COMPOSITIONS.custom;
+
+  rl.question("\nEnter bulk density (in g/cm³): ", (densInput) => {
+    const dens = parseFloat(densInput);
+    if (isNaN(dens) || dens <= 0) {
+      console.log("Invalid density.");
+      return askRepeat();
+    }
+    if (dens < 0.1 || dens > 25) {
+      console.log(
+        `\n⚠️  ${dens} g/cm³ is outside the usual range for solid bodies (0.1–25 g/cm³).`,
+      );
+    }
+
+    if (mode === "1") {
+      rl.question("Enter planet mass (in Earth masses): ", (input) => {
+        const mass = parseFloat(input);
+        if (isNaN(mass) || mass <= 0) {
+          console.log("Invalid mass.");
+          return askRepeat();
+        }
+
+        const radiusEarth = Math.cbrt((EARTH_DENSITY * mass) / dens);
+
+        console.log(`\nType:             ${comp.label}`);
+        console.log(`Estimated radius: ${radiusEarth * EARTH_RADIUS_KM} km`);
+        console.log(`In Earth radii:   ${radiusEarth} R_Earth`);
+        console.log(`Mean density:     ${dens} g/cm³`);
+        askRepeat();
+      });
+    } else {
+      rl.question(
+        "Enter planet radius — in km or R_Earth?\n  1) km\n  2) R_Earth\nEnter unit: ",
+        (unitInput) => {
+          const unit = unitInput.trim();
+          if (unit !== "1" && unit !== "2") {
+            console.log("Invalid unit.");
+            return askRepeat();
+          }
+
+          const unitLabel = unit === "1" ? "km" : "R_Earth";
+          rl.question(`Enter planet radius (in ${unitLabel}): `, (input) => {
+            const rawRadius = parseFloat(input);
+            if (isNaN(rawRadius) || rawRadius <= 0) {
+              console.log("Invalid radius.");
+              return askRepeat();
+            }
+
+            const radiusEarth =
+              unit === "1" ? rawRadius / EARTH_RADIUS_KM : rawRadius;
+            const mass = (dens * Math.pow(radiusEarth, 3)) / EARTH_DENSITY;
+
+            console.log(`\nType:             ${comp.label}`);
+            console.log(
+              `Input radius:     ${radiusEarth * EARTH_RADIUS_KM} km` +
+                `  /  ${radiusEarth} R_Earth`,
+            );
+            console.log(`Estimated mass:   ${formatMass(mass)} M_Earth`);
+            if (mass >= 1 / M_JUP) {
+              console.log(`                  ${mass / M_JUP} M_Jupiter`);
+            }
+            console.log(`Mean density:     ${dens} g/cm³`);
+            askRepeat();
+          });
+        },
+      );
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Main flow
 // ---------------------------------------------------------------------------
 function startCalculation() {
@@ -1361,6 +1445,7 @@ function startCalculation() {
         if (key === "youngGiant") return askYoungGiantInputs(mode);
         if (key === "rockyAsteroid" || key === "icyAsteroid")
           return askAsteroidInputs(key, mode);
+        if (key === "custom") return askCustomInputs(mode);
 
         if (mode === "1") {
           // --- Forward: mass → radius ---
