@@ -341,6 +341,93 @@ const MS_SEQUENCE = (() => {
   return out;
 })();
 
+// ------------------------------------------------------------
+// SMOOTH ZAMS RELATIONS (luminosity, radius and T_eff as continuous functions of mass)
+// Reading the nearest table row makes L, R and T_eff jump in steps, so a star of
+// 0.852 M_Sun could out-live a star of 0.84 M_Sun. Here the table is sorted by mass,
+// forced to rise with mass (pool-adjacent-violators, which removes the small zigzags in
+// the A-type masses, with L rising at least as fast as M^1.5) and interpolated in log mass. The BHAC15 value at 0.15 M_Sun joins
+// the low-mass end, and above the table L rises as M^1.1 and R as M^0.55.
+// ------------------------------------------------------------
+function isotonicIncreasing(y) {
+  const blocks = [];
+  for (const v of y) {
+    blocks.push({ sum: v, n: 1 });
+    while (blocks.length > 1) {
+      const b = blocks[blocks.length - 1];
+      const a = blocks[blocks.length - 2];
+      if (a.sum / a.n <= b.sum / b.n) break;
+      blocks.pop();
+      a.sum += b.sum;
+      a.n += b.n;
+    }
+  }
+  const out = [];
+  for (const b of blocks) for (let i = 0; i < b.n; i++) out.push(b.sum / b.n);
+  return out;
+}
+
+const MS_SMOOTH = (() => {
+  const rows = MS_SEQUENCE.filter((e) => e.M > 0.15).map((e) => ({
+    M: e.M,
+    logL: Math.log10(e.L),
+    logR: Math.log10(e.R),
+    Teff: e.Teff,
+  }));
+  const b = bhac15Lookup(0.15);
+  rows.push({ M: 0.15, logL: Math.log10(b.L), logR: Math.log10(b.R), Teff: b.Teff });
+  rows.sort((a, c) => a.M - c.M);
+  // L must rise at least as fast as M^1.5, so t = M/L can only fall as mass rises
+  const logL = isotonicIncreasing(rows.map((r) => r.logL - 1.5 * Math.log10(r.M))).map(
+    (y, i) => y + 1.5 * Math.log10(rows[i].M),
+  );
+  const logR = isotonicIncreasing(rows.map((r) => r.logR));
+  // The BHAC15 node (lowest mass) keeps its own model-atmosphere T_eff
+  const Teff = [rows[0].Teff, ...isotonicIncreasing(rows.slice(1).map((r) => r.Teff))];
+  return rows.map((r, i) => ({ M: r.M, logL: logL[i], logR: logR[i], Teff: Teff[i] }));
+})();
+
+// ZAMS { Teff, L, R, M } for any mass
+function msZamsFromMass(massSun) {
+  if (massSun <= 0.15) return bhac15Lookup(Math.max(0.075, massSun));
+  const t = MS_SMOOTH;
+  const last = t[t.length - 1];
+  if (massSun >= last.M) {
+    const ratio = massSun / last.M;
+    const L = Math.pow(10, last.logL) * Math.pow(ratio, 1.1);
+    const R = Math.pow(10, last.logR) * Math.pow(ratio, 0.55);
+    return { Teff: calcTeff(L, R), L, R, M: massSun };
+  }
+  for (let i = 0; i < t.length - 1; i++) {
+    const lo = t[i];
+    const hi = t[i + 1];
+    if (massSun >= lo.M && massSun <= hi.M) {
+      const f = hi.M === lo.M ? 0 : Math.log(massSun / lo.M) / Math.log(hi.M / lo.M);
+      return {
+        Teff: lo.Teff + f * (hi.Teff - lo.Teff),
+        L: Math.pow(10, lo.logL + f * (hi.logL - lo.logL)),
+        R: Math.pow(10, lo.logR + f * (hi.logR - lo.logR)),
+        M: massSun,
+      };
+    }
+  }
+  return { Teff: last.Teff, L: Math.pow(10, last.logL), R: Math.pow(10, last.logR), M: massSun };
+}
+
+// Mass whose ZAMS radius equals radiusSun (bisection, R rises with M)
+function msMassFromRadius(radiusSun) {
+  let lo = 0.075;
+  let hi = 150;
+  if (radiusSun <= msZamsFromMass(lo).R) return lo;
+  if (radiusSun >= msZamsFromMass(hi).R) return hi;
+  for (let i = 0; i < 200; i++) {
+    const mid = Math.sqrt(lo * hi);
+    if (msZamsFromMass(mid).R < radiusSun) lo = mid;
+    else hi = mid;
+  }
+  return Math.sqrt(lo * hi);
+}
+
 // Letter class boundaries for the spectral type menu
 const MS_CLASSES = {
   O: { label: "O-type  (massive blue star)", Mmin: 16, Mmax: 150 },
@@ -501,13 +588,10 @@ function teffToSpectralType(teff) {
   let bestDist = Math.abs(MS_SEQUENCE[0].Teff - teff);
   for (const e of MS_SEQUENCE) {
     const d = Math.abs(e.Teff - teff);
-    if (d < bestDist) {
-      bestDist = d;
-      best = e;
-    }
+    if (d < bestDist) { bestDist = d; best = e; }
   }
   return {
-    classKey: best.letter,
+    classKey:   best.letter,
     subtypeVal: best.subtype,
     subtypeStr: Number.isInteger(best.subtype)
       ? String(best.subtype)
@@ -532,23 +616,9 @@ function subtypeImpliedMass(classKey, subtypeVal) {
 //   With [Fe/H] = 0 every factor is exactly 1, so solar results are unchanged.
 // ------------------------------------------------------------
 const METALLICITY_SENSITIVITY = [
-  [0.08, 0.05],
-  [0.1, 0.08],
-  [0.25, 0.12],
-  [0.4, 0.15],
-  [0.6, 0.18],
-  [0.8, 0.2],
-  [1.0, 0.22],
-  [1.2, 0.25],
-  [1.5, 0.28],
-  [2.0, 0.32],
-  [3.0, 0.35],
-  [5.0, 0.38],
-  [9.0, 0.4],
-  [15.0, 0.42],
-  [25.0, 0.45],
-  [60.0, 0.48],
-  [120.0, 0.5],
+  [0.08, 0.05], [0.1, 0.08], [0.25, 0.12], [0.4, 0.15], [0.6, 0.18], [0.8, 0.2],
+  [1.0, 0.22], [1.2, 0.25], [1.5, 0.28], [2.0, 0.32], [3.0, 0.35], [5.0, 0.38],
+  [9.0, 0.4], [15.0, 0.42], [25.0, 0.45], [60.0, 0.48], [120.0, 0.5],
 ];
 
 function metallicitySensitivity(massSun) {
@@ -572,8 +642,7 @@ function metallicityLifetimeFactor(massSun, feh) {
 // Shifts a ZAMS entry { Teff, L, R, M } for [Fe/H]
 function applyMetallicity(z, massSun, feh) {
   if (!feh) return z;
-  const w =
-    massSun <= 2 ? 1 : massSun >= 20 ? 0.2 : 1 - (0.8 * (massSun - 2)) / 18;
+  const w = massSun <= 2 ? 1 : massSun >= 20 ? 0.2 : 1 - (0.8 * (massSun - 2)) / 18;
   const dLogL = -0.18 * feh * w;
   const dLogR = -0.03 * feh * w;
   const dLogT = 0.25 * dLogL - 0.5 * dLogR;
@@ -586,10 +655,7 @@ function applyMetallicity(z, massSun, feh) {
 }
 
 function printFeH(feh) {
-  if (feh)
-    console.log(
-      `Metallicity:           [Fe/H] = ${feh > 0 ? "+" : ""}${fmt(feh)}  (lifetime, L, R and T_eff adjusted)`,
-    );
+  if (feh) console.log(`Metallicity:           [Fe/H] = ${feh > 0 ? "+" : ""}${fmt(feh)}  (lifetime, L, R and T_eff adjusted)`);
 }
 
 // MS lifetime estimate.
@@ -608,9 +674,13 @@ function printFeH(feh) {
 //                              Continuous at M=20; ~25 Myr @ 10 M_Sun
 //   2 ≤ M < 8     (lower B/A):t = 6.508 × M^−2.5 Gyr
 //                              Continuous at M=8; ~120 Myr @ 5 M_Sun
-//   M < 2         (F/G/K/M):  t = (M/L) × 10 Gyr  (well-calibrated by Mamajek)
+//   M ≤ 1.5       (F/G/K/M):  t = (M/L) × 10 Gyr  (well-calibrated by Mamajek)
+//   1.5 < M < 2   (blend):    the two formulas above are mixed in log space with a
+//                              smoothstep weight, so the lifetime always falls as mass rises
 //
-// All bands are continuous at their boundaries.
+// The fuel/burn-rate formula and the 2 ≤ M < 8 power law do not meet at 2 M_Sun
+// (0.77 Gyr against 1.15 Gyr), so without the blend a 2.003 M_Sun star would outlive
+// a 1.98 M_Sun star. All other bands are continuous at their boundaries.
 function mainSequenceLifetimeBase(massSun, luminosityZams) {
   if (massSun >= 20) {
     // O-type: Geneva/PARSEC empirical fit; ~3 Myr @ 60 M_Sun, ~8 Myr @ 20 M_Sun
@@ -625,15 +695,18 @@ function mainSequenceLifetimeBase(massSun, luminosityZams) {
     return 6.507601 * Math.pow(massSun, -2.5);
   }
   // F/G/K/M: fuel/burn-rate formula is well-calibrated from Mamajek table
-  return (massSun / luminosityZams) * 10;
+  const tFuel = (massSun / luminosityZams) * 10;
+  if (massSun <= 1.5) return tFuel;
+  // 1.5 to 2 M_Sun: mix toward the A-type power law so there is no jump at 2 M_Sun
+  const x = (massSun - 1.5) / 0.5;
+  const w = x * x * (3 - 2 * x);
+  const tPower = 6.507601 * Math.pow(massSun, -2.5);
+  return Math.exp((1 - w) * Math.log(tFuel) + w * Math.log(tPower));
 }
 
 // Solar-metallicity lifetime scaled by [Fe/H] (feh defaults to 0, so old calls are unchanged)
 function mainSequenceLifetime(massSun, luminosityZams, feh = 0) {
-  return (
-    mainSequenceLifetimeBase(massSun, luminosityZams) *
-    metallicityLifetimeFactor(massSun, feh)
-  );
+  return mainSequenceLifetimeBase(massSun, luminosityZams) * metallicityLifetimeFactor(massSun, feh);
 }
 
 // Age-adjusted luminosity and radius
@@ -644,10 +717,7 @@ function mainSequenceLifetime(massSun, luminosityZams, feh = 0) {
 //   L(t) = L_ZAMS × (1 − 0.15 × t/t_MS)   [dims slowly]
 //   R(t) = R_ZAMS × (1 − 0.05 × t/t_MS)
 function ageAdjust(massSun, L_ZAMS, R_ZAMS, ageGyr, tMsOverride) {
-  const t_MS =
-    tMsOverride !== undefined
-      ? tMsOverride
-      : mainSequenceLifetime(massSun, L_ZAMS);
+  const t_MS = tMsOverride !== undefined ? tMsOverride : mainSequenceLifetime(massSun, L_ZAMS);
   const f = ageGyr / t_MS;
   if (massSun < 0.35) {
     return { L: L_ZAMS * (1 - 0.15 * f), R: R_ZAMS * (1 - 0.05 * f), t_MS };
@@ -656,16 +726,9 @@ function ageAdjust(massSun, L_ZAMS, R_ZAMS, ageGyr, tMsOverride) {
 }
 
 // fromMass: when true, spectral type is derived from computed Teff, not passed-in classKey.
-function printMS(
-  classKey,
-  subtypeStr,
-  subtypeVal,
-  massSun,
-  ageGyr,
-  fromMass,
-  feh = 0,
-) {
-  const zamsBase = msLookup(classKey, subtypeVal, massSun);
+function printMS(classKey, subtypeStr, subtypeVal, massSun, ageGyr, fromMass, feh = 0) {
+  // A typed-in mass gets smooth ZAMS values. A spectral-type entry keeps its table row.
+  const zamsBase = fromMass ? msZamsFromMass(massSun) : msLookup(classKey, subtypeVal, massSun);
   // Lifetime uses the solar-metallicity luminosity, so [Fe/H] is not counted twice
   const zams = applyMetallicity(zamsBase, massSun, feh);
 
@@ -678,13 +741,7 @@ function printMS(
   const hasAge = ageGyr !== null && !useBHAC15;
   let L, R, t_MS;
   if (hasAge) {
-    const adj = ageAdjust(
-      massSun,
-      zams.L,
-      zams.R,
-      ageGyr,
-      mainSequenceLifetime(massSun, zamsBase.L, feh),
-    );
+    const adj = ageAdjust(massSun, zams.L, zams.R, ageGyr, mainSequenceLifetime(massSun, zamsBase.L, feh));
     L = adj.L;
     R = adj.R;
     t_MS = adj.t_MS;
@@ -701,18 +758,16 @@ function printMS(
   let displayClass, displaySub;
   if (fromMass) {
     const derived = teffToSpectralType(Teff);
-    displayClass = derived.classKey;
-    displaySub = derived.subtypeStr;
+    displayClass  = derived.classKey;
+    displaySub    = derived.subtypeStr;
   } else {
-    displayClass = classKey;
-    displaySub = subtypeStr;
+    displayClass  = classKey;
+    displaySub    = subtypeStr;
   }
   const label = `${displayClass}${displaySub}`;
 
   console.log(`\nEvolutionary phase:    Main sequence (luminosity class V)`);
-  console.log(
-    `Spectral class:        ${label}V${fromMass ? "  (derived from T_eff)" : ""}`,
-  );
+  console.log(`Spectral class:        ${label}V${fromMass ? "  (derived from T_eff)" : ""}`);
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
   printFeH(feh);
   console.log(`MS lifetime:           ${fmtLifetime(t_MS)}`);
@@ -864,7 +919,7 @@ function pmsTypeLabel(massSun) {
 }
 
 function printPMS(massSun, ageMyr, feh = 0) {
-  const zams = applyMetallicity(massToMsKey(massSun), massSun, feh);
+  const zams = applyMetallicity(msZamsFromMass(massSun), massSun, feh);
   const R_ZAMS = zams.R,
     L_ZAMS = zams.L;
   const t_KH = pmsKelvinHelmholtzTimeMyr(massSun, R_ZAMS, L_ZAMS);
@@ -1082,10 +1137,7 @@ function teffToGiantSpectralType(teff, phase) {
   let bestDist = Math.abs(MS_SEQUENCE[0].Teff - teff);
   for (const e of MS_SEQUENCE) {
     const d = Math.abs(e.Teff - teff);
-    if (d < bestDist) {
-      bestDist = d;
-      best = e;
-    }
+    if (d < bestDist) { bestDist = d; best = e; }
   }
   const subStr = Number.isInteger(best.subtype)
     ? String(best.subtype)
@@ -1114,29 +1166,21 @@ function postMsEstimate(phase, massSun, FeH, userTeff) {
     case "III":
       // Calibrated: Arcturus (K1.5 III, 4286 K) and Aldebaran (K5 III, 3910 K).
       R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
-      L =
-        p.L_range[0] *
-        Math.pow(p.L_range[1] / p.L_range[0], f) *
-        Math.pow(10, p.fehCorrL * feh);
+      L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f) *
+          Math.pow(10, p.fehCorrL * feh);
       Teff = 4300 - f * 500 + p.fehCorrTeff * feh;
       break;
     case "II":
       R = p.R_range[0] + f * (p.R_range[1] - p.R_range[0]);
       L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
-      Teff =
-        p.Teff_range[1] -
-        f * (p.Teff_range[1] - p.Teff_range[0]) +
-        p.fehCorrTeff * feh;
+      Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]) + p.fehCorrTeff * feh;
       break;
     case "Ib":
     case "Iab":
     case "Ia":
       R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
       L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
-      Teff =
-        p.Teff_range[0] +
-        f * (p.Teff_range[1] - p.Teff_range[0]) +
-        p.fehCorrTeff * feh;
+      Teff = p.Teff_range[0] + f * (p.Teff_range[1] - p.Teff_range[0]) + p.fehCorrTeff * feh;
       break;
     case "Ia+":
       R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
@@ -1154,14 +1198,11 @@ function postMsEstimate(phase, massSun, FeH, userTeff) {
       Teff = p.Teff_range[1] - f * (p.Teff_range[1] - p.Teff_range[0]);
       break;
     default:
-      R = 10;
-      L = 100;
-      Teff = 4000;
+      R = 10; L = 100; Teff = 4000;
   }
   Teff = Math.max(p.Teff_range[0], Math.min(p.Teff_range[1], Teff));
   // User-supplied T_eff overrides the formula (Ib/Ia/Ia+ only).
-  const teffFromUser =
-    userTeff !== null && userTeff !== undefined && !isNaN(userTeff);
+  const teffFromUser = userTeff !== null && userTeff !== undefined && !isNaN(userTeff);
   if (teffFromUser) Teff = userTeff;
   return { Teff, L, R, TeffSB: calcTeff(L, R), feh, teffFromUser };
 }
@@ -1180,11 +1221,10 @@ function printPostMS(phase, massSun, FeH, userTeff) {
     );
 
   console.log(`\nEvolutionary phase:    ${p.label}`);
-  console.log(
-    `Spectral type:         ${sType}${est.teffFromUser ? "  (derived from user T_eff)" : "  (derived from T_eff)"}`,
-  );
+  console.log(`Spectral type:         ${sType}${est.teffFromUser ? "  (derived from user T_eff)" : "  (derived from T_eff)"}`);
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
-  if (showFeH) console.log(`Metallicity:           [Fe/H] = ${fehStr}`);
+  if (showFeH)
+    console.log(`Metallicity:           [Fe/H] = ${fehStr}`);
   console.log(`Phase description:     ${p.description}`);
   console.log(
     `\n  -- Representative values for ${fmt(massSun)} M_Sun${showFeH ? `, [Fe/H] = ${fehStr}` : ""} --`,
@@ -1196,12 +1236,8 @@ function printPostMS(phase, massSun, FeH, userTeff) {
   console.log(`                       ${fmt(est.R * R_SUN_KM)} km`);
   printLumBlock(est.L, est.Teff);
   console.log(`  (Typical L range:    ${p.L_range[0]}–${p.L_range[1]} L_Sun)`);
-  const teffLabel = est.teffFromUser
-    ? "T_eff (user-supplied):"
-    : "T_eff (estimated):    ";
-  console.log(
-    `${teffLabel}  ${fmtTeff(est.Teff)} K  [${p.Teff_range[0]}–${p.Teff_range[1]} K]`,
-  );
+  const teffLabel = est.teffFromUser ? "T_eff (user-supplied):" : "T_eff (estimated):    ";
+  console.log(`${teffLabel}  ${fmtTeff(est.Teff)} K  [${p.Teff_range[0]}–${p.Teff_range[1]} K]`);
   if (!est.teffFromUser)
     console.log(`T_eff (S-B back-check, not for SE): ${fmtTeff(est.TeffSB)} K`);
   console.log(
@@ -1968,19 +2004,16 @@ function askFloat(prompt, min, max, callback) {
 
 // Ask metallicity [Fe/H]; Enter for solar (0)
 function askFeH(callback) {
-  ask(
-    "Enter metallicity [Fe/H] relative to the Sun (0 = solar, -2.0 to 0.5) [Enter for solar]: ",
-    (input) => {
-      const raw = input.trim();
-      if (raw === "") return callback(0);
-      const v = parseFloat(raw);
-      if (isNaN(v) || v < -2.0 || v > 0.5) {
-        console.log("Invalid. Expected a number from -2.0 to 0.5.");
-        return askFeH(callback);
-      }
-      callback(v);
-    },
-  );
+  ask("Enter metallicity [Fe/H] relative to the Sun (0 = solar, -2.0 to 0.5) [Enter for solar]: ", (input) => {
+    const raw = input.trim();
+    if (raw === "") return callback(0);
+    const v = parseFloat(raw);
+    if (isNaN(v) || v < -2.0 || v > 0.5) {
+      console.log("Invalid. Expected a number from -2.0 to 0.5.");
+      return askFeH(callback);
+    }
+    callback(v);
+  });
 }
 
 // Ask optional age in Gyr; Enter to skip
@@ -2163,10 +2196,10 @@ function msFromMass() {
       console.log("Invalid mass.");
       return msFromMass();
     }
-    const derived = massToSubtype(mass);
+    const derived  = massToSubtype(mass);
     const classKey = derived.classKey;
-    const autoSub = { str: derived.subtypeStr, val: derived.subtypeVal };
-    const zams = msLookup(classKey, autoSub.val, mass);
+    const autoSub  = { str: derived.subtypeStr, val: derived.subtypeVal };
+    const zams     = msZamsFromMass(mass);
     askFeH((feh) => {
       const t_MS = mainSequenceLifetime(mass, zams ? zams.L : 1, feh);
       askAgeGyr(t_MS, (age) => {
@@ -2195,19 +2228,13 @@ function msFromRadius() {
         const label = u.trim() === "2" ? "km" : "R_Sun";
         askFloat(`Enter radius in ${label}: `, 0, null, (rIn) => {
           const rSun = u.trim() === "2" ? rIn / R_SUN_KM : rIn;
-          // Find MS entry closest by radius
-          let best = MS_SEQUENCE[0],
-            bestD = Math.abs(MS_SEQUENCE[0].R - rSun);
-          for (const e of MS_SEQUENCE) {
-            const d = Math.abs(e.R - rSun);
-            if (d < bestD) {
-              bestD = d;
-              best = e;
-            }
-          }
-          const mass = best.M;
+          // Mass whose smooth ZAMS radius matches the entered radius
+          const mass = msMassFromRadius(rSun);
+          const derived = massToSubtype(mass);
+          const zamsR = msZamsFromMass(mass);
+          const matchType = teffToSpectralType(zamsR.Teff);
           console.log(
-            `  Nearest MS match: ${best.letter}${Number.isInteger(best.subtype) ? best.subtype : best.subtype.toFixed(1)}V  M = ${fmt(mass)} M_Sun`,
+            `  Radius-matched MS star: ${matchType.classKey}${matchType.subtypeStr}V  M = ${fmt(mass)} M_Sun`,
           );
           if (sub) {
             const implied = (msLookup(classKey, sub.val) || {}).M;
@@ -2219,20 +2246,16 @@ function msFromRadius() {
                 );
             }
           }
-          const zams = msLookup(best.letter, best.subtype);
-          const autoS = massToSubtype(mass);
           askFeH((feh) => {
-            const t_MS = mainSequenceLifetime(mass, zams ? zams.L : 1, feh);
+            const t_MS = mainSequenceLifetime(mass, zamsR.L, feh);
             askAgeGyr(t_MS, (age) => {
               printMS(
-                best.letter,
-                Number.isInteger(best.subtype)
-                  ? String(best.subtype)
-                  : best.subtype.toFixed(1),
-                best.subtype,
+                derived.classKey,
+                derived.subtypeStr,
+                derived.subtypeVal,
                 mass,
                 age,
-                false,
+                true,
                 feh,
               );
               askRepeat();
@@ -2266,8 +2289,7 @@ function postMsMenu() {
     const p = POST_MS_PHASES[phase];
     const skipFeH = phase === "C" || phase === "S" || phase === "Ia+";
     // For supergiants, mass → T_eff is unreliable; allow direct T_eff entry.
-    const allowTeffOverride =
-      phase === "Ib" || phase === "Iab" || phase === "Ia" || phase === "Ia+";
+    const allowTeffOverride = phase === "Ib" || phase === "Iab" || phase === "Ia" || phase === "Ia+";
 
     askFloat(
       `Enter mass (M_Sun, typical ${p.massMin}–${p.massMax}): `,
@@ -2370,18 +2392,13 @@ function wdMenu() {
         });
       });
     } else {
-      askFloat(
-        "Enter WD mass (M_Sun, typical 0.17–1.33): ",
-        0.01,
-        1.43,
-        (mass) => {
-          ask("Enter cooling age in Gyr [Enter to skip]: ", (ageIn) => {
-            const age = ageIn.trim() === "" ? null : parseFloat(ageIn.trim());
-            printWD(mass, isNaN(age) ? null : age);
-            askRepeat();
-          });
-        },
-      );
+      askFloat("Enter WD mass (M_Sun, typical 0.17–1.33): ", 0.01, 1.43, (mass) => {
+        ask("Enter cooling age in Gyr [Enter to skip]: ", (ageIn) => {
+          const age = ageIn.trim() === "" ? null : parseFloat(ageIn.trim());
+          printWD(mass, isNaN(age) ? null : age);
+          askRepeat();
+        });
+      });
     }
   });
 }

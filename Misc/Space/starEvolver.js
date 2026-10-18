@@ -279,18 +279,75 @@ function bhac15Lookup(m) {
   };
 }
 
-// ZAMS values for any mass. Interpolates the table in log mass, log L and log R.
+// ------------------------------------------------------------
+// SMOOTH ZAMS RELATIONS (same method as starRadius.js)
+// Reading the nearest table row makes L, R and T_eff jump in steps, so a 0.852 M_Sun star
+// could out-live a 0.84 M_Sun star. Here the table is sorted by mass, forced to rise with
+// mass (pool-adjacent-violators, which removes the small zigzags in the A-type masses,
+// with L rising at least as fast as M^1.5) and interpolated in log mass. The BHAC15 value
+// at 0.15 M_Sun joins the low-mass end. Above the table L rises as M^1.1 and R as M^0.55.
+// ------------------------------------------------------------
+function isotonicIncreasing(y) {
+  const blocks = [];
+  for (const v of y) {
+    blocks.push({ sum: v, n: 1 });
+    while (blocks.length > 1) {
+      const b2 = blocks[blocks.length - 1];
+      const a2 = blocks[blocks.length - 2];
+      if (a2.sum / a2.n <= b2.sum / b2.n) break;
+      blocks.pop();
+      a2.sum += b2.sum;
+      a2.n += b2.n;
+    }
+  }
+  const out = [];
+  for (const b2 of blocks)
+    for (let i = 0; i < b2.n; i++) out.push(b2.sum / b2.n);
+  return out;
+}
+
+const MS_SMOOTH = (() => {
+  const rows = MS_BY_MASS.filter((e) => e.M > 0.15).map((e) => ({
+    M: e.M,
+    logL: Math.log10(e.L),
+    logR: Math.log10(e.R),
+    Teff: e.Teff,
+  }));
+  const bh = bhac15Lookup(0.15);
+  rows.push({
+    M: 0.15,
+    logL: Math.log10(bh.L),
+    logR: Math.log10(bh.R),
+    Teff: bh.Teff,
+  });
+  rows.sort((x, y) => x.M - y.M);
+  // L must rise at least as fast as M^1.5, so t = M/L can only fall as mass rises
+  const logL = isotonicIncreasing(
+    rows.map((r) => r.logL - 1.5 * Math.log10(r.M)),
+  ).map((v, i) => v + 1.5 * Math.log10(rows[i].M));
+  const logR = isotonicIncreasing(rows.map((r) => r.logR));
+  // The BHAC15 node (lowest mass) keeps its own model-atmosphere T_eff
+  const Teff = [
+    rows[0].Teff,
+    ...isotonicIncreasing(rows.slice(1).map((r) => r.Teff)),
+  ];
+  return rows.map((r, i) => ({
+    M: r.M,
+    logL: logL[i],
+    logR: logR[i],
+    Teff: Teff[i],
+  }));
+})();
+
+// ZAMS { Teff, L, R, M } for any mass
 function zamsFromMass(m) {
-  if (m <= 0.15) return bhac15Lookup(m);
-  const t = MS_BY_MASS;
-  const first = t[0];
+  if (m <= 0.15) return bhac15Lookup(Math.max(0.075, m));
+  const t = MS_SMOOTH;
   const last = t[t.length - 1];
-  if (m <= first.M) return { Teff: first.Teff, L: first.L, R: first.R, M: m };
   if (m >= last.M) {
-    // Above the table (59 M_Sun) L rises roughly with M and R with M^0.55
     const ratio = m / last.M;
-    const L = last.L * Math.pow(ratio, 1.1);
-    const R = last.R * Math.pow(ratio, 0.55);
+    const L = Math.pow(10, last.logL) * Math.pow(ratio, 1.1);
+    const R = Math.pow(10, last.logR) * Math.pow(ratio, 0.55);
     return { Teff: calcTeff(L, R), L, R, M: m };
   }
   for (let i = 0; i < t.length - 1; i++) {
@@ -300,13 +357,69 @@ function zamsFromMass(m) {
       const f = hi.M === lo.M ? 0 : Math.log(m / lo.M) / Math.log(hi.M / lo.M);
       return {
         Teff: lo.Teff + f * (hi.Teff - lo.Teff),
-        L: logLerp(lo.L, hi.L, f),
-        R: logLerp(lo.R, hi.R, f),
+        L: Math.pow(10, lo.logL + f * (hi.logL - lo.logL)),
+        R: Math.pow(10, lo.logR + f * (hi.logR - lo.logR)),
         M: m,
       };
     }
   }
-  return { Teff: last.Teff, L: last.L, R: last.R, M: m };
+  return {
+    Teff: last.Teff,
+    L: Math.pow(10, last.logL),
+    R: Math.pow(10, last.logR),
+    M: m,
+  };
+}
+
+// ZAMS shift for [Fe/H] (same relations as starRadius.js). At fixed mass a metal-rich star
+// is fainter, a little smaller and cooler. Slopes from Tout et al. (1996) and Girardi et al.
+// (2000): dlogL = -0.18 [Fe/H], dlogR = -0.03 [Fe/H], dlogT = dlogL/4 - dlogR/2.
+// The effect fades for massive stars (full strength up to 2 M_Sun, 20% at 20 M_Sun and above).
+// With [Fe/H] = 0 every factor is exactly 1, so solar results do not change.
+function applyMetallicity(z, m, feh) {
+  if (!feh) return z;
+  const w = m <= 2 ? 1 : m >= 20 ? 0.2 : 1 - (0.8 * (m - 2)) / 18;
+  const dLogL = -0.18 * feh * w;
+  const dLogR = -0.03 * feh * w;
+  const dLogT = 0.25 * dLogL - 0.5 * dLogR;
+  return {
+    Teff: z.Teff * Math.pow(10, dLogT),
+    L: z.L * Math.pow(10, dLogL),
+    R: z.R * Math.pow(10, dLogR),
+    M: z.M,
+  };
+}
+
+// Mass whose ZAMS T_eff matches teff. Scans log mass, then bisects inside the best bracket.
+function massFromTeff(teff, feh = 0) {
+  const lo = 0.16;
+  const hi = 120;
+  const n = 4000;
+  const step = Math.pow(hi / lo, 1 / n);
+  let bestI = 0;
+  let bestErr = Infinity;
+  for (let i = 0; i <= n; i++) {
+    const mm = lo * Math.pow(step, i);
+    const err = Math.abs(
+      Math.log(applyMetallicity(zamsFromMass(mm), mm, feh).Teff / teff),
+    );
+    if (err < bestErr) {
+      bestErr = err;
+      bestI = i;
+    }
+  }
+  let a = lo * Math.pow(step, Math.max(0, bestI - 1));
+  let b = lo * Math.pow(step, Math.min(n, bestI + 1));
+  const teffAt = (mm) => applyMetallicity(zamsFromMass(mm), mm, feh).Teff;
+  const ta = teffAt(a) - teff;
+  const tb = teffAt(b) - teff;
+  if (ta * tb > 0) return lo * Math.pow(step, bestI);
+  for (let i = 0; i < 200; i++) {
+    const mid = Math.sqrt(a * b);
+    if ((teffAt(mid) - teff) * ta > 0) a = mid;
+    else b = mid;
+  }
+  return Math.sqrt(a * b);
 }
 
 // Table row for a spectral type such as G 2.5, interpolated inside the letter class
@@ -392,7 +505,9 @@ function lifetimeSensitivity(m) {
 const LIFETIME_USES_METALLICITY = true;
 
 // Main-sequence lifetime in Gyr. The base value uses the same formula as starRadius.js:
-// fuel over burn rate (M/L x 10 Gyr) below 2 M_Sun, three fitted power laws above.
+// fuel over burn rate (M/L x 10 Gyr) up to 1.5 M_Sun, three fitted power laws from 2 M_Sun,
+// and a log-space smoothstep blend between 1.5 and 2 M_Sun so lifetime always falls with mass.
+// L comes from the smooth ZAMS relation, not the nearest table row.
 // The [Fe/H] scaling comes from my Discord bot's starlifetime command.
 function msLifetimeGyr(m, feh) {
   let base;
@@ -400,16 +515,16 @@ function msLifetimeGyr(m, feh) {
   else if (m >= 8) base = 1.088337 * Math.pow(m, -1.64);
   else if (m >= 2) base = 6.507601 * Math.pow(m, -2.5);
   else {
-    // starRadius.js reads L from the nearest tabulated spectral type, so this does too
-    let lum;
-    if (m <= 0.15) lum = bhac15Lookup(Math.max(0.075, m)).L;
+    // Smooth ZAMS luminosity, so a heavier star never lives longer than a lighter one
+    const tFuel = (m / zamsFromMass(m).L) * 10;
+    if (m <= 1.5) base = tFuel;
     else {
-      let best = MS_BY_TEFF[0];
-      for (const e of MS_BY_TEFF)
-        if (Math.abs(e.M - m) < Math.abs(best.M - m)) best = e;
-      lum = best.L;
+      // 1.5 to 2 M_Sun: mix toward the A-type power law so there is no jump at 2 M_Sun
+      const x = (m - 1.5) / 0.5;
+      const w = x * x * (3 - 2 * x);
+      const tPower = 6.507601 * Math.pow(m, -2.5);
+      base = Math.exp((1 - w) * Math.log(tFuel) + w * Math.log(tPower));
     }
-    base = (m / lum) * 10;
   }
   return LIFETIME_USES_METALLICITY
     ? base * Math.pow(10, lifetimeSensitivity(m) * feh)
@@ -573,7 +688,7 @@ const STAGE_ORDER = ["PMS", "MS", "SG", "GIANT", "REM", "BD"];
 // Builds the whole life track for one zero-age mass and metallicity.
 // Every stage boundary is an age in Gyr, so evolving and devolving are the same lookup.
 function buildTimeline(m, feh, remOverride) {
-  const z = zamsFromMass(m);
+  const z = applyMetallicity(zamsFromMass(m), m, feh);
   const tPms = pmsKHMyr(m, z.R, z.L) / 1000;
   const tMs = msLifetimeGyr(m, feh);
   const post = m >= 0.4; // below this, stars skip the subgiant and giant stages
@@ -792,6 +907,10 @@ function printState(title, st, tl, showSpan) {
     console.log(`Remnant cooling age:   ${fmtAge(st.cool)}`);
   console.log(`Spectral type:         ${st.spec}`);
   console.log(`Mass:                  ${fmt(st.mass)} M_Sun`);
+  if (tl.feh)
+    console.log(
+      `Metallicity:           [Fe/H] = ${tl.feh > 0 ? "+" : ""}${fmt(tl.feh)}  (lifetime, L, R and T_eff adjusted)`,
+    );
   if (st.isBH) {
     console.log(`Schwarzschild radius:  ${fmt(st.Rkm)} km`);
     console.log(`Photon sphere:         ${fmt(1.5 * st.Rkm)} km`);
@@ -1054,12 +1173,9 @@ async function askParams(stageKey, kind) {
       p.mass = row.M;
       console.log(`Mass taken from ${p.spec.text}: ${fmt(p.mass)} M_Sun`);
     } else if (p.teff !== null && stageKey === "MS") {
-      let near = MS_BY_TEFF[0];
-      for (const e of MS_BY_TEFF)
-        if (Math.abs(e.Teff - p.teff) < Math.abs(near.Teff - p.teff)) near = e;
-      p.mass = near.M;
+      p.mass = massFromTeff(p.teff, p.feh);
       console.log(
-        `Mass taken from the main-sequence star nearest ${fmt(p.teff)} K (${near.key}): ${fmt(p.mass)} M_Sun`,
+        `Mass taken from the ZAMS relation at ${fmt(p.teff)} K: ${fmt(p.mass)} M_Sun`,
       );
     } else {
       p.mass = await askNum("A mass is required. Mass (M_Sun, 0.08-120): ", {
