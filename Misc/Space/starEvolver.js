@@ -9,7 +9,7 @@
 //   WD:   Nauenberg (1972) mass-radius relation, Mestel cooling
 //   NS:   NICER-anchored radius, Page et al. (2004) cooling
 //   BH:   Schwarzschild radius and Hawking temperature
-// Lifetimes reused from my bot's starlifetime command (same table, same metallicity scaling).
+// Lifetimes reused from my Discord bot's starlifetime command (same table, same metallicity scaling).
 //
 // Sections:
 //   1. Core evolver (the features you asked for)
@@ -343,7 +343,7 @@ function specFromTeff(teff) {
 }
 
 // ============================================================
-// LIFETIMES (same table and scaling as my bot's starlifetime command)
+// LIFETIMES (same table and scaling as my Discord bot's starlifetime command)
 // ============================================================
 const STELLAR_MODELS = [
   { mass: 0.08, baseLifetime: 12000.0, sensitivity: 0.05 },
@@ -369,35 +369,51 @@ function interpolate(x, x1, x2, y1, y2) {
   return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
 }
 
-function msLifetimeGyr(m, feh) {
+// Metallicity sensitivity from the my Discord bot's starlifetime command table (interpolated in mass)
+function lifetimeSensitivity(m) {
   const t = STELLAR_MODELS;
-  let base = t[0].baseLifetime;
-  let sens = t[0].sensitivity;
-  if (m >= t[t.length - 1].mass) {
-    base = t[t.length - 1].baseLifetime;
-    sens = t[t.length - 1].sensitivity;
-  } else if (m > t[0].mass) {
-    for (let i = 0; i < t.length - 1; i++) {
-      if (m >= t[i].mass && m <= t[i + 1].mass) {
-        base = interpolate(
-          m,
-          t[i].mass,
-          t[i + 1].mass,
-          t[i].baseLifetime,
-          t[i + 1].baseLifetime,
-        );
-        sens = interpolate(
-          m,
-          t[i].mass,
-          t[i + 1].mass,
-          t[i].sensitivity,
-          t[i + 1].sensitivity,
-        );
-        break;
-      }
+  if (m <= t[0].mass) return t[0].sensitivity;
+  if (m >= t[t.length - 1].mass) return t[t.length - 1].sensitivity;
+  for (let i = 0; i < t.length - 1; i++) {
+    if (m >= t[i].mass && m <= t[i + 1].mass) {
+      return interpolate(
+        m,
+        t[i].mass,
+        t[i + 1].mass,
+        t[i].sensitivity,
+        t[i + 1].sensitivity,
+      );
     }
   }
-  return base * Math.pow(10, sens * feh);
+  return t[t.length - 1].sensitivity;
+}
+
+// Set to false to ignore [Fe/H] in lifetimes, which matches starRadius.js exactly
+const LIFETIME_USES_METALLICITY = true;
+
+// Main-sequence lifetime in Gyr. The base value uses the same formula as starRadius.js:
+// fuel over burn rate (M/L x 10 Gyr) below 2 M_Sun, three fitted power laws above.
+// The [Fe/H] scaling comes from my Discord bot's starlifetime command.
+function msLifetimeGyr(m, feh) {
+  let base;
+  if (m >= 20) base = 0.116047 * Math.pow(m, -0.8928);
+  else if (m >= 8) base = 1.088337 * Math.pow(m, -1.64);
+  else if (m >= 2) base = 6.507601 * Math.pow(m, -2.5);
+  else {
+    // starRadius.js reads L from the nearest tabulated spectral type, so this does too
+    let lum;
+    if (m <= 0.15) lum = bhac15Lookup(Math.max(0.075, m)).L;
+    else {
+      let best = MS_BY_TEFF[0];
+      for (const e of MS_BY_TEFF)
+        if (Math.abs(e.M - m) < Math.abs(best.M - m)) best = e;
+      lum = best.L;
+    }
+    base = (m / lum) * 10;
+  }
+  return LIFETIME_USES_METALLICITY
+    ? base * Math.pow(10, lifetimeSensitivity(m) * feh)
+    : base;
 }
 
 // ============================================================
@@ -504,7 +520,7 @@ function bhHawkingK(m) {
   return (HBAR * C * C * C) / (8 * Math.PI * G * m * M_SUN_KG * K_B);
 }
 
-// Initial-final mass relation from my bot's starlifetime command, capped so a WD stays below Chandrasekhar
+// Initial-final mass relation from my Discord bot's starlifetime command, capped so a WD stays below Chandrasekhar
 function wdMassFromProgenitor(m) {
   return Math.min(0.489 + 0.096 * m, 0.9 * m, WD_MCH - 0.09);
 }
@@ -757,12 +773,21 @@ function stateAt(tl, age, massLoss) {
 // ------------------------------------------------------------
 // Printing
 // ------------------------------------------------------------
-function printState(title, st, tl) {
+function printState(title, st, tl, showSpan) {
   console.log(`\n=== ${title} ===`);
   console.log(`Stage:                 ${stageName(tl, st.stage)}`);
   console.log(`Age:                   ${fmtAge(st.age)}`);
   if (st.progress !== undefined)
     console.log(`Progress in stage:     ${fmtPct(st.progress * 100)}%`);
+  if (showSpan) {
+    const [a, b] = stageRange(tl, st.stage);
+    console.log(
+      `Stage lifespan:        ${Number.isFinite(b) ? `${fmt(b - a)} Gyr` : "open ended"}`,
+    );
+    console.log(
+      `Total lifespan:        ${fmt(tl.t.start.REM)} Gyr  (formation to the end of the giant stage, when the remnant forms)`,
+    );
+  }
   if (st.cool !== undefined)
     console.log(`Remnant cooling age:   ${fmtAge(st.cool)}`);
   console.log(`Spectral type:         ${st.spec}`);
@@ -1320,7 +1345,7 @@ async function main() {
       `\nNote: at ${fmt(age)} Gyr the model places this star in the stage "${stageName(tl, st0.stage)}", so the model stage is used.`,
     );
   }
-  printState("Initial state", st0, tl);
+  printState("Initial state", st0, tl, true);
   checkInputs(p, st0);
 
   // Step 3: evolve or devolve
