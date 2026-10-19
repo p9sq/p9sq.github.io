@@ -317,6 +317,25 @@
           Pack stars toward the center with a stretched, uneven shape (only
           applies when a center is set)
         </label>
+        <div class="field">
+          <label for="looseness"
+            >Cluster looseness: <span id="loosenessVal">0</span></label
+          >
+          <input
+            type="range"
+            id="looseness"
+            min="0"
+            max="100"
+            step="5"
+            value="0"
+            style="width: 100%"
+          />
+          <p class="hint">
+            0 gives a tight cluster with a packed core. 100 gives a loose OB
+            association, with a flatter spread and more sub-groups. Works
+            with the box above ticked.
+          </p>
+        </div>
 
         <div class="row">
           <div class="field">
@@ -1302,7 +1321,9 @@
       // ============================================================
       let clusterShape = null;
 
-      function buildClusterShape() {
+      // looseness runs 0 to 1. 0 is a tight cluster with a packed core, 1 is
+      // a loose association with a flatter spread and more sub-groups.
+      function buildClusterShape(looseness) {
         // random orthonormal axes, so the stretch points a random way
         const axes = [];
         while (axes.length < 3) {
@@ -1316,12 +1337,13 @@
         }
         // scales stay at or under 1 so no star lands past the max distance
         const scales = [1, 0.6 + Math.random() * 0.3, 0.35 + Math.random() * 0.3];
-        return { axes, scales };
+        return { axes, scales, looseness: looseness || 0 };
       }
 
       // Most stars fall near the center, a few reach the max distance.
       function randomPlummerRadius(minLy, maxLy) {
-        const a = maxLy / 5;
+        // a wider scale flattens the core, which is what makes a loose spread
+        const a = maxLy * (0.2 + 0.4 * clusterShape.looseness);
         for (let i = 0; i < 50; i++) {
           const u = Math.random();
           const r = a / Math.sqrt(Math.pow(u, -2 / 3) - 1);
@@ -1368,9 +1390,12 @@
       // loose clusters, voids) than a perfectly smooth density falloff.
       // Seeds are rebuilt fresh for each generation run.
       function buildDensitySeeds(minLy, maxLy, basePos, count) {
+        // loose clusters get more sub-groups, since an association is a
+        // string of small clumps and not one smooth blob
+        const more = clusterShape ? 1 + 1.5 * clusterShape.looseness : 1;
         const numSeeds = Math.max(
           12,
-          Math.min(60, Math.round(Math.sqrt(count))),
+          Math.min(clusterShape ? 100 : 60, Math.round(Math.sqrt(count) * more)),
         );
         const seeds = [];
         for (let i = 0; i < numSeeds; i++) {
@@ -1413,7 +1438,8 @@
           const d2 = dx * dx + dy * dy + dz * dz;
           raw += Math.exp(-d2 / (2 * s.radius * s.radius));
         }
-        const baseFloor = 0.15;
+        // a lower floor leaves emptier space between the sub-groups
+        const baseFloor = clusterShape ? 0.15 - 0.1 * clusterShape.looseness : 0.15;
         return baseFloor + (1 - baseFloor) * Math.min(1, raw);
       }
 
@@ -1626,6 +1652,12 @@
       useParsecsCheckbox.addEventListener("change", refreshDistanceUnitUI);
       refreshDistanceUnitUI();
 
+      const loosenessInput = document.querySelector("#looseness");
+      const loosenessVal = document.querySelector("#loosenessVal");
+      loosenessInput.addEventListener("input", () => {
+        loosenessVal.textContent = loosenessInput.value;
+      });
+
       form.addEventListener("submit", (e) => {
         e.preventDefault();
         errorMsg.hidden = true;
@@ -1713,7 +1745,9 @@
         // a new shape per run, so two clusters never look alike
         clusterShape =
           centerSet && document.querySelector("#concentrate").checked
-            ? buildClusterShape()
+            ? buildClusterShape(
+                Number(document.querySelector("#looseness").value) / 100,
+              )
             : null;
         const seeds = buildDensitySeeds(minLy, maxLy, basePos, count);
         let done = 0;
