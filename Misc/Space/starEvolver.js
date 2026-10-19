@@ -482,7 +482,7 @@ function interpolate(x, x1, x2, y1, y2) {
   return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
 }
 
-// Metallicity sensitivity from the my Discord bot's starlifetime command table (interpolated in mass)
+// Metallicity sensitivity from my Discord bot's starlifetime command table (interpolated in mass)
 function lifetimeSensitivity(m) {
   const t = STELLAR_MODELS;
   if (m <= t[0].mass) return t[0].sensitivity;
