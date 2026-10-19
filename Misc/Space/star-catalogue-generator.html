@@ -302,13 +302,21 @@
         <p class="hint">
           These three set the center point stars spread from. Default keeps the
           center at the Sun, at 0 ly, RA 0, Dec 0. The min/max distance fields
-          below measure outward from this center point, not from the Sun, so a
-          catalogue centered far from the Sun still needs those two narrowed
-          down if the stars should sit close together around it. Leaving them at
-          the default range means stars spread up to 2 million ly from the
-          center in every direction, which swamps a center only a few thousand
-          or a few hundred thousand ly out.
+          below measure outward from this center point, not from the Sun. Fill
+          in any of the three and leave min/max blank, and the stars form a
+          cluster from 0.01 ly to 50 ly around the center. Type your own min
+          and max to change the cluster size.
         </p>
+        <label class="mode-row">
+          <input
+            type="checkbox"
+            id="concentrate"
+            checked
+            style="width: auto; margin-right: 8px"
+          />
+          Pack stars toward the center with a stretched, uneven shape (only
+          applies when a center is set)
+        </label>
 
         <div class="row">
           <div class="field">
@@ -1286,6 +1294,66 @@
         grid.get(key).push([x, y, z]);
       }
 
+      // ============================================================
+      // Cluster mode. A flat-density ball reads as a ball, so a cluster
+      // gets a Plummer profile (packed core, thin halo) and a random
+      // stretched, tilted shape, so it never looks like a sphere.
+      // null means cluster mode is off and stars use the flat field.
+      // ============================================================
+      let clusterShape = null;
+
+      function buildClusterShape() {
+        // random orthonormal axes, so the stretch points a random way
+        const axes = [];
+        while (axes.length < 3) {
+          let v = [Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5];
+          for (const a of axes) {
+            const dot = v[0] * a[0] + v[1] * a[1] + v[2] * a[2];
+            v = [v[0] - dot * a[0], v[1] - dot * a[1], v[2] - dot * a[2]];
+          }
+          const len = Math.hypot(v[0], v[1], v[2]);
+          if (len > 0.05) axes.push([v[0] / len, v[1] / len, v[2] / len]);
+        }
+        // scales stay at or under 1 so no star lands past the max distance
+        const scales = [1, 0.6 + Math.random() * 0.3, 0.35 + Math.random() * 0.3];
+        return { axes, scales };
+      }
+
+      // Most stars fall near the center, a few reach the max distance.
+      function randomPlummerRadius(minLy, maxLy) {
+        const a = maxLy / 5;
+        for (let i = 0; i < 50; i++) {
+          const u = Math.random();
+          const r = a / Math.sqrt(Math.pow(u, -2 / 3) - 1);
+          if (r >= minLy && r <= maxLy) return r;
+        }
+        return randomVolumeUniformRadius(minLy, maxLy);
+      }
+
+      function randomClusterRadius(minLy, maxLy) {
+        return clusterShape
+          ? randomPlummerRadius(minLy, maxLy)
+          : randomGalaxyAwareRadius(minLy, maxLy);
+      }
+
+      // Random direction at a given radius, squashed along the cluster axes
+      // when cluster mode is on.
+      function randomOffset(r) {
+        const raRad = Math.random() * 2 * Math.PI;
+        const decRad = Math.asin(Math.random() * 2 - 1);
+        const dx = Math.cos(decRad) * Math.cos(raRad);
+        const dy = Math.cos(decRad) * Math.sin(raRad);
+        const dz = Math.sin(decRad);
+        if (!clusterShape) return { x: r * dx, y: r * dy, z: r * dz };
+        const { axes, scales } = clusterShape;
+        const l = [r * dx * scales[0], r * dy * scales[1], r * dz * scales[2]];
+        return {
+          x: l[0] * axes[0][0] + l[1] * axes[1][0] + l[2] * axes[2][0],
+          y: l[0] * axes[0][1] + l[1] * axes[1][1] + l[2] * axes[2][1],
+          z: l[0] * axes[0][2] + l[1] * axes[1][2] + l[2] * axes[2][2],
+        };
+      }
+
       // A fixed vertical thickness applied to every star regardless of how
       // far out it landed collapses the field onto the vertical axis for
       // any star whose planar draw is small next to that thickness, which
@@ -1315,14 +1383,18 @@
           // near the center stays local-sized while one out in the thin
           // region spans a proportionally wider stretch, rather than
           // every clump sharing one size tied only to the overall max.
-          const r = randomGalaxyAwareRadius(minLy, maxLy);
-          const raRad = Math.random() * 2 * Math.PI;
-          const decRad = Math.asin(Math.random() * 2 - 1);
+          const r = randomClusterRadius(minLy, maxLy);
+          const off = randomOffset(r);
+          // clumps in a cluster stay small and tight next to the whole,
+          // with a floor so a clump near the core still spans some stars
+          const radius = clusterShape
+            ? Math.max(maxLy * 0.04, r * (0.1 + Math.random() * 0.25))
+            : r * (0.1 + Math.random() * 0.4);
           seeds.push({
-            x: basePos.x + r * Math.cos(decRad) * Math.cos(raRad),
-            y: basePos.y + r * Math.cos(decRad) * Math.sin(raRad),
-            z: basePos.z + r * Math.sin(decRad),
-            radius: r * (0.1 + Math.random() * 0.4),
+            x: basePos.x + off.x,
+            y: basePos.y + off.y,
+            z: basePos.z + off.z,
+            radius,
           });
         }
         return seeds;
@@ -1384,12 +1456,10 @@
         const maxAttempts = 30;
         let x, y, z;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          const radiusLy = randomGalaxyAwareRadius(minLy, maxLy);
-          const raRad = Math.random() * 2 * Math.PI;
-          const decRad = Math.asin(Math.random() * 2 - 1);
-          x = basePos.x + radiusLy * Math.cos(decRad) * Math.cos(raRad);
-          y = basePos.y + radiusLy * Math.cos(decRad) * Math.sin(raRad);
-          z = basePos.z + radiusLy * Math.sin(decRad);
+          const off = randomOffset(randomClusterRadius(minLy, maxLy));
+          x = basePos.x + off.x;
+          y = basePos.y + off.y;
+          z = basePos.z + off.z;
           if (Math.random() > densityAcceptance(seeds, x, y, z)) continue;
           if (!tooClose(grid, x, y, z)) break;
         }
@@ -1509,6 +1579,10 @@
         maxLy: 2000000,
       };
 
+      // used when a base distance, RA, or Dec is typed and the min/max
+      // distance fields are left blank
+      const CLUSTER_DEFAULTS = { minLy: 0.01, maxLy: 50 };
+
       let lastCsv = "";
       let lastCatName = "catalogue";
 
@@ -1594,10 +1668,21 @@
           baseDecRaw === "" ? DEFAULTS.baseDec : parseFloat(baseDecRaw);
 
         const minDistRaw = document.querySelector("#minDist").value.trim();
-        const minLy = toLy(minDistRaw, DEFAULTS.minLy);
-
         const maxDistRaw = document.querySelector("#maxDist").value.trim();
-        const maxLy = toLy(maxDistRaw, DEFAULTS.maxLy);
+
+        // A custom center means a local group, not a Sun-centered survey.
+        // The 4 ly to 2,000,000 ly defaults scatter stars far from any
+        // center you pick, so blank fields shrink to a tight cluster here.
+        const centerSet =
+          baseDistRaw !== "" || baseRARaw !== "" || baseDecRaw !== "";
+        const minLy = toLy(
+          minDistRaw,
+          centerSet ? CLUSTER_DEFAULTS.minLy : DEFAULTS.minLy,
+        );
+        const maxLy = toLy(
+          maxDistRaw,
+          centerSet ? CLUSTER_DEFAULTS.maxLy : DEFAULTS.maxLy,
+        );
 
         const badInput =
           !count ||
@@ -1625,6 +1710,11 @@
         const rows = new Array(count);
         const grid = new Map();
         const basePos = raDecDistToXyz(baseRA, baseDec, baseLy);
+        // a new shape per run, so two clusters never look alike
+        clusterShape =
+          centerSet && document.querySelector("#concentrate").checked
+            ? buildClusterShape()
+            : null;
         const seeds = buildDensitySeeds(minLy, maxLy, basePos, count);
         let done = 0;
 
