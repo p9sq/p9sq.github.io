@@ -15,7 +15,7 @@
 //   NS:       Miller et al. (2021) NICER PSR J0740+6620;
 //             Riley et al. (2021); typical R ~ 11–13 km
 //   BH:       Schwarzschild radius: R = 2GM/c²
-//   Metallicity ([Fe/H]) for PMS and MS: lifetimes from the starlifetime.js sensitivity table,
+//   Metallicity ([Fe/H]) for PMS and MS: lifetimes from my Discord bot's starlifetime command sensitivity table,
 //             L, R and T_eff shifts from Tout et al. (1996) and Girardi et al. (2000) slopes
 //   BD:       Baraffe et al. (2003) COND cooling tracks;
 //             Kirkpatrick (2005), Cushing (2014) spectral classification
@@ -635,7 +635,7 @@ function subtypeImpliedMass(classKey, subtypeVal) {
 
 // ------------------------------------------------------------
 // METALLICITY ([Fe/H], 0 = solar)
-// Lifetime: the [Fe/H] sensitivity table from starlifetime.js (MIST / PARSEC tracks),
+// Lifetime: the [Fe/H] sensitivity table from my Discord bot's starlifetime command (MIST / PARSEC tracks),
 //   t_MS(feh) = t_MS(solar) × 10^(sensitivity × [Fe/H])
 // Structure: at fixed mass a metal-rich star is fainter, a little smaller and cooler on
 //   the ZAMS. Approximate slopes from Tout et al. (1996) and Girardi et al. (2000):

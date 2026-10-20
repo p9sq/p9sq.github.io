@@ -819,7 +819,18 @@ function stageRange(tl, stage) {
   }
 }
 
-function stageName(tl, key) {
+// Colour word for a supergiant, using the same T_eff bands as starRadius.js
+function sgColour(teff) {
+  if (teff < 3900) return "red";
+  if (teff < 5300) return "orange";
+  if (teff < 6500) return "yellow";
+  if (teff < 10000) return "white";
+  if (teff < 30000) return "blue-white";
+  return "blue";
+}
+
+// teff is optional. With it, a supergiant gets its true colour. Without it, the label shows the stage endpoint.
+function stageName(tl, key, teff) {
   switch (key) {
     case "PMS":
       return tl.m < 2
@@ -835,7 +846,7 @@ function stageName(tl, key) {
       return tl.gk === "WR"
         ? "Giant (Wolf-Rayet star)"
         : tl.gk === "RSG"
-          ? "Giant (red supergiant)"
+          ? `Giant (${teff === undefined ? "red" : sgColour(teff)} supergiant)`
           : "Giant (red giant to AGB)";
     case "REM":
       return `Stellar remnant (${tl.rem.sub})`;
@@ -926,7 +937,7 @@ function stateAt(tl, age, massLoss) {
 // ------------------------------------------------------------
 function printState(title, st, tl, showSpan) {
   console.log(`\n=== ${title} ===`);
-  console.log(`Stage:                 ${stageName(tl, st.stage)}`);
+  console.log(`Stage:                 ${stageName(tl, st.stage, st.Teff)}`);
   console.log(`Age:                   ${fmtAge(st.age)}`);
   if (st.progress !== undefined)
     console.log(`Progress in stage:     ${fmtPct(st.progress * 100)}%`);
