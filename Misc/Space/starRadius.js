@@ -77,6 +77,12 @@ function calcTeff(luminositySun, radiusSun) {
   return Math.pow(L / (4 * Math.PI * R * R * SIGMA), 0.25);
 }
 
+// Luminosity + T_eff → radius via Stefan-Boltzmann (exact inverse of calcTeff)
+function calcRadius(luminositySun, teff) {
+  const L = luminositySun * L_SUN;
+  return Math.sqrt(L / (4 * Math.PI * SIGMA * Math.pow(teff, 4))) / R_SUN_M;
+}
+
 // Mass (M_Sun) + Radius (R_Sun) → mean density (g/cm³)
 function calcDensity(massSun, radiusSun) {
   const massG = massSun * M_SUN_KG * 1e3;
@@ -1109,7 +1115,7 @@ const POST_MS_PHASES = {
     fehCorrL: 0.0,
     description:
       "Less luminous supergiants. Span full OBAFGKM range; T_eff from mass formula " +
-      "is approximate — use direct T_eff entry when the real value is known.",
+      "is approximate — pick a colour or enter T_eff directly when the real value is known.",
   },
   Iab: {
     label: "Supergiant (Class Iab)",
@@ -1123,7 +1129,7 @@ const POST_MS_PHASES = {
     fehCorrL: 0.0,
     description:
       "Intermediate supergiant between Ib and Ia. Spans full OBAFGKM range; T_eff " +
-      "from mass formula is approximate — use direct T_eff entry when the real value is known.",
+      "from mass formula is approximate — pick a colour or enter T_eff directly when the real value is known.",
   },
   Ia: {
     label: "Supergiant (Class Ia)",
@@ -1137,7 +1143,7 @@ const POST_MS_PHASES = {
     fehCorrL: 0.0,
     description:
       "Luminous supergiants. Span full OBAFGKM range; T_eff from mass formula " +
-      "is approximate — use direct T_eff entry when the real value is known.",
+      "is approximate — pick a colour or enter T_eff directly when the real value is known.",
   },
   "Ia+": {
     label: "Hypergiant (Class 0 / Ia+)",
@@ -1151,7 +1157,7 @@ const POST_MS_PHASES = {
     fehCorrL: 0.0,
     description:
       "Extreme luminosity; near Eddington limit. Humphreys-Davidson instability strip. " +
-      "Use direct T_eff entry when the real value is known.",
+      "Pick a colour or enter T_eff directly when the real value is known.",
   },
   C: {
     label: "Carbon Star (C-type)",
@@ -1185,6 +1191,69 @@ const POST_MS_PHASES = {
 
 const POST_MS_KEYS = ["IV", "III", "II", "Ib", "Iab", "Ia", "Ia+", "C", "S"];
 
+// Supergiant colours (Ib, Iab, Ia, Ia+). A colour fixes a T_eff band. The luminosity still
+// comes from the mass, and the radius follows from L and T_eff by Stefan-Boltzmann.
+// Blue and red supergiants of one mass have similar luminosity (they cross the HR diagram
+// at nearly constant L), so the colour sets the radius, not the other way round.
+// Tcen is the representative T_eff, close to Antares and Betelgeuse for red (M1-2 Iab),
+// Rigel to Alnilam for blue-white and zeta Pup for blue.
+const SUPERGIANT_COLOURS = {
+  red: { label: "Red", Tmin: 3400, Tmax: 3900, Tcen: 3650, note: "M-type" },
+  orange: {
+    label: "Orange",
+    Tmin: 3900,
+    Tmax: 5300,
+    Tcen: 4600,
+    note: "K-type",
+  },
+  yellow: {
+    label: "Yellow",
+    Tmin: 5300,
+    Tmax: 6500,
+    Tcen: 5900,
+    note: "G to late F",
+  },
+  white: {
+    label: "White",
+    Tmin: 6500,
+    Tmax: 10000,
+    Tcen: 8250,
+    note: "early F and A",
+  },
+  "blue-white": {
+    label: "Blue-white",
+    Tmin: 10000,
+    Tmax: 30000,
+    Tcen: 17300,
+    note: "B-type",
+  },
+  blue: {
+    label: "Blue",
+    Tmin: 30000,
+    Tmax: 45000,
+    Tcen: 36000,
+    note: "O-type",
+  },
+};
+const SUPERGIANT_COLOUR_KEYS = [
+  "red",
+  "orange",
+  "yellow",
+  "white",
+  "blue-white",
+  "blue",
+];
+
+// Accepts 1-6 or a name such as "red", "blue-white", "Blue White"
+function parseSupergiantColour(raw) {
+  const t = raw.trim().toLowerCase();
+  if (/^[1-6]$/.test(t)) return SUPERGIANT_COLOUR_KEYS[parseInt(t, 10) - 1];
+  const flat = t.replace(/[^a-z]/g, "");
+  return (
+    SUPERGIANT_COLOUR_KEYS.find((k) => k.replace("-", "") === flat) || null
+  );
+}
+
 // Map T_eff + luminosity class to a spectral type string for post-MS phases.
 function teffToGiantSpectralType(teff, phase) {
   const p = POST_MS_PHASES[phase];
@@ -1212,10 +1281,45 @@ function teffToGiantSpectralType(teff, phase) {
   return `${best.letter}${subStr} ${p.lumClass}`;
 }
 
+// Red supergiant luminosity vs initial mass (solar metallicity, 8-40 Msun).
+// Columns: initial mass, log L at start of the RSG phase, log L at end of evolution.
+// End values: Smartt (2015) pre-SN table and the Davies and Beasor (2018) fit.
+// Start values: time-averaged RSG fit of POSYDON/MESA (L = 214.9 M^2.26) minus 0.05 dex.
+// The start column is the least calibrated part. Published tracks print no start values.
+const RSG_TABLE = [
+  [8, 4.3, 4.44],
+  [9, 4.44, 4.55],
+  [10, 4.6, 4.68],
+  [12, 4.72, 4.82],
+  [14, 4.86, 4.97],
+  [15, 4.94, 5.03],
+  [16, 5.02, 5.1],
+  [20, 5.22, 5.3],
+  [25, 5.44, 5.5],
+  [30, 5.58, 5.65],
+  [40, 5.8, 5.9],
+];
+// which: 0 = start of RSG phase, 1 = end of evolution. Returns L in Lsun.
+function rsgLuminosity(m, which) {
+  const col = which + 1;
+  const t = RSG_TABLE;
+  const last = t.length - 1;
+  let lg;
+  if (m <= t[0][0]) lg = t[0][col] + 2 * Math.log10(m / t[0][0]);
+  else if (m >= t[last][0]) lg = Math.min(5.9, t[last][col]);
+  else {
+    let i = 0;
+    while (m > t[i + 1][0]) i++;
+    const w = Math.log(m / t[i][0]) / Math.log(t[i + 1][0] / t[i][0]);
+    lg = t[i][col] + w * (t[i + 1][col] - t[i][col]);
+  }
+  return Math.pow(10, lg);
+}
+
 // Estimate representative post-MS values from mass, phase, and optional explicit T_eff.
 // Returns { Teff, L, R, TeffSB, feh, teffFromUser }
 // Uses empirical scaling relations from PARSEC isochrones and Levesque et al. (2005).
-function postMsEstimate(phase, massSun, FeH, userTeff) {
+function postMsEstimate(phase, massSun, FeH, userTeff, colourKey = null) {
   const p = POST_MS_PHASES[phase];
   const feh = FeH !== null && FeH !== undefined ? FeH : 0.0;
   const f = Math.max(
@@ -1251,7 +1355,8 @@ function postMsEstimate(phase, massSun, FeH, userTeff) {
     case "Iab":
     case "Ia":
       R = p.R_range[0] * Math.pow(p.R_range[1] / p.R_range[0], f);
-      L = p.L_range[0] * Math.pow(p.L_range[1] / p.L_range[0], f);
+      // Mid-RSG luminosity from the track table, geometric mean of start and end
+      L = Math.sqrt(rsgLuminosity(massSun, 0) * rsgLuminosity(massSun, 1));
       Teff =
         p.Teff_range[0] +
         f * (p.Teff_range[1] - p.Teff_range[0]) +
@@ -1278,17 +1383,43 @@ function postMsEstimate(phase, massSun, FeH, userTeff) {
       Teff = 4000;
   }
   Teff = Math.max(p.Teff_range[0], Math.min(p.Teff_range[1], Teff));
-  // User-supplied T_eff overrides the formula (Ib/Ia/Ia+ only).
+  // User-supplied T_eff overrides the formula (Ib/Iab/Ia/Ia+ only).
   const teffFromUser =
     userTeff !== null && userTeff !== undefined && !isNaN(userTeff);
-  if (teffFromUser) Teff = userTeff;
-  return { Teff, L, R, TeffSB: calcTeff(L, R), feh, teffFromUser };
+  const colour =
+    !teffFromUser && colourKey && SUPERGIANT_COLOURS[colourKey]
+      ? colourKey
+      : null;
+  let rFromTeff = false;
+  if (teffFromUser) {
+    Teff = userTeff;
+    // Keep L from the mass formula and let the radius follow, so L, R and T_eff agree
+    R = calcRadius(L, Teff);
+    rFromTeff = true;
+  } else if (colour) {
+    const c = SUPERGIANT_COLOURS[colour];
+    // Stay inside the phase's own T_eff range (Ib stops at 30000 K, Iab at 35000 K)
+    const hiT = Math.min(c.Tmax, p.Teff_range[1]);
+    Teff = Math.max(c.Tmin, Math.min(hiT, c.Tcen + p.fehCorrTeff * feh));
+    R = calcRadius(L, Teff);
+    rFromTeff = true;
+  }
+  return {
+    Teff,
+    L,
+    R,
+    TeffSB: calcTeff(L, R),
+    feh,
+    teffFromUser,
+    colour,
+    rFromTeff,
+  };
 }
 
-function printPostMS(phase, massSun, FeH, userTeff) {
+function printPostMS(phase, massSun, FeH, userTeff, colourKey = null) {
   const p = POST_MS_PHASES[phase];
   const feh = FeH !== null && FeH !== undefined ? FeH : 0.0;
-  const est = postMsEstimate(phase, massSun, feh, userTeff);
+  const est = postMsEstimate(phase, massSun, feh, userTeff, colourKey);
   const fehStr = feh >= 0 ? `+${feh.toFixed(2)}` : feh.toFixed(2);
   const showFeH = phase !== "C" && phase !== "S" && phase !== "Ia+";
   const sType = teffToGiantSpectralType(est.Teff, phase);
@@ -1300,28 +1431,41 @@ function printPostMS(phase, massSun, FeH, userTeff) {
 
   console.log(`\nEvolutionary phase:    ${p.label}`);
   console.log(
-    `Spectral type:         ${sType}${est.teffFromUser ? "  (derived from user T_eff)" : "  (derived from T_eff)"}`,
+    `Spectral type:         ${sType}${est.teffFromUser ? "  (derived from user T_eff)" : est.colour ? "  (derived from colour band T_eff)" : "  (derived from T_eff)"}`,
   );
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
   if (showFeH) console.log(`Metallicity:           [Fe/H] = ${fehStr}`);
+  if (est.colour) {
+    const c = SUPERGIANT_COLOURS[est.colour];
+    console.log(
+      `Colour:                ${c.label}  (${c.Tmin}–${c.Tmax} K band, ${c.note})`,
+    );
+  }
   console.log(`Phase description:     ${p.description}`);
   console.log(
     `\n  -- Representative values for ${fmt(massSun)} M_Sun${showFeH ? `, [Fe/H] = ${fehStr}` : ""} --`,
   );
   console.log(`  (Typical ranges shown in brackets)`);
+  // The bracket is the mass-formula range, so it is hidden when L and T_eff set the radius
   console.log(
-    `Radius:                ${fmt(est.R)} R_Sun  [${p.R_range[0]}–${p.R_range[1]} R_Sun]`,
+    `Radius:                ${fmt(est.R)} R_Sun${est.rFromTeff ? "" : `  [${p.R_range[0]}–${p.R_range[1]} R_Sun]`}`,
   );
   console.log(`                       ${fmt(est.R * R_SUN_KM)} km`);
+  if (est.rFromTeff)
+    console.log(
+      `  (Radius follows from the luminosity and T_eff by Stefan-Boltzmann)`,
+    );
   printLumBlock(est.L, est.Teff);
   console.log(`  (Typical L range:    ${p.L_range[0]}–${p.L_range[1]} L_Sun)`);
   const teffLabel = est.teffFromUser
     ? "T_eff (user-supplied):"
-    : "T_eff (estimated):    ";
+    : est.colour
+      ? "T_eff (colour band):  "
+      : "T_eff (estimated):    ";
   console.log(
     `${teffLabel}  ${fmtTeff(est.Teff)} K  [${p.Teff_range[0]}–${p.Teff_range[1]} K]`,
   );
-  if (!est.teffFromUser)
+  if (!est.teffFromUser && !est.colour)
     console.log(`T_eff (S-B back-check, not for SE): ${fmtTeff(est.TeffSB)} K`);
   console.log(
     `Mean density:          ${fmt(calcDensity(massSun, est.R))} g/cm³`,
@@ -2398,13 +2542,13 @@ function postMsMenu() {
         const askTeff = (feh, cb) => {
           if (!allowTeffOverride) return cb(feh, null);
           ask(
-            `Enter T_eff (K) [Enter to estimate from mass, or supply known value e.g. 13480]: `,
+            `Enter T_eff (K) [Enter to choose a colour instead, or supply a known value e.g. 13480]: `,
             (tInput) => {
               const raw = tInput.trim();
               if (raw === "") return cb(feh, null);
               const t = parseFloat(raw);
               if (isNaN(t) || t < 1000 || t > 100000) {
-                console.log("Invalid T_eff — estimating from mass.");
+                console.log("Invalid T_eff, ignored.");
                 return cb(feh, null);
               }
               cb(feh, t);
@@ -2412,10 +2556,40 @@ function postMsMenu() {
           );
         };
 
+        // Colour is asked only when no T_eff was typed
+        const askColour = (userTeff, cb) => {
+          if (!allowTeffOverride || userTeff !== null) return cb(null);
+          console.log(
+            "\nStar colour (sets the T_eff band, then the radius follows from the luminosity):",
+          );
+          SUPERGIANT_COLOUR_KEYS.forEach((k, i) => {
+            const c = SUPERGIANT_COLOURS[k];
+            console.log(
+              `  ${i + 1}) ${c.label.padEnd(11)} ${c.Tmin}–${c.Tmax} K  (${c.note})`,
+            );
+          });
+          const again = () =>
+            ask(
+              "Enter colour [Enter to estimate from mass as before]: ",
+              (input) => {
+                if (input.trim() === "") return cb(null);
+                const key = parseSupergiantColour(input);
+                if (!key) {
+                  console.log("Invalid. Enter 1-6 or a colour name.");
+                  return again();
+                }
+                cb(key);
+              },
+            );
+          again();
+        };
+
         askFeH((feh) => {
           askTeff(feh, (feh2, userTeff) => {
-            printPostMS(phase, mass, feh2, userTeff);
-            askRepeat();
+            askColour(userTeff, (colourKey) => {
+              printPostMS(phase, mass, feh2, userTeff, colourKey);
+              askRepeat();
+            });
           });
         });
       },

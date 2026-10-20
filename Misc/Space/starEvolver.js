@@ -687,6 +687,41 @@ const STAGE_ORDER = ["PMS", "MS", "SG", "GIANT", "REM", "BD"];
 
 // Builds the whole life track for one zero-age mass and metallicity.
 // Every stage boundary is an age in Gyr, so evolving and devolving are the same lookup.
+// Red supergiant luminosity vs initial mass (solar metallicity, 8-40 Msun).
+// Columns: initial mass, log L at start of the RSG phase, log L at end of evolution.
+// End values: Smartt (2015) pre-SN table and the Davies and Beasor (2018) fit.
+// Start values: time-averaged RSG fit of POSYDON/MESA (L = 214.9 M^2.26) minus 0.05 dex.
+// The start column is the least calibrated part. Published tracks print no start values.
+const RSG_TABLE = [
+  [8, 4.3, 4.44],
+  [9, 4.44, 4.55],
+  [10, 4.6, 4.68],
+  [12, 4.72, 4.82],
+  [14, 4.86, 4.97],
+  [15, 4.94, 5.03],
+  [16, 5.02, 5.1],
+  [20, 5.22, 5.3],
+  [25, 5.44, 5.5],
+  [30, 5.58, 5.65],
+  [40, 5.8, 5.9],
+];
+// which: 0 = start of RSG phase, 1 = end of evolution. Returns L in Lsun.
+function rsgLuminosity(m, which) {
+  const col = which + 1;
+  const t = RSG_TABLE;
+  const last = t.length - 1;
+  let lg;
+  if (m <= t[0][0]) lg = t[0][col] + 2 * Math.log10(m / t[0][0]);
+  else if (m >= t[last][0]) lg = Math.min(5.9, t[last][col]);
+  else {
+    let i = 0;
+    while (m > t[i + 1][0]) i++;
+    const w = Math.log(m / t[i][0]) / Math.log(t[i + 1][0] / t[i][0]);
+    lg = t[i][col] + w * (t[i + 1][col] - t[i][col]);
+  }
+  return Math.pow(10, lg);
+}
+
 function buildTimeline(m, feh, remOverride) {
   const z = applyMetallicity(zamsFromMass(m), m, feh);
   const tPms = pmsKHMyr(m, z.R, z.L) / 1000;
@@ -712,7 +747,8 @@ function buildTimeline(m, feh, remOverride) {
   if (post) {
     if (big) {
       const bsgTeff = m >= 30 ? 20000 : 8000;
-      const lb = tams.L * 1.1;
+      // RSGs take track-table luminosities, WR progenitors keep the old scaling
+      const lb = m >= 30 ? tams.L * 1.1 : rsgLuminosity(m, 0);
       base = { L: lb, R: radiusFrom(lb, bsgTeff) };
       if (m >= 30) {
         const w = wrEstimate(m);
@@ -720,7 +756,7 @@ function buildTimeline(m, feh, remOverride) {
         gk = "WR";
         lossFrac = 0.7;
       } else {
-        const lt = lb * 1.3;
+        const lt = rsgLuminosity(m, 1);
         tip = { L: lt, R: radiusFrom(lt, 3600) };
         gk = "RSG";
         lossFrac = 0.3;

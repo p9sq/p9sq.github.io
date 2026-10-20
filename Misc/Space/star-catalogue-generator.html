@@ -304,8 +304,8 @@
           center at the Sun, at 0 ly, RA 0, Dec 0. The min/max distance fields
           below measure outward from this center point, not from the Sun. Fill
           in any of the three and leave min/max blank, and the stars form a
-          cluster from 0.01 ly to 50 ly around the center. Type your own min
-          and max to change the cluster size.
+          cluster from 0.01 ly to 50 ly around the center. Type your own min and
+          max to change the cluster size.
         </p>
         <label class="mode-row">
           <input
@@ -332,8 +332,8 @@
           />
           <p class="hint">
             0 gives a tight cluster with a packed core. 100 gives a loose OB
-            association, with a flatter spread and more sub-groups. Works
-            with the box above ticked.
+            association, with a flatter spread and more sub-groups. Works with
+            the box above ticked.
           </p>
         </div>
 
@@ -1327,7 +1327,11 @@
         // random orthonormal axes, so the stretch points a random way
         const axes = [];
         while (axes.length < 3) {
-          let v = [Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5];
+          let v = [
+            Math.random() - 0.5,
+            Math.random() - 0.5,
+            Math.random() - 0.5,
+          ];
           for (const a of axes) {
             const dot = v[0] * a[0] + v[1] * a[1] + v[2] * a[2];
             v = [v[0] - dot * a[0], v[1] - dot * a[1], v[2] - dot * a[2]];
@@ -1336,7 +1340,11 @@
           if (len > 0.05) axes.push([v[0] / len, v[1] / len, v[2] / len]);
         }
         // scales stay at or under 1 so no star lands past the max distance
-        const scales = [1, 0.6 + Math.random() * 0.3, 0.35 + Math.random() * 0.3];
+        const scales = [
+          1,
+          0.6 + Math.random() * 0.3,
+          0.35 + Math.random() * 0.3,
+        ];
         return { axes, scales, looseness: looseness || 0 };
       }
 
@@ -1395,7 +1403,10 @@
         const more = clusterShape ? 1 + 1.5 * clusterShape.looseness : 1;
         const numSeeds = Math.max(
           12,
-          Math.min(clusterShape ? 100 : 60, Math.round(Math.sqrt(count) * more)),
+          Math.min(
+            clusterShape ? 100 : 60,
+            Math.round(Math.sqrt(count) * more),
+          ),
         );
         const seeds = [];
         for (let i = 0; i < numSeeds; i++) {
@@ -1439,7 +1450,9 @@
           raw += Math.exp(-d2 / (2 * s.radius * s.radius));
         }
         // a lower floor leaves emptier space between the sub-groups
-        const baseFloor = clusterShape ? 0.15 - 0.1 * clusterShape.looseness : 0.15;
+        const baseFloor = clusterShape
+          ? 0.15 - 0.1 * clusterShape.looseness
+          : 0.15;
         return baseFloor + (1 - baseFloor) * Math.min(1, raw);
       }
 
