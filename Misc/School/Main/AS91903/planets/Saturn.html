@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Solar System: Saturn</title>
     <link rel="stylesheet" href="../css/main.css" />
+    <script src="../js/index.js" defer></script>
   </head>
   <body>
     <!-- Navbar -->
@@ -38,6 +39,12 @@
               orbiter in July 2008
             </figcaption>
           </figure>
+          <form id="calc" data-gravity="1.07">
+            <label for="kg">Your weight on Earth (kg)</label>
+            <input id="kg" type="number" min="1" required />
+            <button>Calculate</button>
+            <p id="out"></p>
+          </form>
           <h1>Overview</h1>
           <p>
             Saturn is the sixth planet from the Sun and the second largest in

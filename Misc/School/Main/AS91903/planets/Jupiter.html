@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Solar System: Jupiter</title>
     <link rel="stylesheet" href="../css/main.css" />
+    <script src="../js/index.js" defer></script>
   </head>
   <body>
     <!-- Navbar -->
@@ -37,6 +38,12 @@
               in January 2024
             </figcaption>
           </figure>
+          <form id="calc" data-gravity="2.528">
+            <label for="kg">Your weight on Earth (kg)</label>
+            <input id="kg" type="number" min="1" required />
+            <button>Calculate</button>
+            <p id="out"></p>
+          </form>
           <h1>Overview</h1>
           <p>
             Jupiter is the fifth planet from the Sun, and the largest in the

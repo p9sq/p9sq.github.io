@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Solar System: Earth</title>
     <link rel="stylesheet" href="../css/main.css" />
+    <script src="../js/index.js" defer></script>
   </head>
   <body>
     <!-- Navbar -->
@@ -191,6 +192,12 @@
               the top
             </figcaption>
           </figure>
+          <form id="calc" data-gravity="0.166">
+            <label for="kg">Your weight on Earth (kg)</label>
+            <input id="kg" type="number" min="1" required />
+            <button>Calculate</button>
+            <p id="out"></p>
+          </form>
           <h1>Overview</h1>
           <p>
             The Moon is the only natural satellite of Earth. It orbits Earth at
