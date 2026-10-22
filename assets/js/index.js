@@ -1,7 +1,23 @@
 const imagesAmount = 24;
-
-let currentIndex = 1;
 const container = document.getElementById("bg-image");
+let currentIndex = 1;
+
+// Dark fallback so a gap never shows white
+container.style.backgroundColor = "#111";
+
+const preloaded = {};
+
+// Start every download now so the browser caches the files
+for (let i = 1; i <= imagesAmount; i++) {
+  const img = new Image();
+  img.src = `assets/img/bg${i}.webp`;
+  preloaded[i] = img;
+}
+
+function showBg(num) {
+  currentIndex = num;
+  container.style.backgroundImage = `url("${preloaded[num].src}")`;
+}
 
 function changeBackground() {
   let nextImageNumber;
@@ -10,9 +26,14 @@ function changeBackground() {
     nextImageNumber = Math.floor(Math.random() * imagesAmount) + 1;
   } while (nextImageNumber === currentIndex && imagesAmount > 1);
 
-  currentIndex = nextImageNumber;
-  const imagePath = `assets/img/bg${currentIndex}.png`;
-  container.style.backgroundImage = `url("${imagePath}")`;
+  const img = preloaded[nextImageNumber];
+
+  // Swap only after the download finishes
+  if (img.complete && img.naturalWidth > 0) {
+    showBg(nextImageNumber);
+  } else {
+    img.addEventListener("load", () => showBg(nextImageNumber), { once: true });
+  }
 }
 
 changeBackground();
