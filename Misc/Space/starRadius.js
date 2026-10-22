@@ -1416,7 +1416,14 @@ function postMsEstimate(phase, massSun, FeH, userTeff, colourKey = null) {
   };
 }
 
-function printPostMS(phase, massSun, FeH, userTeff, colourKey = null) {
+function printPostMS(
+  phase,
+  massSun,
+  FeH,
+  userTeff,
+  colourKey = null,
+  ageInfo = null,
+) {
   const p = POST_MS_PHASES[phase];
   const feh = FeH !== null && FeH !== undefined ? FeH : 0.0;
   const est = postMsEstimate(phase, massSun, feh, userTeff, colourKey);
@@ -1435,6 +1442,24 @@ function printPostMS(phase, massSun, FeH, userTeff, colourKey = null) {
   );
   console.log(`Mass:                  ${fmt(massSun)} M_Sun`);
   if (showFeH) console.log(`Metallicity:           [Fe/H] = ${fehStr}`);
+  if (ageInfo) {
+    const w = ageInfo.chk.win;
+    console.log(`Age:                   ${fmt(ageInfo.age)} Gyr`);
+    console.log(
+      `Zero-age mass:         ${fmt(ageInfo.chk.m0)} M_Sun  (the mass above is the mass at this age)`,
+    );
+    if (ageInfo.chk.m0 !== massSun)
+      console.log(
+        `Mass lost so far:      ${fmt(ageInfo.chk.m0 - massSun)} M_Sun`,
+      );
+    console.log(
+      `MS lifetime:           ${fmtLifetime(w.tMs)}  (for the zero-age mass)`,
+    );
+    console.log(`Phase window:          ${fmt(w.a)} to ${fmt(w.b)} Gyr`);
+    if (ageInfo.chk.progress !== null)
+      console.log(`Progress in phase:     ${fmt(ageInfo.chk.progress * 100)}%`);
+    else console.log(`Progress in phase:     age is outside the phase window`);
+  }
   if (est.colour) {
     const c = SUPERGIANT_COLOURS[est.colour];
     console.log(
@@ -2498,6 +2523,177 @@ function msFromRadius() {
 }
 
 // ============================================================
+//  POST-MS AGE WINDOWS
+// ============================================================
+// Age windows in Gyr since formation, ignoring the short pre-main-sequence phase.
+// Fractions match starEvolver.js: subgiant 12% (2% above 8 Msun) of the MS lifetime,
+// giant stage 10% x M^-0.2 of it. The typed mass is the mass at the given age, and the
+// zero-age mass behind it is solved with the giant-stage mass loss below.
+const AGE_OF_UNIVERSE_GYR = 13.8;
+function postMsWindow(phase, massSun, feh) {
+  // massSun is the zero-age mass
+  const tMs = mainSequenceLifetime(massSun, msZamsFromMass(massSun).L, feh);
+  const big = massSun >= 8;
+  const tSg = tMs * (big ? 0.02 : 0.12);
+  const tGi = tMs * 0.1 * Math.pow(massSun, -0.2);
+  const gStart = tMs + tSg;
+  const end = gStart + tGi;
+  let a, b;
+  switch (phase) {
+    case "IV":
+      a = tMs;
+      b = gStart;
+      break;
+    case "III":
+    case "II":
+      a = gStart;
+      b = end;
+      break;
+    case "C":
+    case "S":
+      a = gStart + 0.7 * tGi;
+      b = end;
+      break; // AGB is the late giant stage
+    default:
+      a = tMs;
+      b = end; // supergiants cover the whole post-MS crossing
+  }
+  return { a, b, tMs, end };
+}
+
+// Typical age range of a phase across its mass range, solar metallicity, before mass loss
+function phaseAgeRange(phase) {
+  const p = POST_MS_PHASES[phase];
+  let lo = Infinity;
+  let hi = 0;
+  let dlo = Infinity;
+  let dhi = 0;
+  for (let i = 0; i <= 100; i++) {
+    const m = p.massMin * Math.pow(p.massMax / p.massMin, i / 100);
+    const w = postMsWindow(phase, m, 0);
+    lo = Math.min(lo, w.a);
+    hi = Math.max(hi, w.b);
+    dlo = Math.min(dlo, w.b - w.a);
+    dhi = Math.max(dhi, w.b - w.a);
+  }
+  // start and end ages of the phase over all masses, then how long the phase lasts
+  return [lo, hi, dlo, dhi];
+}
+// Short form for menus
+function shortGyr(x) {
+  return `${Number(x.toPrecision(3))}`;
+}
+
+// Mass loss model, the same as starEvolver.js: loss happens only in the giant stage
+function remnantMassFor(m0) {
+  if (m0 < 11) return Math.min(0.489 + 0.096 * m0, 0.9 * m0, 1.35);
+  if (m0 < 30) return 1.2 + 0.04 * m0;
+  return 0.33 * m0;
+}
+function giantLossFrac(m0) {
+  return m0 < 8 ? 0.9 : m0 < 30 ? 0.3 : 0.7;
+}
+// Mass at an age for a given zero-age mass. Null once the star is a remnant.
+function currentMassAt(m0, feh, ageGyr) {
+  const w = postMsWindow("III", m0, feh);
+  if (ageGyr <= w.a) return m0;
+  if (ageGyr > w.b) return null;
+  const f = (ageGyr - w.a) / (w.b - w.a);
+  return m0 - giantLossFrac(m0) * (m0 - remnantMassFor(m0)) * f;
+}
+// The typed mass is the mass at the given age, so find the zero-age mass that gives it.
+// Heavier stars sit later in their giant stage at one age, so the scan runs upward.
+function solveZeroAgeMass(curMass, feh, ageGyr) {
+  const at = currentMassAt(curMass, feh, ageGyr);
+  if (at === null) return { m0: curMass, found: false, remnant: true };
+  if (at >= curMass) return { m0: curMass, found: true };
+  const top = Math.min(300, curMass * 6);
+  const steps = 1500;
+  let lo = curMass;
+  for (let i = 1; i <= steps; i++) {
+    const m = curMass * Math.pow(top / curMass, i / steps);
+    const cur = currentMassAt(m, feh, ageGyr);
+    if (cur === null) break;
+    if (cur >= curMass) {
+      let a = lo;
+      let b = m;
+      for (let k = 0; k < 60; k++) {
+        const mid = (a + b) / 2;
+        const cm = currentMassAt(mid, feh, ageGyr);
+        if (cm !== null && cm >= curMass) b = mid;
+        else a = mid;
+      }
+      return { m0: b, found: true };
+    }
+    lo = m;
+  }
+  // Mass loss grows faster than the extra zero-age mass, so no star reaches this mass at this age
+  return { m0: curMass, found: false, remnant: false };
+}
+
+// Returns { ok, reasons[], stage, progress, win, m0 } for a phase, current mass and age
+function checkPostMsAge(phase, massSun, feh, ageGyr) {
+  const p = POST_MS_PHASES[phase];
+  const sol = solveZeroAgeMass(massSun, feh, ageGyr);
+  const m0 = sol.m0;
+  const win = postMsWindow(phase, m0, feh);
+  const reasons = [];
+  if (!sol.found && !sol.remnant)
+    reasons.push(
+      `No zero-age mass leaves a star of ${fmt(massSun)} M_Sun at ${fmt(ageGyr)} Gyr. Stars this old have already lost more mass than that.`,
+    );
+  if (ageGyr > AGE_OF_UNIVERSE_GYR)
+    reasons.push(
+      `${fmt(ageGyr)} Gyr is older than the universe (${AGE_OF_UNIVERSE_GYR} Gyr).`,
+    );
+  if (massSun < p.massMin || massSun > p.massMax)
+    reasons.push(
+      `${fmt(massSun)} M_Sun is outside the usual ${p.massMin} to ${p.massMax} M_Sun for ${p.label}.`,
+    );
+  let stage;
+  if (ageGyr < win.tMs) stage = "main sequence";
+  else if (ageGyr > win.end) stage = "remnant";
+  else stage = "post-main-sequence";
+  if (ageGyr < win.a)
+    reasons.push(
+      `At ${fmt(ageGyr)} Gyr a ${fmt(massSun)} M_Sun star (zero-age ${fmt(m0)} M_Sun) has not reached this phase. It starts at ${fmt(win.a)} Gyr.`,
+    );
+  else if (ageGyr > win.b)
+    reasons.push(
+      `At ${fmt(ageGyr)} Gyr a ${fmt(massSun)} M_Sun star (zero-age ${fmt(m0)} M_Sun) has left this phase. It ends at ${fmt(win.b)} Gyr.`,
+    );
+  const progress =
+    ageGyr >= win.a && ageGyr <= win.b
+      ? (ageGyr - win.a) / (win.b - win.a)
+      : null;
+  return { ok: reasons.length === 0, reasons, stage, progress, win, m0 };
+}
+
+// Other phases that fit this mass and age
+function suggestPostMsPhases(massSun, feh, ageGyr, skip) {
+  return POST_MS_KEYS.filter(
+    (k) => k !== skip && checkPostMsAge(k, massSun, feh, ageGyr).ok,
+  );
+}
+
+// Mass range (log-spaced scan) for which the phase fits the age
+function massRangeForAge(phase, feh, ageGyr) {
+  const p = POST_MS_PHASES[phase];
+  let lo = null;
+  let hi = null;
+  for (let i = 0; i <= 400; i++) {
+    const m = p.massMin * Math.pow(p.massMax / p.massMin, i / 400);
+    const sol = solveZeroAgeMass(m, feh, ageGyr);
+    const w = postMsWindow(phase, sol.m0, feh);
+    if (sol.found && ageGyr >= w.a && ageGyr <= w.b) {
+      if (lo === null) lo = m;
+      hi = m;
+    }
+  }
+  return lo === null ? null : [lo, hi];
+}
+
+// ============================================================
 //  POST-MS MENU
 // ============================================================
 function postMsMenu() {
@@ -2505,9 +2701,11 @@ function postMsMenu() {
   console.log("Phase:");
   POST_MS_KEYS.forEach((k, i) => {
     const p = POST_MS_PHASES[k];
+    const ar = phaseAgeRange(k);
     console.log(
       `  ${i + 1}) ${p.label.padEnd(35)} [M: ${p.massMin}–${p.massMax} M_Sun]`,
     );
+    console.log(`       phase lasts ${shortGyr(ar[2])}–${shortGyr(ar[3])} Gyr`);
   });
   ask("Enter phase: ", (input) => {
     const idx = parseInt(input.trim()) - 1;
@@ -2517,83 +2715,147 @@ function postMsMenu() {
     }
     const phase = POST_MS_KEYS[idx];
     const p = POST_MS_PHASES[phase];
-    const skipFeH = phase === "C" || phase === "S" || phase === "Ia+";
-    // For supergiants, mass → T_eff is unreliable; allow direct T_eff entry.
-    const allowTeffOverride =
-      phase === "Ib" || phase === "Iab" || phase === "Ia" || phase === "Ia+";
 
     askFloat(
       `Enter mass (M_Sun, typical ${p.massMin}–${p.massMax}): `,
       0.3,
       200,
-      (mass) => {
-        const askFeH = (cb) => {
-          if (skipFeH) return cb(0.0);
-          ask(
-            `Enter metallicity [Fe/H] (e.g. 0.0 = solar, -1.0 = metal-poor, +0.3 = metal-rich) [Enter for solar]: `,
-            (fehInput) => {
-              const raw = fehInput.trim();
-              const feh = raw === "" ? 0.0 : parseFloat(raw);
-              cb(isNaN(feh) ? 0.0 : feh);
-            },
-          );
-        };
+      (mass) => postMsAfterMass(phase, mass, null),
+    );
+  });
+}
 
-        const askTeff = (feh, cb) => {
-          if (!allowTeffOverride) return cb(feh, null);
-          ask(
-            `Enter T_eff (K) [Enter to choose a colour instead, or supply a known value e.g. 13480]: `,
-            (tInput) => {
-              const raw = tInput.trim();
-              if (raw === "") return cb(feh, null);
-              const t = parseFloat(raw);
-              if (isNaN(t) || t < 1000 || t > 100000) {
-                console.log("Invalid T_eff, ignored.");
-                return cb(feh, null);
-              }
-              cb(feh, t);
-            },
-          );
-        };
-
-        // Colour is asked only when no T_eff was typed
-        const askColour = (userTeff, cb) => {
-          if (!allowTeffOverride || userTeff !== null) return cb(null);
-          console.log(
-            "\nStar colour (sets the T_eff band, then the radius follows from the luminosity):",
-          );
-          SUPERGIANT_COLOUR_KEYS.forEach((k, i) => {
-            const c = SUPERGIANT_COLOURS[k];
-            console.log(
-              `  ${i + 1}) ${c.label.padEnd(11)} ${c.Tmin}–${c.Tmax} K  (${c.note})`,
-            );
-          });
-          const again = () =>
-            ask(
-              "Enter colour [Enter to estimate from mass as before]: ",
-              (input) => {
-                if (input.trim() === "") return cb(null);
-                const key = parseSupergiantColour(input);
-                if (!key) {
-                  console.log("Invalid. Enter 1-6 or a colour name.");
-                  return again();
-                }
-                cb(key);
-              },
-            );
-          again();
-        };
-
-        askFeH((feh) => {
-          askTeff(feh, (feh2, userTeff) => {
-            askColour(userTeff, (colourKey) => {
-              printPostMS(phase, mass, feh2, userTeff, colourKey);
-              askRepeat();
-            });
-          });
-        });
+// feh is null until it has been asked, so a phase switch can still ask for it
+function postMsAfterMass(phase, mass, feh) {
+  const skipFeH = phase === "C" || phase === "S" || phase === "Ia+";
+  if (feh === null && !skipFeH) {
+    return ask(
+      `Enter metallicity [Fe/H] (e.g. 0.0 = solar, -1.0 = metal-poor, +0.3 = metal-rich) [Enter for solar]: `,
+      (fehInput) => {
+        const raw = fehInput.trim();
+        const v = raw === "" ? 0.0 : parseFloat(raw);
+        postMsAfterMass(phase, mass, isNaN(v) ? 0.0 : v);
       },
     );
+  }
+  const fehUse = feh === null ? 0.0 : feh;
+  const wTyp = postMsWindow(phase, mass, fehUse);
+  console.log(
+    `${POST_MS_PHASES[phase].label} lasts ${shortGyr(wTyp.b - wTyp.a)} Gyr at about ${fmt(mass)} M_Sun (before mass loss)`,
+  );
+  ask(
+    `Enter age in Gyr (the mass above is the mass at this age) [Enter to skip]: `,
+    (ageInput) => {
+      const raw = ageInput.trim();
+      if (raw === "") return postMsFinish(phase, mass, fehUse, null);
+      const age = parseFloat(raw);
+      if (isNaN(age) || age < 0) {
+        console.log("Invalid age, ignored.");
+        return postMsFinish(phase, mass, fehUse, null);
+      }
+      const chk = checkPostMsAge(phase, mass, fehUse, age);
+      if (chk.ok) return postMsFinish(phase, mass, fehUse, { age, chk });
+      postMsSuggest(phase, mass, fehUse, age, chk);
+    },
+  );
+}
+
+// Explain the mismatch and offer other phases
+function postMsSuggest(phase, mass, feh, age, chk) {
+  const p = POST_MS_PHASES[phase];
+  console.log(`\nThe mass and age do not fit ${p.label}:`);
+  chk.reasons.forEach((r) => console.log(`  - ${r}`));
+  console.log(`  At ${fmt(age)} Gyr this star is on the ${chk.stage} stage.`);
+  const alts = suggestPostMsPhases(mass, feh, age, phase);
+  if (alts.length) {
+    console.log("Phases that fit this mass and age:");
+    alts.forEach((k) =>
+      console.log(
+        `  ${POST_MS_KEYS.indexOf(k) + 1}) ${POST_MS_PHASES[k].label}`,
+      ),
+    );
+  } else {
+    console.log("No post-main-sequence phase fits this mass and age.");
+    if (chk.stage === "main sequence")
+      console.log("  Use the main sequence option for this star.");
+    if (chk.stage === "remnant")
+      console.log(
+        "  Use the remnant (white dwarf, neutron star or black hole) option.",
+      );
+  }
+  const rng = massRangeForAge(phase, feh, age);
+  if (rng)
+    console.log(
+      `${p.label} fits ${fmt(age)} Gyr for masses from ${fmt(rng[0])} to ${fmt(rng[1])} M_Sun.`,
+    );
+  const hint = alts.length ? "Enter a phase number to switch, " : "";
+  const again = () =>
+    ask(`${hint}or press Enter to keep ${p.label}: `, (input) => {
+      const raw = input.trim();
+      if (raw === "") return postMsFinish(phase, mass, feh, { age, chk });
+      const k = POST_MS_KEYS[parseInt(raw) - 1];
+      if (!k || !alts.includes(k)) {
+        console.log("Pick a number from the list above, or press Enter.");
+        return again();
+      }
+      // Fe/H is reused. Phases that skip it set it to 0 in the final print.
+      const chk2 = checkPostMsAge(k, mass, feh, age);
+      postMsFinish(k, mass, feh, { age, chk: chk2 });
+    });
+  again();
+}
+
+// T_eff and colour prompts, then the printout
+function postMsFinish(phase, mass, feh, ageInfo) {
+  const allowTeffOverride =
+    phase === "Ib" || phase === "Iab" || phase === "Ia" || phase === "Ia+";
+  const askTeff = (cb) => {
+    if (!allowTeffOverride) return cb(null);
+    ask(
+      `Enter T_eff (K) [Enter to choose a colour instead, or supply a known value e.g. 13480]: `,
+      (tInput) => {
+        const raw = tInput.trim();
+        if (raw === "") return cb(null);
+        const t = parseFloat(raw);
+        if (isNaN(t) || t < 1000 || t > 100000) {
+          console.log("Invalid T_eff, ignored.");
+          return cb(null);
+        }
+        cb(t);
+      },
+    );
+  };
+
+  // Colour is asked only when no T_eff was typed
+  const askColour = (userTeff, cb) => {
+    if (!allowTeffOverride || userTeff !== null) return cb(null);
+    console.log(
+      "\nStar colour (sets the T_eff band, then the radius follows from the luminosity):",
+    );
+    SUPERGIANT_COLOUR_KEYS.forEach((k, i) => {
+      const c = SUPERGIANT_COLOURS[k];
+      console.log(
+        `  ${i + 1}) ${c.label.padEnd(11)} ${c.Tmin}–${c.Tmax} K  (${c.note})`,
+      );
+    });
+    const again = () =>
+      ask("Enter colour [Enter to estimate from mass as before]: ", (input) => {
+        if (input.trim() === "") return cb(null);
+        const key = parseSupergiantColour(input);
+        if (!key) {
+          console.log("Invalid. Enter 1-6 or a colour name.");
+          return again();
+        }
+        cb(key);
+      });
+    again();
+  };
+
+  askTeff((userTeff) => {
+    askColour(userTeff, (colourKey) => {
+      printPostMS(phase, mass, feh, userTeff, colourKey, ageInfo);
+      askRepeat();
+    });
   });
 }
 
