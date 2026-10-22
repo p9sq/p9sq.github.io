@@ -2570,7 +2570,7 @@ function phaseAgeRange(phase) {
   let dhi = 0;
   for (let i = 0; i <= 100; i++) {
     const m = p.massMin * Math.pow(p.massMax / p.massMin, i / 100);
-    const w = postMsWindow(phase, m, 0);
+    const w = midPhaseWindow(phase, m, 0).win; // typed mass is the mass now
     lo = Math.min(lo, w.a);
     hi = Math.max(hi, w.b);
     dlo = Math.min(dlo, w.b - w.a);
@@ -2578,6 +2578,46 @@ function phaseAgeRange(phase) {
   }
   // start and end ages of the phase over all masses, then how long the phase lasts
   return [lo, hi, dlo, dhi];
+}
+// Phases whose stars lose mass. The subgiant stage is before the giant stage, so IV has none.
+function phaseLosesMass(phase) {
+  return phase !== "IV";
+}
+// With no age given, treat the typed mass as the mass halfway through the phase.
+// Solves for the zero-age mass that has this mass at that point, then returns its window.
+function midPhaseWindow(phase, curMass, feh) {
+  const massAtMid = (m0) => {
+    const w = postMsWindow(phase, m0, feh);
+    return currentMassAt(m0, feh, (w.a + w.b) / 2);
+  };
+  let m0 = curMass;
+  if (phaseLosesMass(phase)) {
+    const at = massAtMid(curMass);
+    if (at !== null && at < curMass) {
+      const top = Math.min(300, curMass * 6);
+      const steps = 1500;
+      let lo = curMass;
+      for (let i = 1; i <= steps; i++) {
+        const m = curMass * Math.pow(top / curMass, i / steps);
+        const cm = massAtMid(m);
+        if (cm === null) break;
+        if (cm >= curMass) {
+          let a = lo;
+          let b = m;
+          for (let k = 0; k < 60; k++) {
+            const mid = (a + b) / 2;
+            const cmm = massAtMid(mid);
+            if (cmm !== null && cmm >= curMass) b = mid;
+            else a = mid;
+          }
+          m0 = b;
+          break;
+        }
+        lo = m;
+      }
+    }
+  }
+  return { m0, win: postMsWindow(phase, m0, feh) };
 }
 // Short form for menus
 function shortGyr(x) {
@@ -2601,40 +2641,53 @@ function currentMassAt(m0, feh, ageGyr) {
   const f = (ageGyr - w.a) / (w.b - w.a);
   return m0 - giantLossFrac(m0) * (m0 - remnantMassFor(m0)) * f;
 }
-// The typed mass is the mass at the given age, so find the zero-age mass that gives it.
-// Heavier stars sit later in their giant stage at one age, so the scan runs upward.
-function solveZeroAgeMass(curMass, feh, ageGyr) {
+// The typed mass is the mass at the given age, so find the zero-age masses that give it.
+// More than one star can match. A lighter star still on the main sequence has not lost
+// mass, and a heavier star in its giant stage has. When a phase is given, the star that
+// is in that phase at this age wins. Otherwise the lightest match is used.
+function solveZeroAgeMass(curMass, feh, ageGyr, phase) {
   const at = currentMassAt(curMass, feh, ageGyr);
   if (at === null) return { m0: curMass, found: false, remnant: true };
-  if (at >= curMass) return { m0: curMass, found: true };
+  const cands = [];
+  if (at >= curMass) cands.push(curMass);
   const top = Math.min(300, curMass * 6);
-  const steps = 1500;
-  let lo = curMass;
+  const steps = 3000;
+  let prevM = curMass;
+  let prevG = at - curMass;
   for (let i = 1; i <= steps; i++) {
     const m = curMass * Math.pow(top / curMass, i / steps);
     const cur = currentMassAt(m, feh, ageGyr);
-    if (cur === null) break;
-    if (cur >= curMass) {
-      let a = lo;
+    if (cur === null) break; // heavier stars are remnants by now
+    const g = cur - curMass;
+    if ((prevG < 0 && g >= 0) || (prevG > 0 && g <= 0)) {
+      let a = prevM;
       let b = m;
+      const rising = prevG < 0;
       for (let k = 0; k < 60; k++) {
         const mid = (a + b) / 2;
-        const cm = currentMassAt(mid, feh, ageGyr);
-        if (cm !== null && cm >= curMass) b = mid;
+        const gm = currentMassAt(mid, feh, ageGyr) - curMass;
+        if (gm >= 0 === rising) b = mid;
         else a = mid;
       }
-      return { m0: b, found: true };
+      cands.push((a + b) / 2);
     }
-    lo = m;
+    prevM = m;
+    prevG = g;
   }
-  // Mass loss grows faster than the extra zero-age mass, so no star reaches this mass at this age
-  return { m0: curMass, found: false, remnant: false };
+  if (cands.length === 0) return { m0: curMass, found: false, remnant: false };
+  if (phase) {
+    for (const m0 of cands) {
+      const w = postMsWindow(phase, m0, feh);
+      if (ageGyr >= w.a && ageGyr <= w.b) return { m0, found: true, cands };
+    }
+  }
+  return { m0: cands[0], found: true, cands };
 }
 
 // Returns { ok, reasons[], stage, progress, win, m0 } for a phase, current mass and age
 function checkPostMsAge(phase, massSun, feh, ageGyr) {
   const p = POST_MS_PHASES[phase];
-  const sol = solveZeroAgeMass(massSun, feh, ageGyr);
+  const sol = solveZeroAgeMass(massSun, feh, ageGyr, phase);
   const m0 = sol.m0;
   const win = postMsWindow(phase, m0, feh);
   const reasons = [];
@@ -2683,7 +2736,7 @@ function massRangeForAge(phase, feh, ageGyr) {
   let hi = null;
   for (let i = 0; i <= 400; i++) {
     const m = p.massMin * Math.pow(p.massMax / p.massMin, i / 400);
-    const sol = solveZeroAgeMass(m, feh, ageGyr);
+    const sol = solveZeroAgeMass(m, feh, ageGyr, phase);
     const w = postMsWindow(phase, sol.m0, feh);
     if (sol.found && ageGyr >= w.a && ageGyr <= w.b) {
       if (lo === null) lo = m;
@@ -2739,9 +2792,15 @@ function postMsAfterMass(phase, mass, feh) {
     );
   }
   const fehUse = feh === null ? 0.0 : feh;
-  const wTyp = postMsWindow(phase, mass, fehUse);
+  const mid = midPhaseWindow(phase, mass, fehUse);
+  // No age yet, so this is an assumption. A typed age below replaces it with an exact solve.
+  const lossNote = !phaseLosesMass(phase)
+    ? "no mass loss in this phase"
+    : mid.m0 === mass
+      ? "no mass loss found for this mass"
+      : `zero-age mass about ${shortGyr(mid.m0)} M_Sun`;
   console.log(
-    `${POST_MS_PHASES[phase].label} lasts ${shortGyr(wTyp.b - wTyp.a)} Gyr at about ${fmt(mass)} M_Sun (before mass loss)`,
+    `If the star is halfway through ${POST_MS_PHASES[phase].label}: ${lossNote}, phase lasts ${shortGyr(mid.win.b - mid.win.a)} Gyr (current mass ${fmt(mass)} M_Sun). An age below gives the exact zero-age mass.`,
   );
   ask(
     `Enter age in Gyr (the mass above is the mass at this age) [Enter to skip]: `,
