@@ -510,8 +510,14 @@
           au: 149597870.7,
           ld: 384399, // lunar distance, mean Earth-Moon
           ly: 9460730472580.8,
+          kly: 9460730472580.8e3,
           mly: 9460730472580.8e6,
           gly: 9460730472580.8e9,
+          // IAU 2015 parsec: 648000 / pi AU
+          pc: 30856775814913.67,
+          kpc: 30856775814913.67e3,
+          mpc: 30856775814913.67e6,
+          gpc: 30856775814913.67e9,
         };
 
         const distanceUnits = [
@@ -520,8 +526,13 @@
           { key: "au", name: "Astronomical Units", sym: "AU" },
           { key: "ld", name: "Lunar Distance", sym: "LD" },
           { key: "ly", name: "Light Years", sym: "ly" },
+          { key: "kly", name: "Kilolight Years", sym: "Kly" },
           { key: "mly", name: "Megalight Years", sym: "Mly" },
           { key: "gly", name: "Gigalight Years", sym: "Gly" },
+          { key: "pc", name: "Parsecs", sym: "pc" },
+          { key: "kpc", name: "Kiloparsecs", sym: "Kpc" },
+          { key: "mpc", name: "Megaparsecs", sym: "Mpc" },
+          { key: "gpc", name: "Gigaparsecs", sym: "Gpc" },
         ];
 
         let mode = "mass";
