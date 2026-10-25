@@ -12,10 +12,10 @@ Habitable Worlds is a public website catalogue which aims to let the public (Arv
 
 # Lore (Vulcean Continuity)
 
-The Vulcean Continuity takes place in the year 3000 (Earth years) and near the end of the year 3307 (Arventian years, or the year 2999 in Earth years). This difference in years happens because an Arventian year is about 9.31% shorter than an Earth year.
+The Vulcean Continuity takes place in the year 3000 on Earth and near the end of the year 3429 on Arventia. This is because Arventia’s year is about 12.53% shorter than an Earth year. Coincidentally, as Arventians invented their version of the calendar, it just so happened to be in a format exactly like the human version of the calendar.
 
 Earth’s technology has advanced significantly over many centuries, especially in exoplanet science, with many new exoplanets and even exomoons having been confirmed.
 
-The Athovon System, the home stellar system of the main civilisation in this story (Arventians, who live on the Earth-like planet known as Arventia), sits on the opposite side of the Milky Way from the Sun at roughly 47.99 thousand light years in the Scorpius constellation. The system’s primary star is a spectral type G7 main-sequence yellow dwarf star called Athovon, and the secondary star of the system is called Vexulan, which is a smaller red dwarf separated from Athovon by roughly 4,144 AU. This system includes 12 major planets, ten dwarf planets, and many asteroids and comets.
+The Athovon System, the home stellar system of the main civilisation in this story (Arventians, who live on the Earth-like planet known as Arventia), sits on the opposite side of the Milky Way from the Sun at roughly 47.99 thousand light years in the Scorpius constellation. The system’s primary star is a spectral type G6 main-sequence yellow dwarf star called Athovon, and the secondary star of the system is called Vexulan, which is a smaller red dwarf separated from Athovon by an average distance of roughly 4,144 AU, but this distance changes due to both Athovon and Vexulan having an eccentricity of 0.2. Both stars have their own planetary system, with Athovon having 12 major planets, ten dwarf planets, and many asteroids and comets, and Vexulan having four major planets.
 
-Both Humans and Arventians have no idea of each other's existence due to the Milky Way’s thick dust and gas getting in the way of detection.
+Both Humans and Arventians have no idea of each other’s existence due to the Milky Way’s thick dust and gas getting in the way of detection.
