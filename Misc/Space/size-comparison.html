@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Size Comparison</title>
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+        color: #fff;
+        font-family: Arial, sans-serif;
+      }
+      header,
+      main {
+        max-width: 1588px;
+        margin: 0 auto;
+        padding: 16px 24px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+      form {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        padding: 20px;
+        background: #17171d;
+        border-radius: 8px;
+      }
+      fieldset {
+        border: 0;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      legend,
+      label {
+        font-size: 14px;
+        color: #bbb;
+      }
+      input,
+      select,
+      button {
+        padding: 8px 10px;
+        font-size: 16px;
+        color: #fff;
+        background: #25252e;
+        border: 1px solid #444;
+        border-radius: 4px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      #rad {
+        width: 160px;
+      }
+      #sv {
+        position: relative;
+        width: 240px;
+        height: 160px;
+        border-radius: 4px;
+        cursor: crosshair;
+        touch-action: none;
+        background-image:
+          linear-gradient(to top, #000, transparent),
+          linear-gradient(to right, #fff, transparent);
+      }
+      #dot {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        margin: -9px 0 0 -9px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 0 0 1px #000;
+        pointer-events: none;
+      }
+      #hue {
+        width: 240px;
+        padding: 0;
+        height: 16px;
+        border-radius: 8px;
+        appearance: none;
+        background: linear-gradient(
+          to right,
+          #f00,
+          #ff0,
+          #0f0,
+          #0ff,
+          #00f,
+          #f0f,
+          #f00
+        );
+      }
+      #hue::-webkit-slider-thumb {
+        appearance: none;
+        width: 16px;
+        height: 22px;
+        background: #fff;
+        border: 1px solid #000;
+        border-radius: 4px;
+      }
+      #hue::-moz-range-thumb {
+        width: 14px;
+        height: 20px;
+        background: #fff;
+        border: 1px solid #000;
+        border-radius: 4px;
+      }
+      #hex {
+        width: 100px;
+      }
+      .rgb {
+        width: 60px;
+      }
+      #prev {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        border: 1px solid #666;
+      }
+      #add {
+        background: #1aa7ff;
+        border-color: #1aa7ff;
+        color: #000;
+        font-weight: bold;
+        cursor: pointer;
+      }
+      #msg {
+        min-height: 20px;
+        margin: 0;
+        color: #ff8a8a;
+        font-size: 14px;
+      }
+      .bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin: 24px 0 8px;
+      }
+      #chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 6px 4px 10px;
+        background: #25252e;
+        border-radius: 14px;
+        font-size: 14px;
+      }
+      .chip i {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+      .chip button {
+        padding: 0 6px;
+        border: 0;
+        background: none;
+        cursor: pointer;
+      }
+      #stage {
+        height: 420px;
+        margin-bottom: 40px;
+        background: #17171d;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+      }
+      #chart {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #zoom {
+        width: 240px;
+        padding: 0;
+        background: none;
+        border: 0;
+        accent-color: #1aa7ff;
+      }
+      #zoomval {
+        min-width: 70px;
+        font-size: 14px;
+        color: #bbb;
+      }
+      .chip {
+        cursor: pointer;
+      }
+      .chip.on {
+        outline: 2px solid #1aa7ff;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Size Comparison</h1>
+    </header>
+    <main>
+      <section id="stage">
+        <svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg>
+      </section>
+
+      <form id="form">
+        <fieldset>
+          <label for="name">Name</label>
+          <input id="name" type="text" maxlength="40" autocomplete="off" />
+          <label for="rad">Equatorial radius</label>
+          <div class="row">
+            <input id="rad" type="number" min="0" step="any" />
+            <select id="unit" aria-label="Unit">
+              <option value="mi">mi</option>
+              <option value="km">km</option>
+              <option value="R_Moon">R_Moon</option>
+              <option value="R_Earth">R_Earth</option>
+              <option value="R_Jupiter">R_Jupiter</option>
+              <option value="R_Sun" selected>R_Sun</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Colour</legend>
+          <div id="sv"><div id="dot"></div></div>
+          <input
+            id="hue"
+            type="range"
+            min="0"
+            max="360"
+            step="1"
+            aria-label="Hue"
+          />
+          <div class="row">
+            <input id="hex" type="text" maxlength="7" aria-label="Hex colour" />
+            <input
+              class="rgb"
+              id="r"
+              type="number"
+              min="0"
+              max="255"
+              aria-label="Red"
+            />
+            <input
+              class="rgb"
+              id="g"
+              type="number"
+              min="0"
+              max="255"
+              aria-label="Green"
+            />
+            <input
+              class="rgb"
+              id="b"
+              type="number"
+              min="0"
+              max="255"
+              aria-label="Blue"
+            />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Preview</legend>
+          <div id="prev"></div>
+          <button id="add" type="submit">Add</button>
+          <p id="msg"></p>
+        </fieldset>
+      </form>
+
+      <div class="bar">
+        <label for="order">Sort</label>
+        <select id="order">
+          <option value="desc">Largest to smallest</option>
+          <option value="asc">Smallest to largest</option>
+        </select>
+        <button id="clear" type="button">Clear all</button>
+        <label for="zoom">Zoom</label>
+        <input id="zoom" type="range" min="0" max="1" step="0.001" value="0" />
+        <span id="zoomval"></span>
+      </div>
+      <div id="chips"></div>
+    </main>
+
+    <script>
+      // All radii convert to km so objects compare in one unit
+      const toKm = {
+        mi: 1.609344,
+        km: 1,
+        R_Moon: 1737.4,
+        R_Earth: 6378.137,
+        R_Jupiter: 71492,
+        R_Sun: 695700,
+      };
+
+      const form = document.querySelector("#form");
+      const nameIn = document.querySelector("#name");
+      const radIn = document.querySelector("#rad");
+      const unitIn = document.querySelector("#unit");
+      const sv = document.querySelector("#sv");
+      const dot = document.querySelector("#dot");
+      const hueIn = document.querySelector("#hue");
+      const hexIn = document.querySelector("#hex");
+      const rIn = document.querySelector("#r");
+      const gIn = document.querySelector("#g");
+      const bIn = document.querySelector("#b");
+      const prev = document.querySelector("#prev");
+      const msg = document.querySelector("#msg");
+      const orderIn = document.querySelector("#order");
+      const chips = document.querySelector("#chips");
+      const chart = document.querySelector("#chart");
+      const stage = document.querySelector("#stage");
+      const zoomIn = document.querySelector("#zoom");
+      const zoomVal = document.querySelector("#zoomval");
+
+      let items = [];
+      let nextId = 1;
+      let h = 24;
+      let s = 1;
+      let v = 1;
+
+      const clamp = (n) => Math.min(1, Math.max(0, n));
+
+      // Standard HSV to RGB, returns 0 to 255 values
+      function toRgb(h, s, v) {
+        const f = (n) => {
+          const k = (n + h / 60) % 6;
+          return v - v * s * Math.max(0, Math.min(k, 4 - k, 1));
+        };
+        return [f(5), f(3), f(1)].map((x) => Math.round(x * 255));
+      }
+
+      function toHsv(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        const max = Math.max(r, g, b);
+        const d = max - Math.min(r, g, b);
+        let hue = h;
+        // Grey has no hue, so keep the old one
+        if (d !== 0) {
+          if (max === r) hue = 60 * (((g - b) / d + 6) % 6);
+          else if (max === g) hue = 60 * ((b - r) / d + 2);
+          else hue = 60 * ((r - g) / d + 4);
+        }
+        return [hue, max === 0 ? 0 : d / max, max];
+      }
+
+      function toHex([r, g, b]) {
+        return (
+          "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")
+        );
+      }
+
+      // skip stops a field from rewriting what the user is typing
+      function update(skip) {
+        const rgb = toRgb(h, s, v);
+        const hex = toHex(rgb);
+        prev.style.background = hex;
+        sv.style.backgroundColor = `hsl(${h}, 100%, 50%)`;
+        dot.style.left = s * 100 + "%";
+        dot.style.top = (1 - v) * 100 + "%";
+        hueIn.value = Math.round(h);
+        if (skip !== "hex") hexIn.value = hex;
+        if (skip !== "rgb") {
+          rIn.value = rgb[0];
+          gIn.value = rgb[1];
+          bIn.value = rgb[2];
+        }
+      }
+
+      function pick(e) {
+        const box = sv.getBoundingClientRect();
+        s = clamp((e.clientX - box.left) / box.width);
+        v = 1 - clamp((e.clientY - box.top) / box.height);
+        update();
+      }
+
+      sv.addEventListener("pointerdown", (e) => {
+        sv.setPointerCapture(e.pointerId);
+        pick(e);
+      });
+      sv.addEventListener("pointermove", (e) => {
+        if (sv.hasPointerCapture(e.pointerId)) pick(e);
+      });
+
+      hueIn.addEventListener("input", () => {
+        h = Number(hueIn.value);
+        update();
+      });
+
+      hexIn.addEventListener("input", () => {
+        const m = /^#?([0-9a-f]{6})$/i.exec(hexIn.value.trim());
+        if (!m) return;
+        const n = parseInt(m[1], 16);
+        [h, s, v] = toHsv(n >> 16, (n >> 8) & 255, n & 255);
+        update("hex");
+      });
+
+      [rIn, gIn, bIn].forEach((el) => {
+        el.addEventListener("input", () => {
+          const vals = [rIn, gIn, bIn].map((x) => Number(x.value));
+          const ok = vals.every(
+            (x, i) => [rIn, gIn, bIn][i].value !== "" && x >= 0 && x <= 255,
+          );
+          if (!ok) return;
+          [h, s, v] = toHsv(...vals);
+          update("rgb");
+        });
+      });
+
+      const fmt = (n) =>
+        n.toLocaleString("en-US", { maximumFractionDigits: 6 });
+
+      // Names go into SVG markup, so escape them
+      const esc = (t) =>
+        t.replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+
+      // Pick black or white text by colour brightness
+      function textColor(hex) {
+        const n = parseInt(hex.slice(1), 16);
+        const lum =
+          (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) /
+          255;
+        return lum > 0.55 ? "#000" : "#fff";
+      }
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = nameIn.value.trim();
+        const val = Number(radIn.value);
+        if (!name) {
+          msg.textContent = "Enter a name.";
+          return;
+        }
+        if (!(val > 0)) {
+          msg.textContent = "Enter a radius above 0.";
+          return;
+        }
+        msg.textContent = "";
+        items.push({
+          id: nextId++,
+          name,
+          val,
+          unit: unitIn.value,
+          km: val * toKm[unitIn.value],
+          color: toHex(toRgb(h, s, v)),
+        });
+        nameIn.value = "";
+        radIn.value = "";
+        nameIn.focus();
+        render();
+      });
+
+      orderIn.addEventListener("change", render);
+
+      document.querySelector("#clear").addEventListener("click", () => {
+        items = [];
+        render();
+      });
+
+      chips.addEventListener("click", (e) => {
+        const id = Number(e.target.dataset.id);
+        if (id) {
+          items = items.filter((it) => it.id !== id);
+          if (focusId === id) focusId = null;
+          render();
+          return;
+        }
+        // Clicking the chip centres that object and makes the zoom slider work from it
+        const chip = e.target.closest(".chip");
+        if (!chip) return;
+        const box = boxes.find((b) => b.it.id === Number(chip.dataset.focus));
+        if (!box) return;
+        focusId = box.it.id;
+        panX = box.left + box.d / 2 - stage.clientWidth / 2;
+        mark();
+        draw();
+      });
+
+      let focusId = null;
+
+      // Outline the chip whose object the zoom is centred on
+      function mark() {
+        chips.querySelectorAll(".chip").forEach((c) => {
+          c.classList.toggle("on", Number(c.dataset.focus) === focusId);
+        });
+      }
+
+      // Chips and chart share one order
+      function sorted() {
+        return [...items].sort((a, b) =>
+          orderIn.value === "desc" ? b.km - a.km : a.km - b.km,
+        );
+      }
+
+      function render() {
+        chips.innerHTML = sorted()
+          .map(
+            (it) =>
+              `<div class="chip${it.id === focusId ? " on" : ""}" data-focus="${it.id}" title="Centre on this object"><i style="background:${it.color}"></i>${esc(it.name)}<button type="button" data-id="${it.id}" aria-label="Remove ${esc(it.name)}">x</button></div>`,
+          )
+          .join("");
+        if (!items.length) {
+          zoomT = 0;
+          panX = 0;
+          focusId = null;
+          zoomIn.value = 0;
+        }
+        draw();
+      }
+
+      const gap = 20;
+      const pad = 20;
+      let zoomT = 0;
+      let panX = 0;
+      let boxes = [];
+      let worldW = 0;
+
+      // Zoom runs from "biggest object fits the panel" to "smallest object fits the panel"
+      function layout() {
+        const W = stage.clientWidth;
+        const H = stage.clientHeight;
+        const list = sorted();
+        const kms = list.map((it) => it.km);
+        const maxKm = Math.max(...kms);
+        const minKm = Math.min(...kms);
+        const availH = H - 2 * pad;
+
+        // Minimum zoom sizes the biggest object to the panel height, however many objects there are
+        const scMin = availH / (2 * maxKm);
+        const scMax = Math.max(availH / (2 * minKm), scMin);
+        // Log scale so each slider step changes the zoom by the same ratio
+        const sc = scMin * Math.pow(scMax / scMin, zoomT);
+
+        let x = pad;
+        boxes = list.map((it) => {
+          const d = 2 * sc * it.km;
+          const box = { it, left: x, d };
+          x += d + gap;
+          return box;
+        });
+        worldW = x - gap + pad;
+        return { W, H, sc, scMin };
+      }
+
+      // Circles beyond a few thousand px are drawn as polygons clipped to the panel
+      function bigCircle(cx, cy, r, W, H, color) {
+        const x0 = Math.max(cx - r, 0);
+        const x1 = Math.min(cx + r, W);
+        const top = [];
+        const bot = [];
+        for (let x = x0; x < x1 + 4; x += 4) {
+          const xx = Math.min(x, x1);
+          const ax = Math.abs(xx - cx);
+          // Factored form keeps precision when r is huge
+          const dy = Math.sqrt(Math.max((r - ax) * (r + ax), 0));
+          top.push(`${xx},${Math.max(cy - dy, -10)}`);
+          bot.push(`${xx},${Math.min(cy + dy, H + 10)}`);
+        }
+        return `<polygon points="${top.join(" ")} ${bot.reverse().join(" ")}" fill="${color}"/>`;
+      }
+
+      function draw() {
+        // Empty the SVG itself, since the hidden attribute does not hide SVG
+        if (!items.length) {
+          chart.innerHTML = "";
+          zoomVal.textContent = "";
+          return;
+        }
+
+        const { W, H, sc, scMin } = layout();
+        // Keep the row inside the panel, so no empty space shows past the first or last object
+        panX = Math.min(Math.max(panX, 0), Math.max(worldW - W, 0));
+        const ratio = sc / scMin;
+        zoomVal.textContent =
+          "×" +
+          (ratio < 10
+            ? ratio.toFixed(2)
+            : ratio < 1000
+              ? ratio.toFixed(1)
+              : Math.round(ratio).toLocaleString("en-US"));
+
+        const cy = H / 2;
+        let svg = "";
+
+        boxes.forEach(({ it, left, d }) => {
+          const sx = left - panX;
+          if (sx + d < 0 || sx > W) return;
+          const r = d / 2;
+          const cx = sx + r;
+          svg +=
+            r > 5000
+              ? bigCircle(cx, cy, r, W, H, it.color)
+              : `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${it.color}"/>`;
+
+          // Centre the text on the visible part of the circle and size it to fit inside
+          const from = Math.max(cx - r, 0);
+          const to = Math.min(cx + r, W);
+          const wide = Math.min(d, to - from);
+          const line2 = `${fmt(it.val)} ${it.unit}`;
+          const len = Math.max(it.name.length, line2.length);
+          const fs = Math.min(32, wide * 0.2, (wide * 0.75) / (len * 0.58));
+          if (fs < 1.5) return;
+          const tx = (from + to) / 2;
+          const col = textColor(it.color);
+          svg += `<text x="${tx}" y="${cy - fs * 0.2}" text-anchor="middle" font-size="${fs}" fill="${col}">${esc(it.name)}</text>`;
+          svg += `<text x="${tx}" y="${cy + fs * 1.1}" text-anchor="middle" font-size="${fs}" fill="${col}">${esc(line2)}</text>`;
+        });
+
+        chart.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        chart.innerHTML = svg;
+      }
+
+      // Over the last 5% of the slider the view eases back to the left edge,
+      // so full zoom out shows the biggest object whole instead of cut off
+      function edge() {
+        return Math.min(1, zoomT / 0.05);
+      }
+
+      zoomIn.addEventListener("input", () => {
+        if (!items.length) return;
+        const W = stage.clientWidth;
+
+        // A chosen chip anchors the zoom on its object
+        const f = boxes.findIndex((b) => b.it.id === focusId);
+        if (f >= 0) {
+          zoomT = Number(zoomIn.value);
+          layout();
+          panX = (boxes[f].left + boxes[f].d / 2 - W / 2) * edge();
+          draw();
+          return;
+        }
+
+        // Otherwise zoom around the middle of the panel, so find which object sits there
+        const mid = panX + W / 2;
+        let k = boxes.findIndex((b) => mid < b.left + b.d + gap);
+        if (k < 0) k = boxes.length - 1;
+        const rel = (mid - boxes[k].left) / (boxes[k].d + gap);
+        zoomT = Number(zoomIn.value);
+        layout();
+        panX = (boxes[k].left + rel * (boxes[k].d + gap) - W / 2) * edge();
+        draw();
+      });
+
+      // Drag or scroll to move along the row
+      let drag = null;
+      stage.addEventListener("pointerdown", (e) => {
+        drag = { x: e.clientX, pan: panX };
+        stage.setPointerCapture(e.pointerId);
+      });
+      stage.addEventListener("pointermove", (e) => {
+        if (!drag) return;
+        // Moving the view away drops the chosen object
+        if (focusId && Math.abs(e.clientX - drag.x) > 2) {
+          focusId = null;
+          mark();
+        }
+        panX = drag.pan - (e.clientX - drag.x);
+        draw();
+      });
+      stage.addEventListener("pointerup", () => {
+        drag = null;
+      });
+      stage.addEventListener("pointercancel", () => {
+        drag = null;
+      });
+      stage.addEventListener(
+        "wheel",
+        (e) => {
+          if (!items.length) return;
+          e.preventDefault();
+          focusId = null;
+          mark();
+          panX += e.deltaX + e.deltaY;
+          draw();
+        },
+        { passive: false },
+      );
+
+      // Redraw on resize so circles keep fitting the panel
+      window.addEventListener("resize", draw);
+
+      update();
+    </script>
+  </body>
+</html>
