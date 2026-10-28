@@ -93,8 +93,8 @@ function calcDensity(massSun, radiusSun) {
 function calcMbol(lum) {
   return 4.74 - 2.5 * Math.log10(lum);
 }
-// Torres (2010) BC_V polynomials, valid 2900-52000 K
-function calcBCV(teff) {
+// Torres (2010) BC_V polynomials, used above 4600 K
+function calcBCVTorres(teff) {
   const lt = Math.log10(teff);
   if (lt < 3.7) {
     return (
@@ -122,9 +122,62 @@ function calcBCV(teff) {
     0.78873172180499e2 * lt ** 5
   );
 }
-// Returns null outside the BC_V range, where the polynomial gives nonsense
+// Below 4440 K the Torres polynomial runs far from observed stars. At 3081 K it gives -4.41
+// against -3.0 from Pecaut and Mamajek (2022), and at 2570 K it gives -9.8 against -5.65.
+// So M dwarfs and late K dwarfs use the Pecaut and Mamajek mean dwarf table. Columns:
+// [Teff (K), BC_V]. BC_V = Mbol - M_V, and each row agrees with the table's own logL and M_V.
+// Interpolation is linear in log Teff. Above 4600 K the Torres polynomial agrees to 0.05 mag,
+// and the two blend linearly between 4440 and 4600 K.
+const BCV_COOL = [
+  [2380, -5.86],
+  [2420, -5.78],
+  [2570, -5.65],
+  [2630, -5.32],
+  [2680, -4.99],
+  [2740, -4.62],
+  [2810, -4.13],
+  [2930, -3.58],
+  [3060, -3.11],
+  [3110, -2.84],
+  [3210, -2.51],
+  [3270, -2.28],
+  [3430, -1.93],
+  [3470, -1.78],
+  [3560, -1.62],
+  [3620, -1.5],
+  [3660, -1.42],
+  [3770, -1.29],
+  [3850, -1.15],
+  [3930, -1.07],
+  [3990, -1.03],
+  [4100, -0.93],
+  [4300, -0.75],
+  [4440, -0.63],
+];
+
+function calcBCVCool(teff) {
+  const t = BCV_COOL;
+  // Below the table the value is held flat: the table already flattens near 2400 K
+  if (teff <= t[0][0]) return t[0][1];
+  for (let i = 0; i < t.length - 1; i++) {
+    if (teff <= t[i + 1][0]) {
+      const f = Math.log(teff / t[i][0]) / Math.log(t[i + 1][0] / t[i][0]);
+      return t[i][1] + f * (t[i + 1][1] - t[i][1]);
+    }
+  }
+  return t[t.length - 1][1];
+}
+
+function calcBCV(teff) {
+  if (teff <= 4440) return calcBCVCool(teff);
+  if (teff >= 4600) return calcBCVTorres(teff);
+  const w = (teff - 4440) / 160;
+  return (1 - w) * calcBCVCool(4440) + w * calcBCVTorres(teff);
+}
+
+// Returns null outside the BC_V range (2380 to 52000 K)
 function visLum(lum, teff) {
-  if (teff === null || teff === undefined || teff < 2900 || teff > 52000)
+  if (teff === null || teff === undefined || teff < 2380 || teff > 52000)
     return null;
   return lum * Math.pow(10, (calcBCV(teff) - BC_V_SUN) / 2.5);
 }
@@ -498,7 +551,7 @@ function interpolate(x, x1, x2, y1, y2) {
   return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
 }
 
-// Metallicity sensitivity from my Discord bot's starlifetime command table (interpolated in mass)
+// Metallicity sensitivity from the my Discord bot's starlifetime command table (interpolated in mass)
 function lifetimeSensitivity(m) {
   const t = STELLAR_MODELS;
   if (m <= t[0].mass) return t[0].sensitivity;
