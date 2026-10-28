@@ -99,11 +99,11 @@ function calcMbol(luminositySun) {
 // BC_V is defined so that M_bol = M_V + BC_V, with BC_V,Sun = −0.072 (Torres 2010).
 // L_V / L_Sun = L_bol / L_Sun × 10^(BC_V / 2.5) / 10^(BC_V_Sun / 2.5)
 // i.e. L_V = L_bol × 10^((BC_V − BC_V_Sun) / 2.5)
-// Valid range: Teff ≈ 2900–52000 K. Outside this range we flag the estimate.
+// Valid range: Teff ≈ 2380–52000 K (Pecaut and Mamajek below 4600 K, Torres above). Outside this range we flag the estimate.
 // Coefficients from Torres (2010) Table 2, Flower (1996) piecewise polynomial.
 const BC_V_SUN = -0.072; // Torres (2010) solar BC_V
 
-function calcBCV(teff) {
+function calcBCVTorres(teff) {
   const lt = Math.log10(teff);
   let a, b, c, d, e, f;
   if (lt < 3.7) {
@@ -140,6 +140,59 @@ function calcBCV(teff) {
   }
 }
 
+// Below 4440 K the Torres polynomial runs far from observed stars. At 3081 K it gives -4.41
+// against -3.0 from Pecaut and Mamajek (2022), and at 2570 K it gives -9.8 against -5.65.
+// So M dwarfs and late K dwarfs use the Pecaut and Mamajek mean dwarf table. Columns:
+// [Teff (K), BC_V]. BC_V = Mbol - M_V, and each row agrees with the table's own logL and M_V.
+// Interpolation is linear in log Teff. Above 4600 K the Torres polynomial agrees to 0.05 mag,
+// and the two blend linearly between 4440 and 4600 K.
+const BCV_COOL = [
+  [2380, -5.86],
+  [2420, -5.78],
+  [2570, -5.65],
+  [2630, -5.32],
+  [2680, -4.99],
+  [2740, -4.62],
+  [2810, -4.13],
+  [2930, -3.58],
+  [3060, -3.11],
+  [3110, -2.84],
+  [3210, -2.51],
+  [3270, -2.28],
+  [3430, -1.93],
+  [3470, -1.78],
+  [3560, -1.62],
+  [3620, -1.5],
+  [3660, -1.42],
+  [3770, -1.29],
+  [3850, -1.15],
+  [3930, -1.07],
+  [3990, -1.03],
+  [4100, -0.93],
+  [4300, -0.75],
+  [4440, -0.63],
+];
+
+function calcBCVCool(teff) {
+  const t = BCV_COOL;
+  // Below the table the value is held flat: the table already flattens near 2400 K
+  if (teff <= t[0][0]) return t[0][1];
+  for (let i = 0; i < t.length - 1; i++) {
+    if (teff <= t[i + 1][0]) {
+      const f = Math.log(teff / t[i][0]) / Math.log(t[i + 1][0] / t[i][0]);
+      return t[i][1] + f * (t[i + 1][1] - t[i][1]);
+    }
+  }
+  return t[t.length - 1][1];
+}
+
+function calcBCV(teff) {
+  if (teff <= 4440) return calcBCVCool(teff);
+  if (teff >= 4600) return calcBCVTorres(teff);
+  const w = (teff - 4440) / 160;
+  return (1 - w) * calcBCVCool(4440) + w * calcBCVTorres(teff);
+}
+
 // Luminosity in solar units in the visual band (V)
 // L_V = L_bol × 10^((BC_V − BC_V_Sun) / 2.5)
 function calcLvisual(luminosityBol, teff) {
@@ -152,7 +205,7 @@ function calcLvisual(luminosityBol, teff) {
 // teff is used to compute BC_V; pass null to skip visual luminosity
 function printLumBlock(luminosity, teff) {
   if (teff !== null && teff !== undefined) {
-    const inRange = teff >= 2900 && teff <= 52000;
+    const inRange = teff >= 2380 && teff <= 52000;
     const Lv = calcLvisual(luminosity, teff);
     console.log(
       `Lum (L_Sun):              ${fmt(Lv)}${inRange ? "" : "  (est. — Teff outside BC_V valid range)"}`,
@@ -2194,24 +2247,25 @@ function printBD(massJup, ageGyr) {
   const subtype = bdSubtypeFromTeff(Teff_tr);
 
   // Empirical BC_V for BDs — Golimowski et al. (2004), Filippazzo et al. (2015)
-  // The Flower polynomial breaks down below ~2900 K so we use observed BD BC_V values:
+  // Down to 2380 K the Pecaut and Mamajek table gives BC_V (-5.86 at 2380 K). Below that we use
+  // observed BD BC_V values, joined to the table at 2380 K:
   //   L dwarfs (1300–2200 K): BC_V ≈ −4.5 to −8.0  (rapidly worsening)
   //   T dwarfs (500–1300 K):  BC_V ≈ −8 to −15     (essentially no V-band flux)
   //   Y dwarfs (<500 K):      BC_V < −15            (V-band flux unmeasurably small)
-  // Simple linear fit in Teff: BC_V ≈ −5.5 − 0.005 × (2200 − Teff)  for Teff < 2200
+  // Simple linear fit in Teff: BC_V ≈ −5.86 − 0.005 × (2380 − Teff)  for Teff < 2380
   const BC_V_SUN = -0.072;
   let Lv, lumNote;
-  if (Teff_tr >= 2900) {
+  if (Teff_tr >= 2380) {
     Lv = calcLvisual(L, Teff_tr);
     lumNote = "";
   } else if (Teff_tr >= 1300) {
     // L-dwarf empirical BC_V range
-    const bc_v = -5.5 - 0.005 * (2200 - Teff_tr);
+    const bc_v = -5.86 - 0.005 * (2380 - Teff_tr);
     Lv = L * Math.pow(10, (bc_v - BC_V_SUN) / 2.5);
     lumNote = "  (est. — empirical L-dwarf BC_V; very uncertain)";
   } else {
     // T/Y dwarfs: essentially no V-band flux
-    const bc_v = -5.5 - 0.005 * (2200 - 1300) - 0.008 * (1300 - Teff_tr);
+    const bc_v = -5.86 - 0.005 * (2380 - 1300) - 0.008 * (1300 - Teff_tr);
     Lv = L * Math.pow(10, (bc_v - BC_V_SUN) / 2.5);
     lumNote =
       "  (est. — T/Y dwarf emits negligible V-band flux; this is a lower-limit estimate)";
