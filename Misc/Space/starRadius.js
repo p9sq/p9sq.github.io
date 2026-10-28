@@ -171,6 +171,9 @@ function printLumBlock(luminosity, teff) {
 // ------------------------------------------------------------
 // Pecaut & Mamajek (2022) lookup table — O3V through M9V
 // Columns: [SpT_label, Teff(K), logL(L_Sun), R(R_Sun), M(M_Sun)]
+// M4, M4.5 and M5 were adjusted so R and Teff rise smoothly with mass and match measured
+// M dwarfs (Barnard's Star 0.162 M, R 0.187; Wolf 1069 0.167 M, R 0.183; GJ 1132 0.181 M,
+// R 0.211; LTT 1445A 0.257 M, R 0.271; L 98-59 0.273 M, R 0.303). logL follows Stefan-Boltzmann.
 // Source: https://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt
 // version 2022.04.16
 //
@@ -262,48 +265,60 @@ const MS_TABLE = {
   M1: [3660, -1.39, 0.501, 0.5],
   "M1.5": [3620, -1.44, 0.482, 0.47],
   M2: [3560, -1.54, 0.446, 0.44],
-  "M2.5": [3470, -1.64, 0.421, 0.4],
+  "M2.5": [3470, -1.69, 0.395, 0.4],
   M3: [3430, -1.79, 0.361, 0.37],
   "M3.5": [3270, -2.03, 0.3, 0.27],
-  M4: [3210, -2.14, 0.274, 0.23],
-  "M4.5": [3110, -2.4, 0.217, 0.162],
-  M5: [2950, -2.7, 0.189, 0.132],
-  "M5.5": [2800, -3.0, 0.168, 0.113],
-  M6: [2700, -3.14, 0.148, 0.102],
-  "M6.5": [2600, -3.28, 0.127, 0.09],
-  M7: [2500, -3.49, 0.112, 0.083],
-  "M7.5": [2400, -3.67, 0.107, 0.078],
-  M8: [2300, -3.87, 0.101, 0.073],
-  "M8.5": [2200, -4.07, 0.097, 0.07],
-  M9: [2000, -4.6, 0.088, 0.079],
+  M4: [3250, -2.2, 0.25, 0.23],
+  "M4.5": [3190, -2.47, 0.19, 0.162],
+  M5: [3070, -2.69, 0.159, 0.132],
+  // M5.5 to M9: T_eff follows the Pecaut and Mamajek spectral type scale (Mamajek's mean dwarf
+  // table, current version: M5.5 2930, M6 2810, M7 2680, M7.5 2630, M8 2570, M8.5 2420,
+  // M9 2380 K). M6.5 is halfway between M6 and M7. Mass and R come from the low-mass table
+  // at that T_eff, and logL comes from Stefan-Boltzmann. The resulting L is within 0.05 dex
+  // of the published logL for M5.5 to M8.5.
+  "M5.5": [2930, -2.88, 0.141, 0.1164],
+  M6: [2810, -3.03, 0.129, 0.1091],
+  "M6.5": [2745, -3.12, 0.122, 0.1037],
+  M7: [2680, -3.2, 0.116, 0.0986],
+  "M7.5": [2630, -3.26, 0.113, 0.0953],
+  M8: [2570, -3.33, 0.109, 0.0913],
+  "M8.5": [2420, -3.54, 0.097, 0.0848],
+  M9: [2380, -3.59, 0.094, 0.0832],
 };
 
 // ------------------------------------------------------------
-// BHAC15 near-H-burning-limit correction table
-// Baraffe et al. (2015), Table A.1, 10 Gyr isochrone, solar metallicity.
-// Used for stars 0.075–0.15 M_Sun where the Mamajek table anchors become
-// inaccurate because the mass-luminosity relation has a steep cliff near
-// the hydrogen-burning minimum mass (~0.075 M_Sun).
-// Columns: [M (M_Sun), Teff (K), logL (L_Sun), R (R_Sun)]
+// Low-mass main-sequence table, 0.075 to 0.15 M_Sun (near the hydrogen-burning limit)
+// Mamajek table anchors are too coarse here, because the mass-luminosity relation drops
+// steeply toward the hydrogen-burning minimum mass (~0.075 M_Sun).
+// Columns: [M (M_Sun), Teff (K), R (R_Sun)]. Luminosity is NOT stored. It comes from
+// Stefan-Boltzmann, so Teff, R and L always agree with each other.
+// Shape follows the Baraffe et al. (2015) BHAC15 10 Gyr isochrone, solar metallicity.
+// Each row is checked against measured stars (mass, R, Teff, L in L_Sun):
+//   0.0775 M  2MASS J0523-1403   R 0.086  Teff ~2070  L ~1.2e-4
+//   0.090  M  TRAPPIST-1         R 0.119  Teff 2566   L 5.5e-4  (reads large for its mass)
+//   0.097  M  Teegarden's Star   R 0.120  Teff ~2900  L 7.3e-4
+//   0.110  M  Wolf 359           R 0.144  Teff ~2800  L ~1.0e-3
+//   0.122  M  Proxima Centauri   R 0.154  Teff 3042   L 1.5e-3 to 1.8e-3
+//   0.125  M  GJ 1061            R 0.156  Teff ~2950  L 1.7e-3
+//   0.162  M  Barnard's Star     R 0.187  Teff 3238   L 3.5e-3
 // ------------------------------------------------------------
 const BHAC15_LOW_MASS = [
-  [0.075, 2650, -4.27, 0.09],
-  [0.08, 2750, -4.0, 0.096],
-  [0.085, 2820, -3.82, 0.101],
-  [0.09, 2900, -3.63, 0.107],
-  [0.1, 3000, -3.42, 0.117],
-  [0.11, 3100, -3.22, 0.128],
-  [0.12, 3190, -3.05, 0.138],
-  [0.13, 3270, -2.9, 0.148],
-  [0.15, 3380, -2.66, 0.165],
+  [0.075, 2150, 0.085],
+  [0.08, 2300, 0.088],
+  [0.09, 2550, 0.108],
+  [0.1, 2700, 0.117],
+  [0.11, 2820, 0.13],
+  [0.12, 2990, 0.148],
+  [0.13, 3080, 0.157],
+  [0.15, 3180, 0.172],
 ];
 
-// Interpolate BHAC15 low-mass table for a given mass (M_Sun).
-// Returns { Teff, L, R } or null if out of range.
+// Interpolate the low-mass table for a given mass (M_Sun), in log mass, log R and log Teff.
+// L comes from Stefan-Boltzmann, so the three values always agree.
+// Returns { Teff, L, R, M } or null if out of range.
 function bhac15Lookup(massSun) {
   const t = BHAC15_LOW_MASS;
   if (massSun < t[0][0] || massSun > t[t.length - 1][0]) return null;
-  // Find bracketing entries
   let lo = t[0],
     hi = t[t.length - 1];
   for (let i = 0; i < t.length - 1; i++) {
@@ -313,14 +328,19 @@ function bhac15Lookup(massSun) {
       break;
     }
   }
-  const f = (massSun - lo[0]) / (hi[0] - lo[0]);
-  return {
-    Teff: lo[1] + f * (hi[1] - lo[1]),
-    L: Math.pow(10, lo[2] + f * (hi[2] - lo[2])),
-    R: lo[3] + f * (hi[3] - lo[3]),
-    M: massSun,
-  };
+  const f = Math.log(massSun / lo[0]) / Math.log(hi[0] / lo[0]);
+  const Teff = Math.exp(Math.log(lo[1]) + f * Math.log(hi[1] / lo[1]));
+  const R = Math.exp(Math.log(lo[2]) + f * Math.log(hi[2] / lo[2]));
+  const L =
+    (4 * Math.PI * Math.pow(R * R_SUN_M, 2) * SIGMA * Math.pow(Teff, 4)) /
+    L_SUN;
+  return { Teff, L, R, M: massSun };
 }
+
+// T_eff used only to turn a T_eff into a spectral type. M4, M4.5 and M5 keep their smoothed
+// physical T_eff in the table, but their type boundaries follow the published scale
+// (Pecaut and Mamajek: M4 3210, M4.5 3110, M5 3060 K).
+const M_TYPE_TEFF = { M4: 3210, "M4.5": 3110, M5: 3060 };
 
 // Build an ordered list of keys for interpolation
 // Each entry: { key, classLetter, subtype, Teff, logL, R, M }
@@ -340,6 +360,7 @@ const MS_SEQUENCE = (() => {
       R,
       M,
       L: Math.pow(10, logL),
+      typeTeff: M_TYPE_TEFF[key] !== undefined ? M_TYPE_TEFF[key] : Teff,
     });
   }
   // Sort by descending Teff (same as HR diagram left to right)
@@ -393,7 +414,7 @@ const MS_SMOOTH = (() => {
     rows.map((r) => r.logL - 1.5 * Math.log10(r.M)),
   ).map((y, i) => y + 1.5 * Math.log10(rows[i].M));
   const logR = isotonicIncreasing(rows.map((r) => r.logR));
-  // The BHAC15 node (lowest mass) keeps its own model-atmosphere T_eff
+  // The low-mass node keeps its own T_eff (Stefan-Boltzmann consistent with its L and R)
   const Teff = [
     rows[0].Teff,
     ...isotonicIncreasing(rows.slice(1).map((r) => r.Teff)),
@@ -610,9 +631,9 @@ function massToSubtype(massSun) {
 // T_eff → spectral type for MS stars — nearest Mamajek table entry by Teff.
 function teffToSpectralType(teff) {
   let best = MS_SEQUENCE[0];
-  let bestDist = Math.abs(MS_SEQUENCE[0].Teff - teff);
+  let bestDist = Math.abs(MS_SEQUENCE[0].typeTeff - teff);
   for (const e of MS_SEQUENCE) {
-    const d = Math.abs(e.Teff - teff);
+    const d = Math.abs(e.typeTeff - teff);
     if (d < bestDist) {
       bestDist = d;
       best = e;
@@ -742,6 +763,22 @@ function mainSequenceLifetimeBase(massSun, luminosityZams) {
   }
   // F/G/K/M: fuel/burn-rate formula is well-calibrated from Mamajek table
   const tFuel = (massSun / luminosityZams) * 10;
+  // Below 0.5 M_Sun the star mixes and burns most of its hydrogen, so the 10% rule is far too
+  // short. Laughlin, Bodenheimer and Adams (1997): about 10 Tyr at 0.08, about 6 Tyr at 0.1,
+  // about 1 Tyr at 0.2 M_Sun. Between 0.2 and 0.5 the curve joins the fuel formula.
+  if (massSun < 0.5) {
+    const pts = [
+      [0.08, 10000],
+      [0.1, 6000],
+      [0.2, 1000],
+      [0.5, (0.5 / msZamsFromMass(0.5).L) * 10],
+    ];
+    let i = 0;
+    if (massSun > pts[1][0]) i = massSun > pts[2][0] ? 2 : 1;
+    const [m1, t1] = pts[i];
+    const [m2, t2] = pts[i + 1];
+    return t1 * Math.pow(t2 / t1, Math.log(massSun / m1) / Math.log(m2 / m1));
+  }
   if (massSun <= 1.5) return tFuel;
   // 1.5 to 2 M_Sun: mix toward the A-type power law so there is no jump at 2 M_Sun
   const x = (massSun - 1.5) / 0.5;
@@ -819,7 +856,7 @@ function printMS(
     t_MS = mainSequenceLifetime(massSun, zamsBase.L, feh);
   }
 
-  const Teff = useBHAC15 ? zams.Teff : calcTeff(L, R); // BHAC15 uses model atmosphere Teff
+  const Teff = calcTeff(L, R); // always S-B, so T_eff, R and L agree
   const density = calcDensity(massSun, R);
 
   // Derive spectral type from Teff when entered by mass — temperature defines the type.
@@ -864,7 +901,7 @@ function printMS(
   console.log(`                       ${fmt(R * R_SUN_KM)} km`);
   printLumBlock(L, Teff);
   console.log(
-    `T_eff ${useBHAC15 ? "(model atm., use for SE):" : "(S-B derived):        "} ${fmtTeff(Teff)} K`,
+    `T_eff ${useBHAC15 ? "(S-B derived, use for SE):" : "(S-B derived):        "} ${fmtTeff(Teff)} K`,
   );
   console.log(`Mean density:          ${fmt(density)} g/cm³`);
   if (massSun > 150)

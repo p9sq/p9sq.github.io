@@ -213,34 +213,47 @@ const MS_TABLE = {
   M1: [3660, -1.39, 0.501, 0.5],
   "M1.5": [3620, -1.44, 0.482, 0.47],
   M2: [3560, -1.54, 0.446, 0.44],
-  "M2.5": [3470, -1.64, 0.421, 0.4],
+  "M2.5": [3470, -1.69, 0.395, 0.4],
   M3: [3430, -1.79, 0.361, 0.37],
   "M3.5": [3270, -2.03, 0.3, 0.27],
-  M4: [3210, -2.14, 0.274, 0.23],
-  "M4.5": [3110, -2.4, 0.217, 0.162],
-  M5: [2950, -2.7, 0.189, 0.132],
-  "M5.5": [2800, -3.0, 0.168, 0.113],
-  M6: [2700, -3.14, 0.148, 0.102],
-  "M6.5": [2600, -3.28, 0.127, 0.09],
-  M7: [2500, -3.49, 0.112, 0.083],
-  "M7.5": [2400, -3.67, 0.107, 0.078],
-  M8: [2300, -3.87, 0.101, 0.073],
-  "M8.5": [2200, -4.07, 0.097, 0.07],
-  M9: [2000, -4.6, 0.088, 0.079],
+  // M4, M4.5 and M5 were adjusted so R and T_eff rise smoothly with mass and match measured
+  // M dwarfs (Barnard's Star 0.162 M, R 0.187; Wolf 1069 0.167 M, R 0.183; GJ 1132 0.181 M,
+  // R 0.211; LTT 1445A 0.257 M, R 0.271; L 98-59 0.273 M, R 0.303). logL follows Stefan-Boltzmann.
+  M4: [3250, -2.2, 0.25, 0.23],
+  "M4.5": [3190, -2.47, 0.19, 0.162],
+  M5: [3070, -2.69, 0.159, 0.132],
+  // M5.5 to M9: T_eff follows the Pecaut and Mamajek spectral type scale (M6.5 is halfway
+  // between M6 and M7). Mass and R come from the low-mass table at that T_eff, and logL
+  // comes from Stefan-Boltzmann.
+  "M5.5": [2930, -2.88, 0.141, 0.1164],
+  M6: [2810, -3.03, 0.129, 0.1091],
+  "M6.5": [2745, -3.12, 0.122, 0.1037],
+  M7: [2680, -3.2, 0.116, 0.0986],
+  "M7.5": [2630, -3.26, 0.113, 0.0953],
+  M8: [2570, -3.33, 0.109, 0.0913],
+  "M8.5": [2420, -3.54, 0.097, 0.0848],
+  M9: [2380, -3.59, 0.094, 0.0832],
 };
 
-// Baraffe et al. (2015) near the hydrogen-burning limit: [M, Teff, logL, R]
+// Low-mass main-sequence table, 0.075 to 0.15 M_Sun (near the hydrogen-burning limit)
+// Columns: [M (M_Sun), Teff (K), R (R_Sun)]. Luminosity is NOT stored. It comes from
+// Stefan-Boltzmann, so Teff, R and L always agree with each other.
+// Shape follows the Baraffe et al. (2015) BHAC15 10 Gyr isochrone, solar metallicity,
+// checked against measured stars (TRAPPIST-1, Teegarden's Star, Wolf 359, Proxima, GJ 1061, Barnard's Star).
 const BHAC15_LOW_MASS = [
-  [0.075, 2650, -4.27, 0.09],
-  [0.08, 2750, -4.0, 0.096],
-  [0.085, 2820, -3.82, 0.101],
-  [0.09, 2900, -3.63, 0.107],
-  [0.1, 3000, -3.42, 0.117],
-  [0.11, 3100, -3.22, 0.128],
-  [0.12, 3190, -3.05, 0.138],
-  [0.13, 3270, -2.9, 0.148],
-  [0.15, 3380, -2.66, 0.165],
+  [0.075, 2150, 0.085],
+  [0.08, 2300, 0.088],
+  [0.09, 2550, 0.108],
+  [0.1, 2700, 0.117],
+  [0.11, 2820, 0.13],
+  [0.12, 2990, 0.148],
+  [0.13, 3080, 0.157],
+  [0.15, 3180, 0.172],
 ];
+
+// T_eff used only to turn a T_eff into a spectral type. M4, M4.5 and M5 keep their smoothed
+// physical T_eff, but their type boundaries follow the Pecaut and Mamajek scale.
+const M_TYPE_TEFF = { M4: 3210, "M4.5": 3110, M5: 3060 };
 
 const MS_ROWS = Object.keys(MS_TABLE).map((key) => {
   const [Teff, logL, R, M] = MS_TABLE[key];
@@ -252,9 +265,10 @@ const MS_ROWS = Object.keys(MS_TABLE).map((key) => {
     L: Math.pow(10, logL),
     R,
     M,
+    typeTeff: M_TYPE_TEFF[key] !== undefined ? M_TYPE_TEFF[key] : Teff,
   };
 });
-const MS_BY_TEFF = [...MS_ROWS].sort((a, b) => b.Teff - a.Teff);
+const MS_BY_TEFF = [...MS_ROWS].sort((a, b) => b.typeTeff - a.typeTeff);
 // Rows below 0.15 M_Sun are out of order in mass, so BHAC15 covers that range instead
 const MS_BY_MASS = MS_ROWS.filter((r) => r.M >= 0.15).sort((a, b) => a.M - b.M);
 
@@ -270,13 +284,15 @@ function bhac15Lookup(m) {
       break;
     }
   }
-  const f = hi[0] === lo[0] ? 0 : (mm - lo[0]) / (hi[0] - lo[0]);
-  return {
-    Teff: lo[1] + f * (hi[1] - lo[1]),
-    L: Math.pow(10, lo[2] + f * (hi[2] - lo[2])),
-    R: lo[3] + f * (hi[3] - lo[3]),
-    M: m,
-  };
+  // log mass, log R and log T_eff. L follows from Stefan-Boltzmann
+  const f =
+    hi[0] === lo[0] ? 0 : Math.log(mm / lo[0]) / Math.log(hi[0] / lo[0]);
+  const Teff = Math.exp(Math.log(lo[1]) + f * Math.log(hi[1] / lo[1]));
+  const R = Math.exp(Math.log(lo[2]) + f * Math.log(hi[2] / lo[2]));
+  const L =
+    (4 * Math.PI * Math.pow(R * R_SUN_M, 2) * SIGMA * Math.pow(Teff, 4)) /
+    L_SUN;
+  return { Teff, L, R, M: m };
 }
 
 // ------------------------------------------------------------
@@ -326,7 +342,7 @@ const MS_SMOOTH = (() => {
     rows.map((r) => r.logL - 1.5 * Math.log10(r.M)),
   ).map((v, i) => v + 1.5 * Math.log10(rows[i].M));
   const logR = isotonicIncreasing(rows.map((r) => r.logR));
-  // The BHAC15 node (lowest mass) keeps its own model-atmosphere T_eff
+  // The low-mass node (lowest mass) keeps its own T_eff, which agrees with its L and R
   const Teff = [
     rows[0].Teff,
     ...isotonicIncreasing(rows.slice(1).map((r) => r.Teff)),
@@ -450,7 +466,7 @@ function msByType(letter, sub) {
 function specFromTeff(teff) {
   let best = MS_BY_TEFF[0];
   for (const e of MS_BY_TEFF) {
-    if (Math.abs(e.Teff - teff) < Math.abs(best.Teff - teff)) best = e;
+    if (Math.abs(e.typeTeff - teff) < Math.abs(best.typeTeff - teff)) best = e;
   }
   return `${best.letter}${Number.isInteger(best.subtype) ? best.subtype : String(best.subtype)}`;
 }
@@ -517,7 +533,21 @@ function msLifetimeGyr(m, feh) {
   else {
     // Smooth ZAMS luminosity, so a heavier star never lives longer than a lighter one
     const tFuel = (m / zamsFromMass(m).L) * 10;
-    if (m <= 1.5) base = tFuel;
+    if (m < 0.5) {
+      // Red dwarfs mix and burn most of their hydrogen, so the 10% rule is far too short.
+      // Laughlin, Bodenheimer and Adams (1997): about 10 Tyr at 0.08, 6 Tyr at 0.1, 1 Tyr at 0.2 M_Sun.
+      const pts = [
+        [0.08, 10000],
+        [0.1, 6000],
+        [0.2, 1000],
+        [0.5, (0.5 / zamsFromMass(0.5).L) * 10],
+      ];
+      let i = 0;
+      if (m > pts[1][0]) i = m > pts[2][0] ? 2 : 1;
+      const [m1, t1] = pts[i];
+      const [m2, t2] = pts[i + 1];
+      base = t1 * Math.pow(t2 / t1, Math.log(m / m1) / Math.log(m2 / m1));
+    } else if (m <= 1.5) base = tFuel;
     else {
       // 1.5 to 2 M_Sun: mix toward the A-type power law so there is no jump at 2 M_Sun
       const x = (m - 1.5) / 0.5;
