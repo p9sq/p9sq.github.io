@@ -629,22 +629,23 @@ while 1 == 1:
         print (MaxRadiusOfAster)
         print ("")
 
-        # Parent star mass, used for the stable zone of moons and binary partners
-        StarMass = AskFloat("Mass of the parent star in solar masses \n (keeps moons and binary partners inside the stable zone) \n Default = 1.0 : ", 1.0)
-        print (StarMass)
-        print("")
-
-        # SE adds the host planet's mass to the star's mass when it works out the host's period,
-        # so the host runs slightly faster than a body with the same semimajor axis and no mass.
-        # The semimajor axis of the swarm is shortened by the same factor to keep the lock.
-        HostMass = AskFloat("Host planet mass in Earth masses \n (SE counts it in the host's period) \n Default = 0 : ", 0.0)
-        print (HostMass)
-        print("")
 
         # Host orbital parameters
         HostSemi = AskFloat("Host planet Semimajor Axis in AU \n Default = 5.2 : ", 5.2)
         print (HostSemi)
         print("")
+
+        # With a period, SE converts it to an axis itself, so the swarm matches the host exactly.
+        # The star mass for Hill spheres and locking comes from Kepler's third law (a^3 / P^2).
+        HostPeriod = AskFloat("Host orbital period in years \n (blank = use the semimajor axis only) \n Default = 0 : ", 0.0)
+        print (HostPeriod)
+        print("")
+        UsePeriod = HostPeriod > 0
+        if UsePeriod:
+            StarMass = math.pow(HostSemi, 3) / math.pow(HostPeriod, 2)
+            print ("Mass from a and P = " + str(StarMass) + " solar masses\n")
+        else:
+            StarMass = 1.0      # asked at the locking prompt if you lock
 
         print("Use the same RefPlane and Epoch as the host's Orbit block for the next values.\n")
         HostEpoch = AskFloat("Host Epoch \n Default = 2451545 : ", 2451545)
@@ -678,8 +679,6 @@ while 1 == 1:
             RefPlane = 'Ecliptic'
         print (RefPlane + '\n')
 
-        PeriodFactor = math.pow(StarMass / (StarMass + HostMass * SolMassOfEarth), 1.0 / 3.0)
-
         if GenMode == 'Trojan':
             # Lagrange selection
             TrojanPoint = ''
@@ -691,11 +690,8 @@ while 1 == 1:
             # Trojans share the host semimajor axis (1:1 resonance)
             ObjOrbits = 1
             HostOrbits = 1
-            SemiChoice = GetInput("Trojan semimajor axis\n 1 = host's value exactly\n 2 = shortened for the host mass (stays in sync with the host in SE)\n Default = 1 : ")
-            if SemiChoice == '2':
-                ObjectSemi = HostSemi * PeriodFactor
-            else:
-                ObjectSemi = HostSemi
+            ObjectSemi = HostSemi
+            ObjectPeriod = HostPeriod
 
             # Spread
             Spread = AskFloat("Angular spreading around L-point (deg)\n Default = 20 : ", 20.0)
@@ -719,7 +715,8 @@ while 1 == 1:
                 print ('Only first-order resonances work here: 2:1, 3:2, 4:3, 5:4 ...')
 
             # Kepler's third law: period ratio is HostOrbits/ObjOrbits for the object
-            ObjectSemi = HostSemi * math.pow(float(HostOrbits) / ObjOrbits, 2.0 / 3.0) * PeriodFactor
+            ObjectSemi = HostSemi * math.pow(float(HostOrbits) / ObjOrbits, 2.0 / 3.0)
+            ObjectPeriod = HostPeriod * HostOrbits / ObjOrbits
             print ("Resulting Semimajor Axis = " + str(ObjectSemi) + " AU\n")
 
             # The slow, crowded parts of the orbit sit at ObjOrbits points around the host orbit
@@ -738,6 +735,7 @@ while 1 == 1:
         # Tidal locking: lock a body when its locking time is shorter than the system age
         AutoLock = GetInput("Tidally lock bodies that have time to lock? (y/n)\n Default = y : ").lower() != 'n'
         if AutoLock:
+            StarMass = AskFloat("Mass of the parent star in solar masses\n Default = " + str(StarMass) + " : ", StarMass)
             SystemAge = AskFloat("System age in Gyr\n Default = 5.2 : ", 5.2)
             Rigidity = AskFloat("Rigidity in Pa (solid rock 3e10, rubble pile 1e8)\n Default = 3e10 : ", 3e10)
             LockQ = AskFloat("Tidal Q\n Default = 100 : ", 100.0)
@@ -1032,7 +1030,7 @@ while 1 == 1:
         asteroid.obliquity = random.uniform(0,360)
         asteroid.orbit = orbit
         asteroid.locked = False
-        if AutoLock and lockTimeYears(orbit.semi, asteroid.radius, asteroid.rho, asteroid.rotation) < SystemAge * 1e9:
+        if AutoLock and lockTimeYears(ObjectSemi, asteroid.radius, asteroid.rho, asteroid.rotation) < SystemAge * 1e9:
             asteroid.locked = True
             del asteroid.rotation       # SE sets the period from the orbit
 
@@ -1092,7 +1090,7 @@ while 1 == 1:
         outputfile.write('// AsterName       = ' + AsterName + '\n')
         outputfile.write('// StarMass        = ' + str(StarMass) + '\n')
         outputfile.write('// GenerationMode  = ' + GenMode + '\n')
-        outputfile.write('// Host Mass (Earth masses) = ' + str(HostMass) + '\n')
+        outputfile.write('// Host Period (years) = ' + str(HostPeriod) + '\n')
         outputfile.write('// Host Semimajor Axis   = ' + str(HostSemi) + '\n')
         outputfile.write('// Object Semimajor Axis = ' + str(ObjectSemi) + '\n')
         if AutoLock:
@@ -1125,6 +1123,8 @@ while 1 == 1:
 
             orbit = Orbit()
             orbit.semi = ObjectSemi
+            if UsePeriod:
+                orbit.period = ObjectPeriod
             orbit.eccen = randomGenerator(MinEccentricity, MaxEccentricity)
             orbit.epoch = epoch
             orbit.refplane = RefPlane
