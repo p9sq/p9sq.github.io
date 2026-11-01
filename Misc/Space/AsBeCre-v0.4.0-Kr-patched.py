@@ -93,6 +93,8 @@ if Locale[0] == 'de_DE':
 daysYear = 365.24218985
 AU = 149597870.691
 SolMassOfEarth = 3.00316726157558694887e-6
+SolMassKg = 1.98847e30
+GravConst = 6.674e-11
 EarthMass = 5.9736e24
 
 #uncomment this line if you want repeatable results
@@ -105,6 +107,17 @@ def GetInput(s):
         return input(s)
     else:
         return raw_input(s)
+
+
+def AskFloat(prompt, default):
+    while True:
+        text = GetInput(prompt)
+        if text == '':
+            return default
+        try:
+            return float(text)
+        except ValueError:
+            print ('Enter a number.')
 
 
 # Select preset
@@ -124,6 +137,7 @@ while 1 == 1:
     MainInclination = 0.0
     asterSuffix = ''
     asterColor = ''
+    AutoLock = False
 
     Preset = 0
 
@@ -684,6 +698,20 @@ while 1 == 1:
         print (epoch)
         print ("")
 
+        # Tidal locking: lock a body when its locking time is shorter than the system age
+        if ObjectType == 'Asteroid':
+            AutoLock = GetInput("Tidally lock bodies that have time to lock? (y/n)\n Default = n : ").lower() == 'y'
+            if AutoLock:
+                if TotalMass > 0.0:
+                    defStarMass = TotalMass
+                else:
+                    defStarMass = 1.0
+                LockStarMass = AskFloat("Mass of the parent in solar masses\n Default = " + str(defStarMass) + " : ", defStarMass)
+                SystemAge = AskFloat("System age in Gyr\n Default = 5.2 : ", 5.2)
+                Rigidity = AskFloat("Rigidity in Pa (solid rock 3e10, rubble pile 1e8)\n Default = 3e10 : ", 3e10)
+                LockQ = AskFloat("Tidal Q\n Default = 100 : ", 100.0)
+                print ("")
+
         #FileName
         FileName = GetInput(LngStr25 + defFileName + ' : ')
         if FileName == '':
@@ -809,6 +837,8 @@ while 1 == 1:
                 result.append('\tRotationPeriod\t{0}'.format(self.rotation))
             if hasattr(self, 'obliquity'):
                 result.append('\n\tObliquity\t\t{0}\n'.format(self.obliquity))
+            if getattr(self, 'locked', False):
+                result.append('\tTidalLocked\t\ttrue\n')
             if AsterName == 'Kryptonit':
                 result.append('\tAlbedo\t\t\t' + str(random.random() / 10) + '\n')
                 result.append('\tColor\t\t\t' + asterColor + '\n')
@@ -935,6 +965,19 @@ while 1 == 1:
         return moon.PrintIt()
 
 
+    def lockTimeYears(a_au, radius_km, rho_gcc, startSpinHours):
+        # Gladman et al. 1996 with k2 = 1.5 / (1 + 19 mu / (2 rho g R))
+        a = a_au * AU * 1000.0   # AU constant is in km
+        R = radius_km * 1000.0
+        rho = rho_gcc * 1000.0
+        m = 4.0 / 3.0 * math.pi * R**3 * rho
+        g = GravConst * m / R**2
+        k2 = 1.5 / (1.0 + 19.0 * Rigidity / (2.0 * rho * g * R))
+        w = 2 * math.pi / (startSpinHours * 3600.0)
+        I = 0.4 * m * R**2
+        sec = w * a**6 * I * LockQ / (3.0 * GravConst * math.pow(LockStarMass * SolMassKg, 2) * k2 * R**5)
+        return sec / 3.15576e7
+
     def makeAsteroid(count, orbit):
         asteroid = Asteroid()
         asteroid.name = AsterName + '{0}'.format(count)
@@ -944,11 +987,16 @@ while 1 == 1:
         asteroid.bumpH = asteroid.radius
         asteroid.bumpO = asteroid.radius /2
         
-        asteroid.density = randomGenerator(2,4) * 1e12 / EarthMass
+        asteroid.rho = randomGenerator(2,4)
+        asteroid.density = asteroid.rho * 1e12 / EarthMass
         asteroid.mass = 4/3 * math.pi * math.pow(asteroid.radius,3) * asteroid.density
         asteroid.rotation = randomGenerator(MinRotationPeriod,MaxRotationPeriod)
         asteroid.obliquity = random.uniform(0,360)
         asteroid.orbit = orbit
+        asteroid.locked = False
+        if AutoLock and lockTimeYears(orbit.semi, asteroid.radius, asteroid.rho, asteroid.rotation) < SystemAge * 1e9:
+            asteroid.locked = True
+            del asteroid.rotation       # SE sets the period from the orbit
 
         output = [asteroid.PrintIt()]
         
@@ -1004,6 +1052,8 @@ while 1 == 1:
         outputfile.write('// MainInclination = ' + str(MainInclination) + '\n')
         outputfile.write('// MaxInclination  = ' + str(MaxInclination) + '\n')
         outputfile.write('// RefPlane        = ' + RefPlane + '\n')
+        if AutoLock:
+            outputfile.write('// AutoLock: parent mass ' + str(LockStarMass) + ' Msun, age ' + str(SystemAge) + ' Gyr, rigidity ' + str(Rigidity) + ' Pa, Q ' + str(LockQ) + '\n')
 
         if AscNode >= 0:
             outputfile.write('// AscNode         = ' + str(AscNode) + '\n')

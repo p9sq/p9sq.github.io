@@ -526,6 +526,7 @@ while 1 == 1:
         FileName        = 'C-C_Comets'
         
    # No preset
+    AutoLock = False
     if Preset == 0:
         # Generation mode: Trojans (1:1 co-orbital) or Hildas (first-order resonant belt, e.g. 3:2)
         GenModeInput = GetInput("Generate what?\n 1 = Trojans (1:1 co-orbital resonance)\n 2 = Hildas (resonant belt, e.g. 3:2)\n Default = 1 : ")
@@ -690,7 +691,11 @@ while 1 == 1:
             # Trojans share the host semimajor axis (1:1 resonance)
             ObjOrbits = 1
             HostOrbits = 1
-            ObjectSemi = HostSemi * PeriodFactor
+            SemiChoice = GetInput("Trojan semimajor axis\n 1 = host's value exactly\n 2 = shortened for the host mass (stays in sync with the host in SE)\n Default = 1 : ")
+            if SemiChoice == '2':
+                ObjectSemi = HostSemi * PeriodFactor
+            else:
+                ObjectSemi = HostSemi
 
             # Spread
             Spread = AskFloat("Angular spreading around L-point (deg)\n Default = 20 : ", 20.0)
@@ -730,6 +735,19 @@ while 1 == 1:
 
         epoch = HostEpoch
 
+        # Tidal locking: lock a body when its locking time is shorter than the system age
+        AutoLock = GetInput("Tidally lock bodies that have time to lock? (y/n)\n Default = y : ").lower() != 'n'
+        if AutoLock:
+            SystemAge = AskFloat("System age in Gyr\n Default = 5.2 : ", 5.2)
+            Rigidity = AskFloat("Rigidity in Pa (solid rock 3e10, rubble pile 1e8)\n Default = 3e10 : ", 3e10)
+            LockQ = AskFloat("Tidal Q\n Default = 100 : ", 100.0)
+            print ("")
+
+        nameInput = GetInput("File name (without .sc)\n Default = " + defFileName + " : ").strip()
+        if nameInput.lower().endswith('.sc'):
+            nameInput = nameInput[:-3]
+        if nameInput != '':
+            defFileName = nameInput
         FileName = defFileName + '.sc'
 
     print ('\nCreating: ' + FileName + "\n\n")
@@ -834,6 +852,8 @@ while 1 == 1:
                 result.append('\tRotationPeriod\t{0}'.format(self.rotation))
             if hasattr(self, 'obliquity'):
                 result.append('\n\tObliquity\t\t{0}\n'.format(self.obliquity))
+            if getattr(self, 'locked', False):
+                result.append('\tTidalLocked\t\ttrue\n')
             if AsterName == 'Kryptonit':
                 result.append('\tAlbedo\t\t\t' + str(random.random() / 10) + '\n')
                 result.append('\tColor\t\t\t' + asterColor + '\n')
@@ -982,6 +1002,19 @@ while 1 == 1:
         return moon.PrintIt()
 
 
+    def lockTimeYears(a_au, radius_km, rho_gcc, startSpinHours):
+        # Gladman et al. 1996 with k2 = 1.5 / (1 + 19 mu / (2 rho g R))
+        a = a_au * AU * 1000.0   # AU constant is in km
+        R = radius_km * 1000.0
+        rho = rho_gcc * 1000.0
+        m = 4.0 / 3.0 * math.pi * R**3 * rho
+        g = GravConst * m / R**2
+        k2 = 1.5 / (1.0 + 19.0 * Rigidity / (2.0 * rho * g * R))
+        w = 2 * math.pi / (startSpinHours * 3600.0)
+        I = 0.4 * m * R**2
+        sec = w * a**6 * I * LockQ / (3.0 * GravConst * math.pow(StarMass * SolMassKg, 2) * k2 * R**5)
+        return sec / 3.15576e7
+
     def makeAsteroid(count, orbit):
         asteroid = Asteroid()
         asteroid.name = AsterName + '{0}'.format(count)
@@ -998,6 +1031,10 @@ while 1 == 1:
         asteroid.rotation = randomGenerator(MinRotationPeriod,MaxRotationPeriod)
         asteroid.obliquity = random.uniform(0,360)
         asteroid.orbit = orbit
+        asteroid.locked = False
+        if AutoLock and lockTimeYears(orbit.semi, asteroid.radius, asteroid.rho, asteroid.rotation) < SystemAge * 1e9:
+            asteroid.locked = True
+            del asteroid.rotation       # SE sets the period from the orbit
 
         output = [asteroid.PrintIt()]
 
@@ -1043,7 +1080,7 @@ while 1 == 1:
         outputfile.write('// ' + ObjectType + 's made with AsterBeltCreator (by JackDole)\n// ' + Version + '\n// {0}\n'.format(datetime.today()))
         outputfile.write('// Trojan generator made with AI by mystic.xyz on Discord\n')
         if GenMode == 'Hilda':
-            outputfile.write('// Hildas sit at the exact resonant semimajor axis. Each has resonant angle ' + str(ObjOrbits) + '*L(host) - ' + str(HostOrbits) + '*L(object) - varpi near 0\n')
+            outputfile.write('// Hildas sit at the exact resonant semimajor axis. Each has resonant angle ' + str(ObjOrbits) + '*L(host) - ' + str(HostOrbits) + '*L(object) - varpi near 0')
         else:
             outputfile.write('// Trojans share the host semimajor axis and keep a fixed mean longitude offset of +60 (L4) or -60 (L5) degrees')
 
@@ -1058,6 +1095,8 @@ while 1 == 1:
         outputfile.write('// Host Mass (Earth masses) = ' + str(HostMass) + '\n')
         outputfile.write('// Host Semimajor Axis   = ' + str(HostSemi) + '\n')
         outputfile.write('// Object Semimajor Axis = ' + str(ObjectSemi) + '\n')
+        if AutoLock:
+            outputfile.write('// AutoLock: age ' + str(SystemAge) + ' Gyr, rigidity ' + str(Rigidity) + ' Pa, Q ' + str(LockQ) + '\n')
         outputfile.write('// Host Epoch      = ' + str(HostEpoch) + '\n')
         outputfile.write('// Host Inclination = ' + str(HostIncl) + '\n')
         outputfile.write('// ArgOfPericenter = ' + str(HostArg) + '\n')
