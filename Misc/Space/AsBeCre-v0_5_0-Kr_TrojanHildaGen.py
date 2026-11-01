@@ -633,6 +633,13 @@ while 1 == 1:
         print (StarMass)
         print("")
 
+        # SE adds the host planet's mass to the star's mass when it works out the host's period,
+        # so the host runs slightly faster than a body with the same semimajor axis and no mass.
+        # The semimajor axis of the swarm is shortened by the same factor to keep the lock.
+        HostMass = AskFloat("Host planet mass in Earth masses \n (SE counts it in the host's period) \n Default = 0 : ", 0.0)
+        print (HostMass)
+        print("")
+
         # Host orbital parameters
         HostSemi = AskFloat("Host planet Semimajor Axis in AU \n Default = 5.2 : ", 5.2)
         print (HostSemi)
@@ -670,6 +677,8 @@ while 1 == 1:
             RefPlane = 'Ecliptic'
         print (RefPlane + '\n')
 
+        PeriodFactor = math.pow(StarMass / (StarMass + HostMass * SolMassOfEarth), 1.0 / 3.0)
+
         if GenMode == 'Trojan':
             # Lagrange selection
             TrojanPoint = ''
@@ -681,7 +690,7 @@ while 1 == 1:
             # Trojans share the host semimajor axis (1:1 resonance)
             ObjOrbits = 1
             HostOrbits = 1
-            ObjectSemi = HostSemi
+            ObjectSemi = HostSemi * PeriodFactor
 
             # Spread
             Spread = AskFloat("Angular spreading around L-point (deg)\n Default = 20 : ", 20.0)
@@ -705,7 +714,7 @@ while 1 == 1:
                 print ('Only first-order resonances work here: 2:1, 3:2, 4:3, 5:4 ...')
 
             # Kepler's third law: period ratio is HostOrbits/ObjOrbits for the object
-            ObjectSemi = HostSemi * math.pow(float(HostOrbits) / ObjOrbits, 2.0 / 3.0)
+            ObjectSemi = HostSemi * math.pow(float(HostOrbits) / ObjOrbits, 2.0 / 3.0) * PeriodFactor
             print ("Resulting Semimajor Axis = " + str(ObjectSemi) + " AU\n")
 
             # The slow, crowded parts of the orbit sit at ObjOrbits points around the host orbit
@@ -1046,6 +1055,7 @@ while 1 == 1:
         outputfile.write('// AsterName       = ' + AsterName + '\n')
         outputfile.write('// StarMass        = ' + str(StarMass) + '\n')
         outputfile.write('// GenerationMode  = ' + GenMode + '\n')
+        outputfile.write('// Host Mass (Earth masses) = ' + str(HostMass) + '\n')
         outputfile.write('// Host Semimajor Axis   = ' + str(HostSemi) + '\n')
         outputfile.write('// Object Semimajor Axis = ' + str(ObjectSemi) + '\n')
         outputfile.write('// Host Epoch      = ' + str(HostEpoch) + '\n')
