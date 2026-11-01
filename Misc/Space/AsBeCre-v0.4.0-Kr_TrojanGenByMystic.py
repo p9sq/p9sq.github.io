@@ -108,6 +108,17 @@ def GetInput(s):
         return raw_input(s)
 
 
+def AskFloat(prompt, default):
+    while True:
+        text = GetInput(prompt)
+        if text == '':
+            return default
+        try:
+            return float(text)
+        except ValueError:
+            print ('Enter a number.')
+
+
 # Select preset
 MaxPresets = 20
 
@@ -143,6 +154,9 @@ while 1 == 1:
             Preset = 0
         print (Preset)
         print ("")
+        if Preset != 0:
+            print ("Presets do not work in the Trojan version. Choose 0.\n")
+            continue
 
     # Preset Vulcanoids
     if Preset == 1:
@@ -577,10 +591,7 @@ while 1 == 1:
         #print ("")
 
         # Number of Trojans
-        NumberOfAster = GetInput("Number of Trojan objects\n Default = 50 : ")
-        if NumberOfAster == '':
-            NumberOfAster = 50
-        NumberOfAster = int(NumberOfAster)
+        NumberOfAster = int(AskFloat("Number of Trojan objects\n Default = 50 : ", 50))
         print(NumberOfAster)
         print("")
 
@@ -590,61 +601,50 @@ while 1 == 1:
             AsterName = defObjName
         print (AsterName + '\n')
 
-        MinRadiusOfAster = GetInput(LngStr18)
-        if MinRadiusOfAster == '':
-            MinRadiusOfAster = 0.1
-        MinRadiusOfAster = float(MinRadiusOfAster)
+        MinRadiusOfAster = AskFloat(LngStr18, 0.1)
         print (MinRadiusOfAster)
         print ("")
 
         # Radius of asteroids in KM
-        MaxRadiusOfAster = GetInput(LngStr19)
-        if MaxRadiusOfAster == '':
-            MaxRadiusOfAster = 50.0
-        MaxRadiusOfAster = float(MaxRadiusOfAster)
+        MaxRadiusOfAster = AskFloat(LngStr19, 50.0)
+        if MaxRadiusOfAster < MinRadiusOfAster:
+            MaxRadiusOfAster = MinRadiusOfAster
         print (MaxRadiusOfAster)
         print ("")
 
+        # Parent star mass, used for the stable zone of moons and binary partners
+        StarMass = AskFloat("Mass of the parent star in solar masses \n (keeps moons and binary partners inside the stable zone) \n Default = 1.0 : ", 1.0)
+        print (StarMass)
+        print("")
+
         # Host orbital parameters
-        HostSemi = GetInput("Trojan-hosting planet Semimajor Axis \n Default = 5.2 : ")
-        if HostSemi == '':
-            HostSemi = 5.2
-        HostSemi = float(HostSemi)
+        HostSemi = AskFloat("Trojan-hosting planet Semimajor Axis in AU \n Default = 5.2 : ", 5.2)
         print (HostSemi)
         print("")
 
-        HostArg  = float(GetInput("Host ArgOfPericen (deg): "))
-        HostNode = float(GetInput("Host AscendingNode (deg): "))
-        HostMean = float(GetInput("Host MeanAnomaly (deg): "))
+        print("Use the same RefPlane and Epoch as the host's Orbit block for the next values.\n")
+        HostEpoch = AskFloat("Host Epoch \n Default = 2451545 : ", 2451545)
+        HostIncl = AskFloat("Host Inclination (deg) \n Default = 0 : ", 0.0)
+        HostNode = AskFloat("Host AscendingNode (deg) \n Default = 0 : ", 0.0)
+        HostArg = AskFloat("Host ArgOfPericen (deg) \n Default = 0 : ", 0.0)
+        HostMean = AskFloat("Host MeanAnomaly (deg) \n Default = 0 : ", 0.0)
         print("")
 
         #orbital eccentricity
-        MaxEccentricity = GetInput(LngStr20)
-        if MaxEccentricity == '':
-            MaxEccentricity = 0.1
-        MaxEccentricity = float(MaxEccentricity)
+        MaxEccentricity = AskFloat(LngStr20, 0.1)
         print (MaxEccentricity)
         print ("")
 
-        MinEccentricity = GetInput(LngStr21)
-        if MinEccentricity == '':
-            MinEccentricity = 0.0
-        MinEccentricity = float(MinEccentricity)
+        MinEccentricity = AskFloat(LngStr21, 0.0)
         print (MinEccentricity)
         print ("")
 
-        # Orbital inclination  in degrees
-        MinInclination = GetInput(LngStr22)
-        if MinInclination == '':
-            MinInclination = 0.0
-        MinInclination = float(MinInclination)
+        # Tilt of each orbit away from the host orbit plane, in degrees
+        MinInclination = AskFloat("Minimum tilt away from the host orbit plane in degrees \n Default = 0.0 : ", 0.0)
         print (MinInclination)
         print ("")
 
-        MaxInclination = GetInput(LngStr225)
-        if MaxInclination == '':
-            MaxInclination = 10.0
-        MaxInclination = float(MaxInclination)
+        MaxInclination = AskFloat("Maximum tilt away from the host orbit plane in degrees \n Default = 10.0 : ", 10.0)
         print (MaxInclination)
         print ("")
 
@@ -655,14 +655,16 @@ while 1 == 1:
         print (RefPlane + '\n')
 
         # Lagrange selection
-        TrojanPoint = GetInput("Trojan location\n 1 = L4\n 2 = L5\n 3 = Both\n Default = 1 : ")
-        if TrojanPoint == '':
-            TrojanPoint = '1'
+        TrojanPoint = ''
+        while TrojanPoint not in ('1', '2', '3'):
+            TrojanPoint = GetInput("Trojan location\n 1 = L4\n 2 = L5\n 3 = Both\n Default = 1 : ")
+            if TrojanPoint == '':
+                TrojanPoint = '1'
 
         # Spread
-        Spread = float(GetInput("Angular spreading around L-point (deg)\n Default = 20 : ") or 20)
+        Spread = AskFloat("Angular spreading around L-point (deg)\n Default = 20 : ", 20.0)
 
-        epoch = 2451545
+        epoch = HostEpoch
 
         FileName = defFileName + '.sc'
 
@@ -672,24 +674,16 @@ while 1 == 1:
 
     #rotation periods in hours. See https://www.boulder.swri.edu/~bottke/rubble/node3.html
     MaxRotationPeriod = 12
-    MinRotationPeriod = 0.1
+    MinRotationPeriod = 2.2      # spin barrier of rubble piles
 
-    ChanceOfMoon = 0.9      #1.0
-    ChanceOfBinary = 0.1    #0.0
+    # Chance that a body has a moon, and chance that it is a binary pair.
+    # Close to the star, YORP spin-up makes both common.
+    ChanceOfMoon = 0.15
+    ChanceOfBinary = 0.15
 
-    if ObjectType == 'Comet':
-        ChanceOfMoon = 1.0
-        ChanceOfBinary = 0.2
-
-    if AsterName == 'GR':
-        ChanceOfMoon = 1.0
-        ChanceOfBinary = 0.0
-        
-    # If you want dwarf moons with moons change these values:
-    # ChanceOfMoon < 1.0
-    # ChangeOfBinary > 0.0
+    # Dwarf moons get no moons and no binary partners
     if ObjectType == 'DwarfMoon':
-        ChanceOfMoon = 1.0
+        ChanceOfMoon = 0.0
         ChanceOfBinary = 0.0
 
     class Surface:
@@ -822,10 +816,10 @@ while 1 == 1:
     class BinaryAsteroid:
         def PrintIt(self):
             result = ['Barycenter "{0}"\n{{\n\tParentBody\t"{1}"'.format(self.name, self.parent)]
-            result.append(orbit.PrintIt())
+            result.append(self.orbit.PrintIt())
             result.append('}\n')
 
-            density = randomGenerator(2,4) * 1e12 / EarthMass
+            density = self.rho * 1e12 / EarthMass
 
             #asteroid = Asteroid()
             if binAsDwarf == 1:
@@ -861,15 +855,49 @@ while 1 == 1:
 
     randomGenerator = gaussian
 
+    # Power law keeps small bodies common, as in real size counts.
+    def powerlaw(a, b, slope=2.0):
+        if a <= 0 or b <= a:
+            return gaussian(a, b)
+        u = random.random()
+        return (a**-slope - u*(a**-slope - b**-slope)) ** (-1/slope)
+
+    SolMassKg = 1.98847e30
+    GravConst = 6.674e-11
+
+    # Hill radius of a body in units of its own radius. rho in g/cm3.
+    def hillOverRadius(rho):
+        return HostSemi * AU * math.pow(4 * math.pi * rho * 1e12 / (9 * StarMass * SolMassKg), 1.0/3.0)
+
+    # Rotate the host orbit normal by 'tilt' degrees toward 'direction' degrees.
+    # Gives the inclination and node of an orbit tilted away from the host plane.
+    def tiltOrbit(hostIncl, hostNode, tilt, direction):
+        i = math.radians(hostIncl)
+        n = math.radians(hostNode)
+        nh = (math.sin(i)*math.sin(n), -math.sin(i)*math.cos(n), math.cos(i))
+        e1 = (math.cos(n), math.sin(n), 0.0)
+        e2 = (nh[1]*e1[2] - nh[2]*e1[1], nh[2]*e1[0] - nh[0]*e1[2], nh[0]*e1[1] - nh[1]*e1[0])
+        t = math.radians(tilt)
+        d = math.radians(direction)
+        v = [math.cos(t)*nh[k] + math.sin(t)*(math.cos(d)*e1[k] + math.sin(d)*e2[k]) for k in range(3)]
+        incl = math.degrees(math.acos(max(-1.0, min(1.0, v[2]))))
+        if math.hypot(v[0], v[1]) < 1e-9:
+            node = hostNode % 360
+        else:
+            node = math.degrees(math.atan2(v[0], -v[1])) % 360
+        return incl, node
+
     def makeMoon(parentAsteroid, moonCount):
-        innerLimit = parentAsteroid.radius/AU * 1.1
-        outerLimit = innerLimit * 20
+        # Rubble piles hold a moon outside about 2.4 radii (Roche limit)
+        # and inside about 0.3 of their Hill sphere.
+        innerLimit = parentAsteroid.radius/AU * 2.4
+        outerLimit = parentAsteroid.radius/AU * min(20.0, 0.3 * parentAsteroid.hill)
 
         if binAsDwarf == 1:
             moon = DwarfMoon()
         else:
             moon = Asteroid()
-        
+
         moon.radius = random.uniform(parentAsteroid.radius/20, parentAsteroid.radius/4)
         moon.mass = 4/3 * math.pi * math.pow(moon.radius,3) * parentAsteroid.density
         moon.name = parentAsteroid.name + '.{0}'.format(moonCount)
@@ -879,11 +907,11 @@ while 1 == 1:
         orbit.parent = parentAsteroid.name
         orbit.refplane = 'Equator'
         orbit.semi = random.uniform(innerLimit, outerLimit)
-        orbit.incl = randomGenerator(-90, 90)
+        orbit.incl = math.degrees(math.acos(random.uniform(-1, 1)))
         orbit.eccen = randomGenerator(0, 0.01)       # 0.1
         orbit.argof = random.uniform(0,360)
         orbit.ascen = random.uniform(0,360)
-        orbit.mean = random.uniform(0,180)
+        orbit.mean = random.uniform(0,360)
 
         moon.orbit = orbit
 
@@ -894,41 +922,52 @@ while 1 == 1:
         asteroid = Asteroid()
         asteroid.name = AsterName + '{0}'.format(count)
         asteroid.parent = CenterObject
-        asteroid.radius = randomGenerator(MinRadiusOfAster, MaxRadiusOfAster)
-        
+        asteroid.radius = powerlaw(MinRadiusOfAster, MaxRadiusOfAster)
+
         asteroid.bumpH = asteroid.radius
         asteroid.bumpO = asteroid.radius /2
-        
-        asteroid.density = randomGenerator(2,4) * 1e12 / EarthMass
+
+        asteroid.rho = randomGenerator(2,4)
+        asteroid.density = asteroid.rho * 1e12 / EarthMass
+        asteroid.hill = hillOverRadius(asteroid.rho)
         asteroid.mass = 4/3 * math.pi * math.pow(asteroid.radius,3) * asteroid.density
         asteroid.rotation = randomGenerator(MinRotationPeriod,MaxRotationPeriod)
         asteroid.obliquity = random.uniform(0,360)
         asteroid.orbit = orbit
 
         output = [asteroid.PrintIt()]
-        
-        moonCount = 0
-        while random.random() > ChanceOfMoon and moonCount < 10:
-            moonCount = moonCount + 1
-            output.append(makeMoon(asteroid, moonCount))
-        
+
+        # One moon at most, and only where the stable zone is wide enough
+        if 0.3 * asteroid.hill > 3.0 and random.random() < ChanceOfMoon:
+            output.append(makeMoon(asteroid, 1))
+
         return '\n'.join(output)
 
     def makeBinaryAsteroid(count, orbit):
         binary = BinaryAsteroid()
         binary.name = AsterName + '{0}'.format(count)
         binary.parent = CenterObject
-        binary.radius1 = randomGenerator(MinRadiusOfAster, MaxRadiusOfAster)
+        binary.radius1 = powerlaw(MinRadiusOfAster, MaxRadiusOfAster)
         binary.radius2 = binary.radius1 * random.uniform(0.25,1)
+        binary.rho = randomGenerator(2,4)
         binary.orbit = orbit
 
+        # Separation between a loose contact and 0.3 of the Hill sphere
+        sepMin = 1.5 * (binary.radius1 + binary.radius2)
+        sepMax = 0.3 * hillOverRadius(binary.rho) * binary.radius1
+        if sepMax <= sepMin:
+            return None
+        sep = random.uniform(sepMin, sepMax)
+        totalMass = 4/3 * math.pi * (math.pow(binary.radius1*1000, 3) + math.pow(binary.radius2*1000, 3)) * binary.rho * 1000
+        periodSec = 2 * math.pi * math.sqrt(math.pow(sep*1000, 3) / (GravConst * totalMass))
+
         componentOrbit = Orbit()
-        componentOrbit.period = random.uniform(0.1, 3) / daysYear
-        componentOrbit.incl = random.uniform(0,360)
+        componentOrbit.period = periodSec / 86400.0 / daysYear
+        componentOrbit.incl = math.degrees(math.acos(random.uniform(-1, 1)))
         componentOrbit.eccen = randomGenerator(0, 0.01)      # 0.1
         componentOrbit.argof = random.uniform(0,360)
         componentOrbit.ascen = random.uniform(0,360)
-        componentOrbit.mean = random.uniform(0,180)
+        componentOrbit.mean = random.uniform(0,360)
         componentOrbit.refplane = 'Equator'
 
         binary.componentorbit = componentOrbit
@@ -937,47 +976,49 @@ while 1 == 1:
 
 
     with open(FileName, 'w') as outputfile:
-        outputfile.write('// ' + ObjectType + 's made with AsterBeltCreator (by JackDole)\n// ' + Version + '\n// {0}'.format(datetime.today()))
-        outputfile.write('// Trojan generator edited by mystic.xyz on Discord\n')
-        outputfile.write('// Note: There is a slight imperfection where the trojans might not be aligned\n')
-        outputfile.write('// DISCLAIMER: I have used ChatGPT to modify the code,\n')
-        outputfile.write('//             but I have edited that code to prevent errors. I\'ve also added some slight adjustments.')
-        
+        outputfile.write('// ' + ObjectType + 's made with AsterBeltCreator (by JackDole)\n// ' + Version + '\n// {0}\n'.format(datetime.today()))
+        outputfile.write('// Trojan generator made with AI by mystic.xyz on Discord\n')
+        outputfile.write('// Trojans share the host semimajor axis and keep a fixed mean longitude offset of +60 (L4) or -60 (L5) degrees\n')
+
         outputfile.write('\n\n')
         outputfile.write('// ParentObject    = ' + CenterObject + '\n')
         outputfile.write('// Objecttype      = ' + ObjectType + '\n')
         outputfile.write('// NumberOffset    = ' + str(numberingOffset) + '\n')
         outputfile.write('// NumberOfAster   = ' + str(NumberOfAster) + '\n')
         outputfile.write('// AsterName       = ' + AsterName + '\n')
+        outputfile.write('// StarMass        = ' + str(StarMass) + '\n')
         outputfile.write('// Semimajor Axis  = ' + str(HostSemi) + '\n')
+        outputfile.write('// Host Epoch      = ' + str(HostEpoch) + '\n')
+        outputfile.write('// Host Inclination = ' + str(HostIncl) + '\n')
         outputfile.write('// ArgOfPericenter = ' + str(HostArg) + '\n')
         outputfile.write('// AscendingNode   = ' + str(HostNode) + '\n')
-        outputfile.write('// MeanAnomaly     = ' + str(HostNode) + '\n')
+        outputfile.write('// MeanAnomaly     = ' + str(HostMean) + '\n')
         outputfile.write('// MinRadiusOfAster = ' + str(MinRadiusOfAster) + '\n')
         outputfile.write('// MaxRadiusOfAster = ' + str(MaxRadiusOfAster) + '\n')
         outputfile.write('// MaxEccentricity = ' + str(MaxEccentricity) + '\n')
         outputfile.write('// MinEccentricity = ' + str(MinEccentricity) + '\n')
-        outputfile.write('// MinInclination  = ' + str(MinInclination) + '\n')
-        outputfile.write('// MaxInclination  = ' + str(MaxInclination) + '\n')
+        outputfile.write('// MinTilt         = ' + str(MinInclination) + '\n')
+        outputfile.write('// MaxTilt         = ' + str(MaxInclination) + '\n')
         outputfile.write('// RefPlane        = ' + RefPlane + '\n')
-
-        if AscNode >= 0:
-            outputfile.write('// AscNode         = ' + str(AscNode) + '\n')
+        outputfile.write('// TrojanPoint     = ' + TrojanPoint + '\n')
+        outputfile.write('// Spread          = ' + str(Spread) + '\n')
         outputfile.write('// FileName        = ' + FileName)
+
+        # Host mean longitude
+        host_lambda = HostMean + HostArg + HostNode
 
         for count in range(NumberOfAster):
 
             orbit = Orbit()
             orbit.semi = HostSemi
             orbit.eccen = randomGenerator(MinEccentricity, MaxEccentricity)
-            orbit.incl = randomGenerator(MinInclination, MaxInclination)
-            orbit.argof = HostArg
-            orbit.ascen = HostNode
             orbit.epoch = epoch
             orbit.refplane = RefPlane
 
-            # Host mean longitude
-            host_lambda = HostMean + HostArg + HostNode
+            # Plane tilted away from the host plane by a random angle in a random direction
+            tilt = randomGenerator(MinInclination, MaxInclination)
+            orbit.incl, orbit.ascen = tiltOrbit(HostIncl, HostNode, tilt, random.uniform(0, 360))
+            orbit.argof = random.uniform(0, 360)
 
             # Choose L4 / L5
             if TrojanPoint == '1':          # L4
@@ -993,19 +1034,13 @@ while 1 == 1:
             # Apply spreading
             target_lambda += random.uniform(-Spread, Spread)
 
-            # Randomize orientation
-            orbit.ascen = random.uniform(0, 360)
-            orbit.argof = random.uniform(0, 360)
-
-            # Solve for mean anomaly so λ remains correct
-            orbit.mean = target_lambda - orbit.argof - orbit.ascen
-
-            # Normalize for SpaceEngine range (-360 to 360)
-            while orbit.mean > 360:
-                orbit.mean -= 360
-            while orbit.mean < -360:
-                orbit.mean += 360
-
+            # Mean longitude = node + argument of pericenter + mean anomaly
+            orbit.mean = (target_lambda - orbit.argof - orbit.ascen) % 360
 
             outputfile.write('\n\n')
-            outputfile.write(makeAsteroid(count+1, orbit))
+            text = None
+            if random.random() < ChanceOfBinary:
+                text = makeBinaryAsteroid(count+1, orbit)
+            if text is None:
+                text = makeAsteroid(count+1, orbit)
+            outputfile.write(text)
