@@ -1045,7 +1045,7 @@ while 1 == 1:
         if GenMode == 'Hilda':
             outputfile.write('// Hildas sit at the exact resonant semimajor axis. Each has resonant angle ' + str(ObjOrbits) + '*L(host) - ' + str(HostOrbits) + '*L(object) - varpi near 0\n')
         else:
-            outputfile.write('// Trojans share the host semimajor axis and keep a fixed mean longitude offset of +60 (L4) or -60 (L5) degrees\n')
+            outputfile.write('// Trojans share the host semimajor axis and keep a fixed mean longitude offset of +60 (L4) or -60 (L5) degrees')
 
         outputfile.write('\n\n')
         outputfile.write('// ParentObject    = ' + CenterObject + '\n')
