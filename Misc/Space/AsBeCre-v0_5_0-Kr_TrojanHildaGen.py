@@ -737,7 +737,8 @@ while 1 == 1:
         if AutoLock:
             StarMass = AskFloat("Mass of the parent star in solar masses\n Default = " + str(StarMass) + " : ", StarMass)
             SystemAge = AskFloat("System age in Gyr\n Default = 5.2 : ", 5.2)
-            Rigidity = AskFloat("Rigidity in Pa (solid rock 3e10, rubble pile 1e8)\n Default = 3e10 : ", 3e10)
+            Rigidity = AskFloat("Rigidity of solid bodies in Pa\n Default = 3e10 : ", 3e10)
+            RubbleFraction = min(1.0, max(0.0, AskFloat("Fraction of bodies that are rubble piles, 0 to 1\n (rigidity 1e8 Pa, they lock about 100 times faster)\n Default = 0 : ", 0.0)))
             LockQ = AskFloat("Tidal Q\n Default = 100 : ", 100.0)
             print ("")
 
@@ -1000,7 +1001,7 @@ while 1 == 1:
         return moon.PrintIt()
 
 
-    def lockTimeYears(a_au, radius_km, rho_gcc, startSpinHours):
+    def lockTimeYears(a_au, radius_km, rho_gcc, startSpinHours, Rigidity):
         # Gladman et al. 1996 with k2 = 1.5 / (1 + 19 mu / (2 rho g R))
         a = a_au * AU * 1000.0   # AU constant is in km
         R = radius_km * 1000.0
@@ -1030,7 +1031,10 @@ while 1 == 1:
         asteroid.obliquity = random.uniform(0,360)
         asteroid.orbit = orbit
         asteroid.locked = False
-        if AutoLock and lockTimeYears(ObjectSemi, asteroid.radius, asteroid.rho, asteroid.rotation) < SystemAge * 1e9:
+        bodyRigidity = Rigidity
+        if AutoLock and random.random() < RubbleFraction:
+            bodyRigidity = 1e8
+        if AutoLock and lockTimeYears(ObjectSemi, asteroid.radius, asteroid.rho, asteroid.rotation, bodyRigidity) < SystemAge * 1e9:
             asteroid.locked = True
             del asteroid.rotation       # SE sets the period from the orbit
 
@@ -1094,7 +1098,7 @@ while 1 == 1:
         outputfile.write('// Host Semimajor Axis   = ' + str(HostSemi) + '\n')
         outputfile.write('// Object Semimajor Axis = ' + str(ObjectSemi) + '\n')
         if AutoLock:
-            outputfile.write('// AutoLock: age ' + str(SystemAge) + ' Gyr, rigidity ' + str(Rigidity) + ' Pa, Q ' + str(LockQ) + '\n')
+            outputfile.write('// AutoLock: age ' + str(SystemAge) + ' Gyr, rigidity ' + str(Rigidity) + ' Pa, Q ' + str(LockQ) + ', rubble fraction ' + str(RubbleFraction) + '\n')
         outputfile.write('// Host Epoch      = ' + str(HostEpoch) + '\n')
         outputfile.write('// Host Inclination = ' + str(HostIncl) + '\n')
         outputfile.write('// ArgOfPericenter = ' + str(HostArg) + '\n')
