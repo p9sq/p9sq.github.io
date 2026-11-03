@@ -138,6 +138,12 @@ while 1 == 1:
     asterSuffix = ''
     asterColor = ''
     AutoLock = False
+    # Defaults keep the script from crashing when locking is off
+    LockStarMass = 1.0
+    SystemAge = 5.2
+    Rigidity = 3e10
+    RubbleFraction = 0.0
+    LockQ = 100.0
 
     Preset = 0
 
