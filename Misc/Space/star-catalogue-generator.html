@@ -425,6 +425,9 @@
         cluster</label
       >
       <label class="mode-row"
+        ><input type="radio" name="mixMode" value="ob" /> OB association</label
+      >
+      <label class="mode-row"
         ><input type="radio" name="mixMode" value="open" /> Open cluster</label
       >
       <label class="mode-row"
@@ -1266,6 +1269,30 @@
             BH: 0,
             WR: 0,
             BD: 9,
+          },
+        },
+        ob: {
+          label: "OB association",
+          note: "Massive members of a young association. Mostly B stars with a large share of O stars, a few A stars and Wolf-Rayet stars, and very few low-mass stars. Loose and stretched, with many sub-groups.",
+          pack: true,
+          looseness: 90,
+          minLy: 0.01,
+          maxLy: 150,
+          shape: { mid: [0.65, 0.85], thin: [0.6, 0.8] },
+          weights: {
+            O: 18,
+            B: 55,
+            A: 12,
+            F: 4,
+            G: 2,
+            K: 2,
+            M: 2,
+            GIANT: 0,
+            WD: 0,
+            NS: 0.5,
+            BH: 0.2,
+            WR: 2,
+            BD: 0,
           },
         },
         open: {
