@@ -198,6 +198,19 @@
         color: #8b93a7;
       }
 
+      h3 {
+        font-size: 1rem;
+        margin: 20px 0 8px;
+        border-top: 1px solid #2b3242;
+        padding-top: 16px;
+      }
+
+      .preset-note {
+        color: #8b93a7;
+        font-size: 0.8rem;
+        margin: 0 0 10px;
+      }
+
       .dialog-actions {
         margin-top: 18px;
         text-align: right;
@@ -405,6 +418,21 @@
         own mix below</label
       >
       <div id="customSliders" hidden></div>
+
+      <h3>Cluster presets</h3>
+      <label class="mode-row"
+        ><input type="radio" name="mixMode" value="birth" /> Birth
+        cluster</label
+      >
+      <label class="mode-row"
+        ><input type="radio" name="mixMode" value="open" /> Open cluster</label
+      >
+      <label class="mode-row"
+        ><input type="radio" name="mixMode" value="moving" /> Moving
+        group</label
+      >
+      <p class="preset-note" id="presetNote" hidden></p>
+
       <div class="dialog-actions">
         <button type="button" id="closeSettings">Done</button>
       </div>
@@ -1205,11 +1233,98 @@
       const customWeights = {};
       for (const t of LEAF_TYPES) customWeights[t.key] = 10;
 
+      // ============================================================
+      // Cluster presets. Each one sets a star mix, the pack checkbox, the
+      // looseness slider (0-100), the min and max distance in light-years,
+      // and the cluster's 3D proportions.
+      // shape holds the spread of the two shorter axes as a fraction of the
+      // longest. Keeping both near or above 0.5 stops a cluster collapsing
+      // into a band when you view it from the side.
+      // Weights are relative, not percentages. Massive stars sit a little
+      // above a true IMF so a small catalogue still gets a few.
+      // ============================================================
+      const CLUSTER_PRESETS = {
+        birth: {
+          label: "Birth cluster",
+          note: "Young and compact, a few million years old. Every mass from brown dwarfs to O stars, no giants or remnants yet. Clumpy with a packed core.",
+          pack: true,
+          looseness: 25,
+          minLy: 0.01,
+          maxLy: 30,
+          shape: { mid: [0.85, 1], thin: [0.75, 0.95] },
+          weights: {
+            O: 0.3,
+            B: 2,
+            A: 3,
+            F: 5,
+            G: 8,
+            K: 14,
+            M: 58,
+            GIANT: 0,
+            WD: 0,
+            NS: 0,
+            BH: 0,
+            WR: 0,
+            BD: 9,
+          },
+        },
+        open: {
+          label: "Open cluster",
+          note: "Hundreds of millions of years old. The O stars are gone, a few giants and white dwarfs have formed. Dense core with a thin halo.",
+          pack: true,
+          looseness: 40,
+          minLy: 0.01,
+          maxLy: 60,
+          shape: { mid: [0.8, 1], thin: [0.7, 0.9] },
+          weights: {
+            O: 0,
+            B: 0.5,
+            A: 3,
+            F: 7,
+            G: 11,
+            K: 17,
+            M: 52,
+            GIANT: 3,
+            WD: 5,
+            NS: 0.05,
+            BH: 0.02,
+            WR: 0,
+            BD: 1.5,
+          },
+        },
+        moving: {
+          label: "Moving group",
+          note: "Sparse and drifting apart, spread over a wide stretch of space. Stretched along one direction, with a field-like star mix.",
+          pack: true,
+          looseness: 100,
+          minLy: 0.01,
+          maxLy: 300,
+          shape: { mid: [0.7, 0.9], thin: [0.65, 0.85] },
+          weights: {
+            O: 0,
+            B: 0.3,
+            A: 4,
+            F: 9,
+            G: 12,
+            K: 18,
+            M: 50,
+            GIANT: 1,
+            WD: 3,
+            NS: 0.03,
+            BH: 0.01,
+            WR: 0,
+            BD: 2.5,
+          },
+        },
+      };
+
       let mixMode = "realistic";
 
       function pickLeafType() {
-        const weights =
-          mixMode === "equal"
+        const preset = CLUSTER_PRESETS[mixMode];
+        const weights = preset
+          ? preset.weights
+          : mixMode === "equal"
             ? EQUAL_WEIGHTS
             : mixMode === "custom"
               ? customWeights
@@ -1321,9 +1436,17 @@
       // ============================================================
       let clusterShape = null;
 
+      // Used when no preset is picked. Both short axes stay at 0.65 or more
+      // of the long one, so no viewing angle shows a thin band.
+      const DEFAULT_SHAPE = { mid: [0.8, 1], thin: [0.7, 0.95] };
+
       // looseness runs 0 to 1. 0 is a tight cluster with a packed core, 1 is
       // a loose association with a flatter spread and more sub-groups.
-      function buildClusterShape(looseness) {
+      // presetKey picks the proportions, any other value uses the default.
+      function buildClusterShape(looseness, presetKey) {
+        const range = CLUSTER_PRESETS[presetKey]
+          ? CLUSTER_PRESETS[presetKey].shape
+          : DEFAULT_SHAPE;
         // random orthonormal axes, so the stretch points a random way
         const axes = [];
         while (axes.length < 3) {
@@ -1340,11 +1463,10 @@
           if (len > 0.05) axes.push([v[0] / len, v[1] / len, v[2] / len]);
         }
         // scales stay at or under 1 so no star lands past the max distance
-        const scales = [
-          1,
-          0.6 + Math.random() * 0.3,
-          0.35 + Math.random() * 0.3,
-        ];
+        const pick = (r) => r[0] + Math.random() * (r[1] - r[0]);
+        const s1 = pick(range.mid);
+        const s2 = pick(range.thin);
+        const scales = [1, Math.max(s1, s2), Math.min(s1, s2)];
         return { axes, scales, looseness: looseness || 0 };
       }
 
@@ -1585,10 +1707,45 @@
       );
       closeSettingsBtn.addEventListener("click", () => settingsDialog.close());
 
+      // A preset sets the pack checkbox and looseness slider on the main
+      // form. Both stay editable afterwards, so you can start from a preset
+      // and adjust.
+      const presetNote = document.querySelector("#presetNote");
+
+      function applyPreset(preset) {
+        document.querySelector("#concentrate").checked = preset.pack;
+        const slider = document.querySelector("#looseness");
+        slider.value = String(preset.looseness);
+        document.querySelector("#loosenessVal").textContent = slider.value;
+
+        // Distances are stored in light-years and shown in whichever unit
+        // the parsec box is set to. The stored value keeps the unit toggle
+        // from drifting.
+        const inParsecs = document.querySelector("#useParsecs").checked;
+        for (const [id, ly] of [
+          ["#minDist", preset.minLy],
+          ["#maxDist", preset.maxLy],
+        ]) {
+          const input = document.querySelector(id);
+          input.dataset.ly = String(ly);
+          input.value = String(
+            Number((inParsecs ? ly / LY_PER_PC : ly).toPrecision(6)),
+          );
+        }
+      }
+
       document.querySelectorAll('input[name="mixMode"]').forEach((radio) => {
         radio.addEventListener("change", () => {
           mixMode = radio.value;
           customSlidersEl.hidden = mixMode !== "custom";
+          const preset = CLUSTER_PRESETS[mixMode];
+          presetNote.hidden = !preset;
+          if (preset) {
+            presetNote.textContent =
+              preset.note +
+              ` Fills the minimum and maximum distance (${preset.minLy} to ${preset.maxLy} ly) and sets the pack box and looseness slider. Pack and looseness need a base distance, RA, or Dec to take effect.`;
+            applyPreset(preset);
+          }
         });
       });
 
@@ -1627,11 +1784,11 @@
 
       // ============================================================
       // Light-year / parsec toggle for the three distance fields.
-      // Internally everything still runs in light-years; this only
-      // changes how a typed number gets read in and what the
-      // placeholders show, so flipping it mid-session is safe even with
-      // values already typed in (those get reinterpreted in the new
-      // unit, matching what the label now says).
+      // Internally everything still runs in light-years. Flipping the
+      // checkbox converts any value already typed into the new unit, so
+      // 150 ly becomes 45.9893 pc and back to 150 ly when unticked. Each
+      // field remembers its exact light-year value as you type, so
+      // converting back and forth never drifts from rounding.
       // ============================================================
       const useParsecsCheckbox = document.querySelector("#useParsecs");
       const baseDistLabel = document.querySelector('label[for="baseDist"]');
@@ -1660,9 +1817,50 @@
         maxDistInput.placeholder = useParsecs
           ? roundForDisplay(DEFAULTS.maxLy / LY_PER_PC)
           : DEFAULTS.maxLy;
+        // the native minimum of 0.001 ly would block a small value that is
+        // valid once it is shown in parsecs
+        const minAllowed = useParsecs ? String(0.001 / LY_PER_PC) : "0.001";
+        minDistInput.min = minAllowed;
+        maxDistInput.min = minAllowed;
       }
 
-      useParsecsCheckbox.addEventListener("change", refreshDistanceUnitUI);
+      const distInputs = [baseDistInput, minDistInput, maxDistInput];
+      let showingParsecs = useParsecsCheckbox.checked;
+
+      function toLyValue(n) {
+        return showingParsecs ? n * LY_PER_PC : n;
+      }
+
+      function fromLyValue(ly, inParsecs) {
+        // six significant digits keeps the field readable
+        return Number((inParsecs ? ly / LY_PER_PC : ly).toPrecision(6));
+      }
+
+      for (const input of distInputs) {
+        input.addEventListener("input", () => {
+          const n = parseFloat(input.value);
+          if (Number.isNaN(n)) delete input.dataset.ly;
+          else input.dataset.ly = String(toLyValue(n));
+        });
+      }
+
+      useParsecsCheckbox.addEventListener("change", () => {
+        const nowParsecs = useParsecsCheckbox.checked;
+        for (const input of distInputs) {
+          const typed = parseFloat(input.value);
+          if (input.value.trim() === "" || Number.isNaN(typed)) continue;
+          // the stored value is exact, the typed one is a fallback for
+          // fields filled by autofill or a script
+          const ly =
+            input.dataset.ly !== undefined
+              ? Number(input.dataset.ly)
+              : toLyValue(typed);
+          input.dataset.ly = String(ly);
+          input.value = String(fromLyValue(ly, nowParsecs));
+        }
+        showingParsecs = nowParsecs;
+        refreshDistanceUnitUI();
+      });
       refreshDistanceUnitUI();
 
       const loosenessInput = document.querySelector("#looseness");
@@ -1760,6 +1958,7 @@
           centerSet && document.querySelector("#concentrate").checked
             ? buildClusterShape(
                 Number(document.querySelector("#looseness").value) / 100,
+                mixMode,
               )
             : null;
         const seeds = buildDensitySeeds(minLy, maxLy, basePos, count);
