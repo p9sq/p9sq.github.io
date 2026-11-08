@@ -139,6 +139,7 @@
 
       #doneMsg {
         margin-bottom: 12px;
+        white-space: pre-line;
       }
 
       dialog {
@@ -1650,20 +1651,61 @@
           : randomVolumeUniformRadius(minLy, GALAXY_RADIUS_LY);
       }
 
-      function pickSpreadOutPosition(grid, seeds, minLy, maxLy, basePos) {
+      // Flat density alone leaves the inner range nearly empty. With 15,000
+      // stars out to 25,000 ly, the nearest star sits about 750 ly from the
+      // center even when the minimum is 4 ly. So outside cluster mode, a
+      // small share of stars is spread evenly across the log of the distance
+      // range, which puts a few stars at every scale from min to max. The
+      // rest keep the flat density. Two stars per run are also pinned to
+      // exactly the minimum and maximum, see forcedRadius below.
+      const FILL_SHARE = 0.01;
+
+      // Distance from the center for every star in the current run, used for
+      // the summary line shown after generating.
+      let runRadii = [];
+
+      // forcedRadius pins a star to an exact distance from the center, and
+      // skips the clump test so the star always lands there.
+      function pickSpreadOutPosition(
+        grid,
+        seeds,
+        minLy,
+        maxLy,
+        basePos,
+        forcedRadius,
+      ) {
         const maxAttempts = 30;
+        // chosen once per star, so a retry after a spacing clash keeps the
+        // same kind of draw
+        const fill =
+          forcedRadius === undefined &&
+          !clusterShape &&
+          Math.random() < FILL_SHARE;
+        const skipClumps = fill || forcedRadius !== undefined;
         let x, y, z;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          const off = randomOffset(randomClusterRadius(minLy, maxLy));
+          const radiusLy =
+            forcedRadius !== undefined
+              ? forcedRadius
+              : fill
+                ? randomLogUniform(minLy, maxLy)
+                : randomClusterRadius(minLy, maxLy);
+          const off = randomOffset(radiusLy);
           x = basePos.x + off.x;
           y = basePos.y + off.y;
           z = basePos.z + off.z;
-          if (Math.random() > densityAcceptance(seeds, x, y, z)) continue;
+          if (!skipClumps && Math.random() > densityAcceptance(seeds, x, y, z))
+            continue;
           if (!tooClose(grid, x, y, z)) break;
         }
         addToGrid(grid, x, y, z);
         const fromSun = xyzToRaDecDist(x, y, z);
-        return { ra: fromSun.ra, dec: fromSun.dec, finalDistLy: fromSun.dist };
+        return {
+          ra: fromSun.ra,
+          dec: fromSun.dec,
+          finalDistLy: fromSun.dist,
+          fromCenterLy: Math.hypot(x - basePos.x, y - basePos.y, z - basePos.z),
+        };
       }
 
       function buildStarRow(
@@ -1675,9 +1717,18 @@
         basePos,
         seeds,
         grid,
+        forcedRadius,
       ) {
         const star = generateStar();
-        const pos = pickSpreadOutPosition(grid, seeds, minLy, maxLy, basePos);
+        const pos = pickSpreadOutPosition(
+          grid,
+          seeds,
+          minLy,
+          maxLy,
+          basePos,
+          forcedRadius,
+        );
+        runRadii.push(pos.fromCenterLy);
         const distPc = pos.finalDistLy / LY_PER_PC;
 
         const appMagn =
@@ -1886,6 +1937,22 @@
         return Number((inParsecs ? ly / LY_PER_PC : ly).toPrecision(6));
       }
 
+      // Reads a distance field in light-years. A blank field gives the
+      // default. The remembered exact value wins when the field still shows
+      // what that value would display, otherwise the typed number is read in
+      // whichever unit the box shows.
+      function readLy(input, defaultLy) {
+        const raw = input.value.trim();
+        if (raw === "") return defaultLy;
+        const typed = parseFloat(raw);
+        const inParsecs = useParsecsCheckbox.checked;
+        if (input.dataset.ly !== undefined) {
+          const stored = Number(input.dataset.ly);
+          if (fromLyValue(stored, inParsecs) === typed) return stored;
+        }
+        return inParsecs ? typed * LY_PER_PC : typed;
+      }
+
       for (const input of distInputs) {
         input.addEventListener("input", () => {
           const n = parseFloat(input.value);
@@ -1941,16 +2008,13 @@
         // a typed value is in whichever unit the checkbox currently shows;
         // a blank field falls back to the fixed ly default regardless, so
         // the unit toggle never changes what "left blank" means
-        const useParsecs = useParsecsCheckbox.checked;
-        const toLy = (raw, defaultLy) =>
-          raw === ""
-            ? defaultLy
-            : useParsecs
-              ? parseFloat(raw) * LY_PER_PC
-              : parseFloat(raw);
+        // readLy prefers the exact value a field remembers, so a base typed
+        // in parsecs and shown rounded in light-years still generates from
+        // the exact number you typed
+        const toLy = (input, defaultLy) => readLy(input, defaultLy);
 
         const baseDistRaw = document.querySelector("#baseDist").value.trim();
-        const baseLy = toLy(baseDistRaw, DEFAULTS.baseLy);
+        const baseLy = toLy(baseDistInput, DEFAULTS.baseLy);
 
         const baseRARaw = document.querySelector("#baseRA").value.trim();
         const baseRA =
@@ -1969,11 +2033,11 @@
         const centerSet =
           baseDistRaw !== "" || baseRARaw !== "" || baseDecRaw !== "";
         const minLy = toLy(
-          minDistRaw,
+          minDistInput,
           centerSet ? CLUSTER_DEFAULTS.minLy : DEFAULTS.minLy,
         );
         const maxLy = toLy(
-          maxDistRaw,
+          maxDistInput,
           centerSet ? CLUSTER_DEFAULTS.maxLy : DEFAULTS.maxLy,
         );
 
@@ -2014,7 +2078,21 @@
               )
             : null;
         const seeds = buildDensitySeeds(minLy, maxLy, basePos, count);
+        runRadii = [];
         let done = 0;
+
+        // Outside cluster mode, one random star sits at exactly the minimum
+        // distance and another at exactly the maximum, so the full range is
+        // always used. Random positions in the list, so the file shows no
+        // pattern. A cluster keeps its own profile and gets none of this.
+        let minIdx = -1;
+        let maxIdx = -1;
+        if (!clusterShape && count >= 2) {
+          minIdx = Math.floor(Math.random() * count);
+          do {
+            maxIdx = Math.floor(Math.random() * count);
+          } while (maxIdx === minIdx);
+        }
 
         // generate in batches so the progress bar actually updates instead
         // of the tab freezing until the whole catalogue is done
@@ -2030,6 +2108,7 @@
               basePos,
               seeds,
               grid,
+              i === minIdx ? minLy : i === maxIdx ? maxLy : undefined,
             );
           }
           done = batchEnd;
@@ -2039,20 +2118,35 @@
           if (done < count) {
             setTimeout(chunk, 0);
           } else {
-            finish(rows, catName);
+            finish(rows, catName, { baseLy, baseRA, baseDec });
           }
         }
 
         chunk();
       });
 
-      function finish(rows, catName) {
+      // Shows where the center landed and how far the stars actually reach
+      // from it, in both units, so a wrong unit on the base distance shows
+      // up straight away.
+      function fmtNum(n, digits) {
+        return n.toLocaleString("en-US", { maximumFractionDigits: digits });
+      }
+
+      function finish(rows, catName, center) {
         const header =
           "Name,RA,Dec,Dist,AppMagn,SpecClass,MassSol,RadSol,Temperature";
         lastCsv = header + "\n" + rows.join("\n") + "\n";
         lastCatName = catName || "catalogue";
 
-        doneMsg.textContent = `Done. Generated ${rows.length} stars.`;
+        const sorted = runRadii.slice().sort((a, b) => a - b);
+        const near = sorted[0];
+        const far = sorted[sorted.length - 1];
+        const mid = sorted[Math.floor((sorted.length - 1) / 2)];
+        doneMsg.textContent = [
+          `Done. Generated ${rows.length} stars.`,
+          `Center: ${fmtNum(center.baseLy, 1)} ly (${fmtNum(center.baseLy / LY_PER_PC, 3)} pc) from the Sun, RA ${center.baseRA} h, Dec ${center.baseDec} deg.`,
+          `Distance from the center: nearest ${fmtNum(near, 1)} ly, median ${fmtNum(mid, 1)} ly, farthest ${fmtNum(far, 1)} ly (${fmtNum(near / LY_PER_PC, 2)} pc, ${fmtNum(mid / LY_PER_PC, 2)} pc, ${fmtNum(far / LY_PER_PC, 2)} pc).`,
+        ].join("\n");
         resultSection.hidden = false;
       }
 
