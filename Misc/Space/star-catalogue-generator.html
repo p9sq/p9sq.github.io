@@ -323,31 +323,41 @@
         <label class="mode-row">
           <input
             type="checkbox"
-            id="concentrate"
-            checked
+            id="isCluster"
             style="width: auto; margin-right: 8px"
           />
-          Pack stars toward the center with a stretched, uneven shape (only
-          applies when a center is set)
+          These stars are part of a cluster
         </label>
-        <div class="field">
-          <label for="looseness"
-            >Cluster looseness: <span id="loosenessVal">0</span></label
-          >
-          <input
-            type="range"
-            id="looseness"
-            min="0"
-            max="100"
-            step="5"
-            value="0"
-            style="width: 100%"
-          />
-          <p class="hint">
-            0 gives a tight cluster with a packed core. 100 gives a loose OB
-            association, with a flatter spread and more sub-groups. Works with
-            the box above ticked.
-          </p>
+        <div id="clusterOptions" hidden>
+          <label class="mode-row">
+            <input
+              type="checkbox"
+              id="concentrate"
+              checked
+              style="width: auto; margin-right: 8px"
+            />
+            Pack stars toward the center with a stretched, uneven shape (only
+            applies when a center is set)
+          </label>
+          <div class="field">
+            <label for="looseness"
+              >Cluster looseness: <span id="loosenessVal">0</span></label
+            >
+            <input
+              type="range"
+              id="looseness"
+              min="0"
+              max="100"
+              step="5"
+              value="0"
+              style="width: 100%"
+            />
+            <p class="hint">
+              0 gives a tight cluster with a packed core. 100 gives a loose OB
+              association, with a flatter spread and more sub-groups. Works with
+              the box above ticked.
+            </p>
+          </div>
         </div>
 
         <div class="row">
@@ -1739,7 +1749,20 @@
       // and adjust.
       const presetNote = document.querySelector("#presetNote");
 
+      // The pack box and looseness slider only show when the cluster box is
+      // ticked. They keep their values while hidden.
+      const isClusterBox = document.querySelector("#isCluster");
+      const clusterOptions = document.querySelector("#clusterOptions");
+
+      function refreshClusterOptions() {
+        clusterOptions.hidden = !isClusterBox.checked;
+      }
+      isClusterBox.addEventListener("change", refreshClusterOptions);
+
       function applyPreset(preset) {
+        // presets describe clusters, so choosing one turns cluster mode on
+        isClusterBox.checked = true;
+        refreshClusterOptions();
         document.querySelector("#concentrate").checked = preset.pack;
         const slider = document.querySelector("#looseness");
         slider.value = String(preset.looseness);
@@ -1982,7 +2005,9 @@
         const basePos = raDecDistToXyz(baseRA, baseDec, baseLy);
         // a new shape per run, so two clusters never look alike
         clusterShape =
-          centerSet && document.querySelector("#concentrate").checked
+          centerSet &&
+          isClusterBox.checked &&
+          document.querySelector("#concentrate").checked
             ? buildClusterShape(
                 Number(document.querySelector("#looseness").value) / 100,
                 mixMode,
