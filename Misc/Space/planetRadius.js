@@ -1,5 +1,5 @@
 // planetRadius.js
-// 13-type planet/moon radius calculator — forward (mass→radius) and inverse (radius→mass)
+// 18-option planet/moon radius calculator — forward (mass→radius) and inverse (radius→mass)
 // Improved: density fix, chthonian physics, smooth HJ inflation onset, rockyIcy bounds,
 //           predIcy inverse fix, youngGiant bisection fix, hotJupiter inverse, formatted output.
 
@@ -8,8 +8,12 @@ const readline = require("readline");
 // ---------------------------------------------------------------------------
 // Physical constants
 // ---------------------------------------------------------------------------
-const EARTH_RADIUS_KM = 6378.137; // IAU equatorial radius of Earth (km)
-const EARTH_DENSITY = 5.5136; // Earth mean density (g/cm³)
+const EARTH_RADIUS_KM = 6378.137; // IAU equatorial radius of Earth (km), the R_Earth unit
+const EARTH_MEAN_RADIUS_KM = 6371.0; // volumetric mean radius, the base of EARTH_DENSITY
+const EARTH_MASS_KG = 5.9722e24;
+// Earth mean density (g/cm³) from mass and mean radius, so asteroid densities close exactly
+const EARTH_DENSITY =
+  EARTH_MASS_KG / ((4 / 3) * Math.PI * Math.pow(6371.0e3, 3)) / 1000;
 const M_JUP = 317.8; // Jupiter mass in Earth masses
 const R_JUP_RE = 71492 / EARTH_RADIUS_KM; // Jupiter equatorial radius (71492 km) in R_Earth
 const MAX_R_EARTH = 2.3 * R_JUP_RE; // physical upper limit for hot Jupiters (~2.3 RJ, above HAT-P-67 Ab at ~2.14 RJ)
@@ -18,29 +22,52 @@ const SIGMA = 5.6704e-8; // Stefan-Boltzmann constant (W/m²/K⁴)
 const L_SUN = 3.828e26; // Solar luminosity (W)
 const R_SUN = 6.957e8; // Solar radius (m)
 const S_EARTH = 1361.0; // Earth's incident stellar flux (W/m²)
+const GAS_EXP_SUB = 0.1416; // sub-Jupiter gas giant exponent, Saturn and Jupiter equatorial radii
+
+// Volumetric mean radius divided by equatorial radius. Radii here are equatorial,
+// density needs the volume, so each class gets the ratio of its anchor bodies.
+const EARTH_VOL = EARTH_MEAN_RADIUS_KM / EARTH_RADIUS_KM;
+const JUP_VOL = 69911 / 71492;
+const SAT_VOL = 58232 / 60268;
+const ICE_VOL = (25362 / 25559 + 24622 / 24764) / 2; // Uranus and Neptune mean
+const VOL_FACTOR = {
+  iron: EARTH_VOL,
+  rocky: EARTH_VOL,
+  water: EARTH_VOL,
+  carbonia: EARTH_VOL,
+  chthonian: EARTH_VOL,
+  custom: EARTH_VOL,
+  iceGiant: ICE_VOL,
+  youngGiant: JUP_VOL,
+  // Moons, asteroids, transit radii and hot Jupiters stay at 1. Their anchors are
+  // mean radii of near-spherical bodies, or tidally locked.
+};
 
 // ---------------------------------------------------------------------------
-// Calibration anchors (all use volumetric mean radii):
-//   Mercury:   0.0553  M_E -> 0.3829 R_E, density 5.427 g/cm³  (iron model, ~1.5% overshoot)
+// Calibration anchors. Radii are in R_Earth = 6378.137 km (equatorial).
+// Moon and Mercury anchors are mean radii divided by 6378.137.
+// Saturn, Jupiter, Uranus and Neptune anchors are equatorial radii.
+//   Mercury:   0.0553  M_E -> 0.3825 R_E, density 5.427 g/cm³  (iron model, fitted)
 //   Earth:     1.0     M_E -> 1.0    R_E, density 5.514 g/cm³
-//   Tethys:    0.000103 M_E -> 0.0830 R_E  \
-//   Dione:     0.000185 M_E -> 0.0976 R_E   | predIcy small-body fit
-//   Rhea:      0.000377 M_E -> 0.1196 R_E  /
-//   Callisto:  0.0180  M_E -> 0.3784 R_E   \
-//   Titan:     0.0225  M_E -> 0.4043 R_E    | icyBody fit (Pluto not well-described here)
-//   Ganymede:  0.0248  M_E -> 0.4135 R_E   /
-//   Triton:    0.00359 M_E -> 0.2120 R_E  \ rockyIcy 2-point fit
-//   Europa:    0.00804 M_E -> 0.2451 R_E  / (valid range: ~0.002–0.020 M_E)
+//   Tethys:    0.000103 M_E -> 0.0829 R_E  \
+//   Dione:     0.000185 M_E -> 0.0975 R_E   | predIcy small-body fit
+//   Rhea:      0.000377 M_E -> 0.1195 R_E  /
+//   Callisto:  0.0180  M_E -> 0.3780 R_E   \
+//   Titan:     0.0225  M_E -> 0.4038 R_E    | icyBody fit (Pluto not well-described here)
+//   Ganymede:  0.0248  M_E -> 0.4130 R_E   /
+//   Triton:    0.00359 M_E -> 0.2118 R_E  \ rockyIcy 2-point fit
+//   Europa:    0.00804 M_E -> 0.2448 R_E  / (valid range: ~0.002–0.020 M_E)
 //   Uranus:    14.54   M_E -> 4.007  R_E, density 1.270 g/cm³
 //   Neptune:   17.15   M_E -> 3.883  R_E, density 1.638 g/cm³
-//   Saturn:    95.16   M_E -> 9.1402 R_E, density 0.687 g/cm³
-//   Jupiter:   317.83  M_E -> 10.973 R_E, density 1.326 g/cm³
+//   Saturn:    95.16   M_E -> 9.4492 R_E, density 0.687 g/cm³
+//   Jupiter:   317.83  M_E -> 11.2089 R_E, density 1.326 g/cm³
+// Moon fit scales are the old scales times 6371.0/6378.137. The exponents did not change.
 // ---------------------------------------------------------------------------
 
 const COMPOSITIONS = {
   iron: {
     label: "Iron planet (Mercury-like, large iron core)",
-    scale: 0.8,
+    scale: 0.78877, // fitted to Mercury (0.0553 M_E, 0.3825 R_E)
     exponent: 0.25,
   },
   rocky: {
@@ -58,16 +85,16 @@ const COMPOSITIONS = {
     // Pluto (0.00218 M_E, 0.187 R_E, 1.86 g/cm³) is rocky-icy in composition
     // and is not well-described by this model — see rockyIcy.
     label: "Icy body (Titan/Ganymede-like, ice-dominated)",
-    scale: 1.2335,
+    scale: 1.23212,
     exponent: 0.2948,
   },
   predIcy: {
     // Two-segment model — the segments are intentionally discontinuous at 0.002 M_Earth:
     //   <= 0.002 M_Earth: power law calibrated by least-squares to Tethys, Dione, Rhea
     //     (volumetric mean radii from NASA fact sheets):
-    //       Tethys: 0.000103 ME → 529 km (0.0830 RE), ρ = 0.984 g/cm³
-    //       Dione:  0.000185 ME → 622 km (0.0977 RE), ρ = 1.476 g/cm³
-    //       Rhea:   0.000377 ME → 762 km (0.1196 RE), ρ = 1.233 g/cm³
+    //       Tethys: 0.000103 ME → 529 km (0.0829 RE), ρ = 0.984 g/cm³
+    //       Dione:  0.000185 ME → 622 km (0.0975 RE), ρ = 1.476 g/cm³
+    //       Rhea:   0.000377 ME → 762 km (0.1195 RE), ρ = 1.233 g/cm³
     //     Model reproduces all three to within <1%. Valid down to ~Tethys mass (~1e-4 ME).
     //     Below that it extrapolates — at Proteus scale (7e-6 ME) use rockyIcy instead.
     //     Note: at sub-moon masses (< ~0.001 ME) predIcy density exceeds the rocky model
@@ -79,16 +106,16 @@ const COMPOSITIONS = {
     //     -> at 10 M_Earth: R~2.81 R_E, ρ~2.48 g/cm³
     label:
       "Predominantly icy (Tethys/Dione/Rhea-like, extended to super-Earths)",
-    scale: 1.1008,
+    scale: 1.09957,
     exponent: 0.2816,
-    scaleExt: 1.41,
+    scaleExt: 1.40842,
     exponentExt: 0.3,
   },
   rockyIcy: {
     // Two-point fit to Triton and Europa. Valid range: ~0.002–0.020 M_Earth.
     // Returns null outside this range — model collapses to unphysical densities beyond it.
     label: "Rocky-icy body (Europa/Triton-like, rock core + ice shell)",
-    scale: 0.5838,
+    scale: 0.58315,
     exponent: 0.1799,
   },
   carbonia: {
@@ -115,19 +142,21 @@ const COMPOSITIONS = {
     // dwarf masses; at 10–30 M_E the interior is merely partially compressed, so radius
     // still grows with mass, just more slowly (~0.20) than a classical, less-compressed
     // rocky/icy body (~0.27-0.30).
-    // Scale 2.2441 fitted by least squares to anchor points:
+    // Scale 2.2715 is the geometric mean of the Uranus and Neptune fits (exponent fixed at 0.20),
+    // so both land within about 3%. The old scale 2.2441 fitted the grid points below better.
+    // Grid anchors for reference:
     //   [10, 3.50], Uranus (14.54, 4.007), Neptune (17.15, 3.883), [20, 4.05],
     //   [25, 4.25], [30, 4.45]  — theoretical values from Lopez & Fortney 2014.
-    // Uranus/Neptune reproduced to within ~4% — unavoidable since they are
+    // Uranus/Neptune reproduced to within ~3% — unavoidable since they are
     // non-monotonic (Neptune denser despite higher mass), likely due to differing
     // rock/ice ratios rather than a smooth mass-radius trend.
     // Valid range: 10–30 M_E. Below 10 M_E use Mini-Neptune; above 30 M_E use Gas giant.
-    scale: 2.2441,
+    scale: 2.2715,
     exponent: 0.2,
   },
   gasGiant: {
     label: "Gas giant (cold, Saturn/Jupiter-like, up to ~30 M_Jupiter)",
-    scale: 10.9733,
+    scale: R_JUP_RE, // Jupiter equatorial; sub-Jupiter exponent is GAS_EXP_SUB
   },
   hotJupiter: {
     // No simple scale/exponent — handled by dedicated flow (mode 1)
@@ -189,7 +218,7 @@ const COMPOSITIONS = {
     //   Ceres:   9.39e20 kg → ~470  km  (model: 482  km, err ~3%)
     // Valid range: ~1e9 kg to ~0.001 M_Earth (roughly pebble to dwarf-planet scale).
     label: "Rocky asteroid/comet (silicate/metallic, ~2.0 g/cm³)",
-    scale: 1.402145, // (3*ME/(4π*2000 kg/m³))^(1/3) / RE
+    scale: 1.400591, // (3*ME/(4π*2000 kg/m³))^(1/3) / 6378.137 km
     exponent: 1 / 3,
     densityGcm3: 2.0,
   },
@@ -206,9 +235,23 @@ const COMPOSITIONS = {
     // Larger errors at small sizes reflect real variability in cometary porosity.
     // Valid range: ~1e9 kg to ~0.001 M_Earth.
     label: "Icy asteroid/comet (cometary nucleus, ~0.55 g/cm³)",
-    scale: 2.156165, // (3*ME/(4π*550 kg/m³))^(1/3) / RE
+    scale: 2.153776, // (3*ME/(4π*550 kg/m³))^(1/3) / 6378.137 km
     exponent: 1 / 3,
     densityGcm3: 0.55,
+  },
+  empiricalRocky: {
+    // Otegi, Bouchy and Helled (2020), fitted to transiting planets denser than
+    // 3.3 g/cm³. The rocky population ends near 25 M_E.
+    label: "Empirical rocky (Otegi et al. 2020, R = 1.03 M^0.29)",
+    scale: 1.03,
+    exponent: 0.29,
+  },
+  empiricalSubNeptune: {
+    // Same paper, planets below 3.3 g/cm³ (volatile-rich). Fitted up to 120 M_E,
+    // and the paper suggests 5 M_E as the lower limit.
+    label: "Empirical sub-Neptune (Otegi et al. 2020, R = 0.70 M^0.63)",
+    scale: 0.7,
+    exponent: 0.63,
   },
   custom: {
     // No fitted model. You type the bulk density and the radius follows from it.
@@ -233,8 +276,27 @@ const TYPE_KEYS = [
   "youngGiant",
   "rockyAsteroid",
   "icyAsteroid",
-  "custom", // last, so existing option numbers stay the same
+  "custom", // keeps its number, new options go after it
+  "empiricalRocky",
+  "empiricalSubNeptune",
 ];
+
+// Mass range of each empirical fit in M_Earth
+const EMPIRICAL_RANGE = {
+  empiricalRocky: [0, 25],
+  empiricalSubNeptune: [5, 120],
+};
+
+// The two fits overlap between 5 and 25 M_E, and density decides which one applies
+function empiricalNote(key, mass) {
+  const [lo, hi] = EMPIRICAL_RANGE[key];
+  if (mass >= lo && mass <= hi) {
+    return mass >= 5 && mass <= 25
+      ? `Note: rocky and sub-Neptune planets overlap at 5–25 M_Earth. Rocky applies above 3.3 g/cm³, sub-Neptune below.`
+      : null;
+  }
+  return `Warning: ${mass} M_Earth is outside the fitted range (${lo}–${hi} M_Earth). Result is an extrapolation.`;
+}
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -305,7 +367,7 @@ function massSuppression(massEarth) {
 // Uninflated (cold) gas giant radius — two-segment power law
 function coldGasGiantRadius(massEarth) {
   if (massEarth <= M_JUP) {
-    return R_JUP_RE * Math.pow(massEarth / M_JUP, 0.1516);
+    return R_JUP_RE * Math.pow(massEarth / M_JUP, GAS_EXP_SUB);
   }
   return Math.min(R_JUP_RE * Math.pow(massEarth / M_JUP, -0.0347), 15.0);
 }
@@ -349,10 +411,10 @@ function massToRadius(key, mass) {
     case "gasGiant":
       if (mass <= M_JUP) {
         // Sub-Jupiter: exponent solved from Saturn + Jupiter volumetric mean radii
-        r = comp.scale * Math.pow(mass / M_JUP, 0.1516);
+        r = comp.scale * Math.pow(mass / M_JUP, GAS_EXP_SUB);
       } else {
         // Super-Jupiter: gravity wins, radius shrinks with mass.
-        // Exponent from Jupiter (1 MJ, 10.973 R_E) and HAT-P-2b (8.45 MJ, ~10.19 R_E).
+        // Exponent from Jupiter (1 MJ, 11.209 R_E equatorial) and HAT-P-2b (8.45 MJ, ~10.19 R_E).
         // Extended to ~30 MJ: at 25 MJ gives ~9.81 R_E (GJ 504 b actual: ~10.09 R_E, ~3% low).
         // Note: beyond ~13 MJ objects cross the deuterium-burning limit into sub-brown-dwarf
         // territory, but planet-like formation remains possible (e.g. GJ 504 b, Baburaj et al. 2026).
@@ -412,7 +474,7 @@ function radiusToMass(key, radiusEarth) {
       // the same radius can correspond to a sub-Jupiter OR a super-Jupiter mass.
       // This formula returns the sub-Jupiter (lower-mass) solution.
       // If the planet is suspected to be >1 MJ, treat result as a lower-mass bound.
-      mass = M_JUP * Math.pow(radiusEarth / comp.scale, 1 / 0.1516);
+      mass = M_JUP * Math.pow(radiusEarth / comp.scale, 1 / GAS_EXP_SUB);
       if (radiusEarth < R_JUP_RE && radiusEarth >= 7.5) {
         warning =
           (warning ? warning + "\n" : "") +
@@ -424,19 +486,26 @@ function radiusToMass(key, radiusEarth) {
 
     case "rockyIcy": {
       // Calibrated range: ~0.002–0.020 M_Earth (Triton/Europa scale)
-      const rLower = comp.scale * Math.pow(0.002, comp.exponent); // ~0.1907 R_Earth
-      const rUpper = comp.scale * Math.pow(0.02, comp.exponent); // ~0.2888 R_Earth
+      const rLower = comp.scale * Math.pow(0.002, comp.exponent); // ~0.1906 R_Earth
+      const rUpper = comp.scale * Math.pow(0.02, comp.exponent); // ~0.2885 R_Earth
       mass = Math.pow(radiusEarth / comp.scale, 1 / comp.exponent);
       if (radiusEarth < rLower) {
         warning =
-          `Warning: ${radiusEarth.toFixed(5)} R_Earth is below the calibrated range ` +
-          `(${rLower.toFixed(4)}–${rUpper.toFixed(4)} R_Earth). Model is not valid below Triton/Europa scale. ` +
+          `Warning: ${radiusEarth} R_Earth is below the calibrated range ` +
+          `(${rLower}–${rUpper} R_Earth). Model is not valid below Triton/Europa scale. ` +
           `Consider predIcy or icyBody for small icy bodies.`;
       } else if (radiusEarth > rUpper) {
         warning =
-          `Warning: ${radiusEarth.toFixed(5)} R_Earth is above the calibrated range ` +
-          `(${rLower.toFixed(4)}–${rUpper.toFixed(4)} R_Earth). Consider Water/ocean or Icy body instead.`;
+          `Warning: ${radiusEarth} R_Earth is above the calibrated range ` +
+          `(${rLower}–${rUpper} R_Earth). Consider Water/ocean or Icy body instead.`;
       }
+      break;
+    }
+
+    case "empiricalRocky":
+    case "empiricalSubNeptune": {
+      mass = Math.pow(radiusEarth / comp.scale, 1 / comp.exponent);
+      warning = empiricalNote(key, mass);
       break;
     }
 
@@ -445,14 +514,14 @@ function radiusToMass(key, radiusEarth) {
       // R ≤ rBoundary → small segment (masses up to ~0.002 M_Earth)
       // R > rBoundary → extended segment (masses above 0.002 M_Earth)
       // There is a ~174 km model gap between the two segments at the boundary mass.
-      const rBoundSmall = comp.scale * Math.pow(0.002, comp.exponent); // ~0.1869
-      const rBoundLarge = comp.scaleExt * Math.pow(0.002, comp.exponentExt); // ~0.2185
+      const rBoundSmall = comp.scale * Math.pow(0.002, comp.exponent); // ~0.1911
+      const rBoundLarge = comp.scaleExt * Math.pow(0.002, comp.exponentExt); // ~0.2183
       if (radiusEarth <= rBoundLarge) {
         mass = Math.pow(radiusEarth / comp.scale, 1 / comp.exponent);
         if (radiusEarth > rBoundSmall) {
           warning =
-            `Note: ${radiusEarth.toFixed(5)} R_Earth falls in the predIcy model transition gap ` +
-            `(${rBoundSmall.toFixed(4)}–${rBoundLarge.toFixed(4)} R_Earth). ` +
+            `Note: ${radiusEarth} R_Earth falls in the predIcy model transition gap ` +
+            `(${rBoundSmall}–${rBoundLarge} R_Earth). ` +
             `Mass estimate is approximate — the two sub-models don't connect smoothly here.`;
         }
       } else {
@@ -472,8 +541,23 @@ function radiusToMass(key, radiusEarth) {
 // Density: ρ = ρ_Earth × (M/M_Earth) / (R/R_Earth)³
 // Reference: Earth at (1 M_E, 1 R_E) = 5.5136 g/cm³ using equatorial radius 6378.137 km.
 // ---------------------------------------------------------------------------
-function calcDensity(massEarth, radiusEarth) {
-  return EARTH_DENSITY * (massEarth / Math.pow(radiusEarth, 3));
+function fmtFlux(w) {
+  return w >= 1e6 ? `${w / 1e6} MW/m²` : `${w} W/m²`;
+}
+
+function volFactor(key, massEarth) {
+  if (key === "gasGiant") {
+    // Saturn is flatter than Jupiter, so blend between them by log mass
+    const lo = Math.log(95.16);
+    const t = (Math.log(massEarth) - lo) / (Math.log(M_JUP) - lo);
+    return SAT_VOL + Math.max(0, Math.min(1, t)) * (JUP_VOL - SAT_VOL);
+  }
+  return VOL_FACTOR[key] ?? 1;
+}
+
+function calcDensity(massEarth, radiusEarth, key = "rocky") {
+  const meanKm = radiusEarth * EARTH_RADIUS_KM * volFactor(key, massEarth);
+  return EARTH_DENSITY * massEarth * Math.pow(EARTH_MEAN_RADIUS_KM / meanKm, 3);
 }
 
 // ---------------------------------------------------------------------------
@@ -487,7 +571,9 @@ const VARIATION_SIGMA = {
   water: 0.07,
   icyBody: 0.07,
   rockyIcy: 0.06,
-  carbon: 0.05,
+  carbonia: 0.05,
+  empiricalRocky: 0.05, // estimates, the paper gives no scatter per planet
+  empiricalSubNeptune: 0.1,
   predIcy: 0.07,
   miniNeptune: 0.1,
   iceGiant: 0.11,
@@ -525,11 +611,9 @@ function applyVariation(key, nominalRE, massEarth, onDone) {
       const z = randNormal();
       const variedRE = nominalRE * (1 + z * sigma);
       const variedKm = variedRE * EARTH_RADIUS_KM;
-      const variedDensity = calcDensity(massEarth, variedRE);
+      const variedDensity = calcDensity(massEarth, variedRE, key);
       const sign = z >= 0 ? "+" : "";
-      console.log(
-        `\nVaried result  [${sign}${(z * sigma * 100).toFixed(1)}%  z = ${z.toFixed(2)}σ]:`,
-      );
+      console.log(`\nVaried result  [${sign}${z * sigma * 100}%  z = ${z}σ]:`);
       console.log(`Estimated radius: ${variedKm} km`);
       console.log(`In Earth radii:   ${variedRE} R_Earth`);
       console.log(`Mean density:     ${variedDensity} g/cm³`);
@@ -600,13 +684,12 @@ function youngGiantRadius(massJupiter, ageGyr) {
 }
 
 // ---------------------------------------------------------------------------
-// Smart mass formatter (handles values from ~10⁻⁸ to 10⁴ M_Earth)
+// Mass formatter: full precision, exponent form only for tiny values
 // ---------------------------------------------------------------------------
 function formatMass(mass) {
   if (mass === 0) return "0";
-  if (mass <= 5e-7) return mass.toExponential(4);
-  const decimals = Math.max(6, Math.ceil(-Math.log10(mass)) + 4);
-  return mass.toFixed(decimals);
+  if (mass <= 5e-7) return mass.toExponential();
+  return String(mass);
 }
 
 // ---------------------------------------------------------------------------
@@ -634,6 +717,12 @@ function printMenu() {
   console.log("14) Rocky asteroid (silicate/metallic body, ~2.0 g/cm³)");
   console.log("15) Icy asteroid   (cometary nucleus, ~0.55 g/cm³)");
   console.log("16) Custom         (you enter the bulk density, g/cm³)");
+  console.log(
+    "17) Empirical rocky      (Otegi et al. 2020, fitted to exoplanets)",
+  );
+  console.log(
+    "18) Empirical sub-Neptune (Otegi et al. 2020, fitted to exoplanets)",
+  );
 }
 
 function askRepeat() {
@@ -679,7 +768,7 @@ function askChthonianInputs() {
     const comp = COMPOSITIONS["chthonian"];
     const radiusEarth = comp.scale * Math.pow(mass, comp.exponent);
     const radiusKm = radiusEarth * EARTH_RADIUS_KM;
-    const dens = calcDensity(mass, radiusEarth);
+    const dens = calcDensity(mass, radiusEarth, "chthonian");
 
     rl.question(
       "\nEnter stellar luminosity for irradiation context (L_Sun, or Enter to skip): ",
@@ -716,7 +805,7 @@ function printChthonianResult(mass, radiusEarth, radiusKm, dens, stellar) {
   );
   console.log("Estimated radius: " + radiusKm + " km");
   console.log("In Earth radii:   " + radiusEarth + " R_Earth");
-  console.log("Mean density:     " + dens.toFixed(3) + " g/cm³");
+  console.log("Mean density:     " + dens + " g/cm³");
   console.log(
     "Note: density typically 9–14 g/cm³ for this mass range —" +
       " iron-rich core, denser than rocky due to original compression inside the parent giant.",
@@ -725,12 +814,12 @@ function printChthonianResult(mass, radiusEarth, radiusKm, dens, stellar) {
     console.log("\nStellar irradiation context:");
     console.log(
       "  Incident flux:    " +
-        (stellar.flux / 1e6).toPrecision(4) +
-        " MW/m²  (" +
-        (stellar.flux / S_EARTH).toFixed(1) +
+        fmtFlux(stellar.flux) +
+        "  (" +
+        stellar.flux / S_EARTH +
         " S_Earth)",
     );
-    console.log("  Equilibrium temp: " + stellar.Teq.toFixed(0) + " K");
+    console.log("  Equilibrium temp: " + stellar.Teq + " K");
     if (stellar.Teq > 2000) {
       console.log("  Surface likely molten (magma ocean conditions).");
     } else if (stellar.Teq > 1000) {
@@ -756,7 +845,7 @@ function askHotJupiterInputs() {
     const massJup = mass / M_JUP;
     if (massJup < 0.1 || massJup > 13) {
       console.log(
-        `\n⚠️  ${massJup.toFixed(4)} M_Jupiter is outside the hot Jupiter range (0.1–13 MJ).`,
+        `\n⚠️  ${massJup} M_Jupiter is outside the hot Jupiter range (0.1–13 MJ).`,
       );
       return askRepeat();
     }
@@ -836,7 +925,7 @@ function computeAndPrintHotJupiter(mass, L_solar, a_AU, A) {
   const rInflatedRaw = rBase * (1 + inflationFraction);
   const rFinal = Math.min(rInflatedRaw, MAX_R_EARTH);
   const radiusKm = rFinal * EARTH_RADIUS_KM;
-  const density = calcDensity(mass, rFinal);
+  const density = calcDensity(mass, rFinal, "hotJupiter");
   const inflPct = inflationFraction * 100;
   const incidentFlux = calcFluxFromL(L_solar, a_AU);
 
@@ -845,16 +934,16 @@ function computeAndPrintHotJupiter(mass, L_solar, a_AU, A) {
   );
   console.log(`Stellar luminosity: ${L_solar} L_Sun`);
   console.log(`Orbital distance:   ${a_AU} AU`);
-  console.log(`Bond albedo:        ${A.toFixed(2)}`);
-  console.log(`Equilibrium temp:   ${Teq.toFixed(0)} K`);
+  console.log(`Bond albedo:        ${A}`);
+  console.log(`Equilibrium temp:   ${Teq} K`);
   console.log(
-    `Incident flux:      ${(incidentFlux / 1e6).toPrecision(4)} MW/m²` +
-      `  (${(incidentFlux / S_EARTH).toFixed(1)} S_Earth)`,
+    `Incident flux:      ${fmtFlux(incidentFlux)}` +
+      `  (${incidentFlux / S_EARTH} S_Earth)`,
   );
 
   if (Teq < 1000) {
     console.log(
-      `\n⚠️  Teq = ${Teq.toFixed(0)} K is below the significant inflation threshold (~1000 K).`,
+      `\n⚠️  Teq = ${Teq} K is below the significant inflation threshold (~1000 K).`,
     );
     console.log(`   Radius inflation is minimal at this temperature.`);
     console.log(
@@ -862,7 +951,7 @@ function computeAndPrintHotJupiter(mass, L_solar, a_AU, A) {
     );
   } else {
     console.log(
-      `Inflation applied:  ${inflPct.toFixed(1)}% radius increase over cold baseline`,
+      `Inflation applied:  ${inflPct}% radius increase over cold baseline`,
     );
   }
 
@@ -880,7 +969,7 @@ function computeAndPrintHotJupiter(mass, L_solar, a_AU, A) {
   console.log(`Inflated radius:  ${radiusKm} km`);
   console.log(`In Earth radii:   ${rFinal} R_Earth`);
   console.log(`In Jupiter radii: ${rFinal / R_JUP_RE} R_Jupiter`);
-  console.log(`Mean density:     ${density.toFixed(3)} g/cm³`);
+  console.log(`Mean density:     ${density} g/cm³`);
 
   applyVariation("hotJupiter", rFinal, mass, () => askRepeat());
 }
@@ -931,9 +1020,9 @@ function askHotJupiterInverse() {
           );
         }
 
-        // Invert using sub-Jupiter cold baseline: R = R_JUP_RE * (M/M_JUP)^0.1516
-        const mass = M_JUP * Math.pow(radiusEarth / R_JUP_RE, 1 / 0.1516);
-        const density = calcDensity(mass, radiusEarth);
+        // Invert using sub-Jupiter cold baseline: R = R_JUP_RE * (M/M_JUP)^GAS_EXP_SUB
+        const mass = M_JUP * Math.pow(radiusEarth / R_JUP_RE, 1 / GAS_EXP_SUB);
+        const density = calcDensity(mass, radiusEarth, "hotJupiter");
 
         console.log(
           `\nType:              Hot Jupiter (cold baseline inversion)`,
@@ -945,7 +1034,7 @@ function askHotJupiterInverse() {
         console.log(
           `Est. mass (cold):  ${mass} M_Earth  (${mass / M_JUP} M_Jupiter)`,
         );
-        console.log(`Mean density:      ${density.toFixed(3)} g/cm³`);
+        console.log(`Mean density:      ${density} g/cm³`);
         console.log(
           `\nNote: true mass is likely lower — inflation increases radius without changing mass.` +
             `\n      Use forward mode (mode 1) with stellar parameters for a self-consistent model.`,
@@ -1004,7 +1093,7 @@ function askYoungGiantInputs(mode) {
               const radiusKm = radiusEarth * EARTH_RADIUS_KM;
               const radiusJup = radiusEarth / R_JUP_RE;
               const massEarth = massJup * M_JUP;
-              const density = calcDensity(massEarth, radiusEarth);
+              const density = calcDensity(massEarth, radiusEarth, "youngGiant");
               const L_int_Lsun = internalLuminosity(massJup, age);
               const L_int_W = L_int_Lsun * L_SUN;
               const R_m = radiusEarth * EARTH_RADIUS_KM * 1e3;
@@ -1018,11 +1107,11 @@ function askYoungGiantInputs(mode) {
               console.log(`Estimated radius: ${radiusKm} km`);
               console.log(`In Jupiter radii: ${radiusJup} R_Jupiter`);
               console.log(`In Earth radii:   ${radiusEarth} R_Earth`);
-              console.log(`Mean density:     ${density.toFixed(3)} g/cm³`);
+              console.log(`Mean density:     ${density} g/cm³`);
 
               const T_endo = endogenousTemp(L_int_Lsun, radiusEarth);
               console.log(
-                `\nEndogenousHeating: ${T_endo.toFixed(0)} K  (for SE .sc file)`,
+                `\nEndogenousHeating: ${T_endo} K  (for SE .sc file)`,
               );
               console.log(`  Internal luminosity: ${L_int_Lsun} L_Sun`);
               console.log(
@@ -1035,12 +1124,12 @@ function askYoungGiantInputs(mode) {
                 const ratio = L_int_surf / (flux / 4);
                 console.log(`\nStellar irradiation:`);
                 console.log(
-                  `  Incident flux:      ${(flux / 1e6).toPrecision(4)} MW/m²` +
-                    `  (${(flux / S_EARTH).toFixed(1)} S_Earth)`,
+                  `  Incident flux:      ${fmtFlux(flux)}` +
+                    `  (${flux / S_EARTH} S_Earth)`,
                 );
-                console.log(`  Equilibrium temp:   ${Teq.toFixed(0)} K`);
+                console.log(`  Equilibrium temp:   ${Teq} K`);
                 console.log(
-                  `  Endogenous/stellar: ${ratio.toExponential(2)}  (internal vs absorbed flux ratio)`,
+                  `  Endogenous/stellar: ${ratio.toExponential()}  (internal vs absorbed flux ratio)`,
                 );
                 if (ratio > 0.1) {
                   console.log(
@@ -1163,11 +1252,11 @@ function askYoungGiantInputs(mode) {
 
               if (radiusEarth < rAt30 || radiusEarth > rAt0p1) {
                 console.log(
-                  `\n⚠️  Radius ${(radiusEarth / R_JUP_RE).toFixed(4)} R_Jupiter is outside the` +
+                  `\n⚠️  Radius ${radiusEarth / R_JUP_RE} R_Jupiter is outside the` +
                     ` model range at ${age} Gyr`,
                 );
                 console.log(
-                  `   (valid: ${(rAt30 / R_JUP_RE).toFixed(4)}–${(rAt0p1 / R_JUP_RE).toFixed(4)}` +
+                  `   (valid: ${rAt30 / R_JUP_RE}–${rAt0p1 / R_JUP_RE}` +
                     ` R_Jupiter for 0.1–30 M_Jupiter at this age).`,
                 );
               }
@@ -1208,8 +1297,8 @@ function askYoungGiantInputs(mode) {
                 }
                 console.log(
                   `\nNote: this radius is ambiguous at ${age} Gyr. Two solutions exist:` +
-                    `\n  Sub-13 MJ solution (returned): ~${mid.toFixed(3)} M_Jupiter` +
-                    `\n  Super-Jovian solution:          ~${midS.toFixed(3)} M_Jupiter` +
+                    `\n  Sub-13 MJ solution (returned): ~${mid} M_Jupiter` +
+                    `\n  Super-Jovian solution:          ~${midS} M_Jupiter` +
                     `\n  Choose based on what you know about the object.`,
                 );
               }
@@ -1218,7 +1307,7 @@ function askYoungGiantInputs(mode) {
               const massEarth = massJup * M_JUP;
               const radiusKm = radiusEarth * EARTH_RADIUS_KM;
               const radiusJup = radiusEarth / R_JUP_RE;
-              const density = calcDensity(massEarth, radiusEarth);
+              const density = calcDensity(massEarth, radiusEarth, "youngGiant");
 
               console.log(`\nType:             Young gas giant`);
               console.log(`Age:              ${age} Gyr`);
@@ -1231,7 +1320,7 @@ function askYoungGiantInputs(mode) {
                 `Estimated mass:   ${massJup} M_Jupiter` +
                   `  (${massEarth} M_Earth)`,
               );
-              console.log(`Mean density:     ${density.toFixed(3)} g/cm³`);
+              console.log(`Mean density:     ${density} g/cm³`);
 
               askRepeat();
             });
@@ -1246,7 +1335,7 @@ function askYoungGiantInputs(mode) {
 // Asteroid / comet input flow
 // Accepts mass in kg or M_Earth; radius in km or R_Earth.
 // ---------------------------------------------------------------------------
-const KG_PER_EARTH_MASS = 5.972e24;
+const KG_PER_EARTH_MASS = EARTH_MASS_KG;
 
 function askAsteroidInputs(key, mode) {
   const comp = COMPOSITIONS[key];
@@ -1275,18 +1364,18 @@ function askAsteroidInputs(key, mode) {
 
           if (massEarth > 0.001) {
             console.log(
-              `\n⚠️  ${massEarth.toExponential(3)} M_Earth exceeds the small-body range (~0.001 M_Earth).` +
+              `\n⚠️  ${massEarth.toExponential()} M_Earth exceeds the small-body range (~0.001 M_Earth).` +
                 `\n   At this scale gravity compression matters — consider Icy body or Water/ocean world instead.`,
             );
           }
 
           const radiusEarth = comp.scale * Math.pow(massEarth, comp.exponent);
           const radiusKm = radiusEarth * EARTH_RADIUS_KM;
-          const density = calcDensity(massEarth, radiusEarth);
+          const density = calcDensity(massEarth, radiusEarth, key);
 
           console.log(`\nType:             ${comp.label}`);
           console.log(
-            `Mass:             ${massKg.toExponential(4)} kg  (${massEarth.toExponential(4)} M_Earth)`,
+            `Mass:             ${massKg.toExponential()} kg  (${massEarth.toExponential()} M_Earth)`,
           );
           console.log(`Estimated radius: ${radiusKm} km`);
           console.log(`In Earth radii:   ${radiusEarth} R_Earth`);
@@ -1325,7 +1414,7 @@ function askAsteroidInputs(key, mode) {
           const radiusKm = radiusEarth * EARTH_RADIUS_KM;
           const massEarth = Math.pow(radiusEarth / comp.scale, 3);
           const massKg = massEarth * KG_PER_EARTH_MASS;
-          const density = calcDensity(massEarth, radiusEarth);
+          const density = calcDensity(massEarth, radiusEarth, key);
 
           if (massEarth > 0.001) {
             console.log(
@@ -1339,7 +1428,7 @@ function askAsteroidInputs(key, mode) {
             `Input radius:     ${radiusKm} km  (${radiusEarth} R_Earth)`,
           );
           console.log(
-            `Estimated mass:   ${massKg.toExponential(4)} kg  (${massEarth.toExponential(4)} M_Earth)`,
+            `Estimated mass:   ${massKg.toExponential()} kg  (${massEarth.toExponential()} M_Earth)`,
           );
           console.log(`Mean density:     ${density} g/cm³`);
           console.log(
@@ -1518,12 +1607,12 @@ function startCalculation() {
             }
 
             const radiusKm = radiusEarth * EARTH_RADIUS_KM;
-            const density = calcDensity(mass, radiusEarth);
+            const density = calcDensity(mass, radiusEarth, key);
 
             console.log(`\nType:             ${comp.label}`);
             console.log(`Estimated radius: ${radiusKm} km`);
             console.log(`In Earth radii:   ${radiusEarth} R_Earth`);
-            console.log(`Mean density:     ${density.toFixed(3)} g/cm³`);
+            console.log(`Mean density:     ${density} g/cm³`);
 
             if (key === "predIcy" && mass > 0.002) {
               console.log(
@@ -1538,10 +1627,15 @@ function startCalculation() {
               );
             }
 
+            if (key === "empiricalRocky" || key === "empiricalSubNeptune") {
+              const note = empiricalNote(key, mass);
+              if (note) console.log(`\n${note}`);
+            }
+
             if (key === "gasGiant" && (mass < 50 || mass > M_JUP * 30)) {
               console.log(
                 `\n⚠️  Note: ${mass} M_Earth is outside the calibrated Gas giant range` +
-                  ` (~50–${(M_JUP * 30).toFixed(0)} M_Earth, i.e. below Saturn or above ~30 M_Jupiter).` +
+                  ` (~50–${M_JUP * 30} M_Earth, i.e. below Saturn or above ~30 M_Jupiter).` +
                   `\n   The radius has been clamped — treat this as a rough bound, not a fit.`,
               );
             }
@@ -1550,7 +1644,7 @@ function startCalculation() {
               console.log(
                 `\n⚠️  Note: ${mass} M_Earth is outside the calibrated Mini-Neptune range` +
                   ` (~2–30 M_Earth, K2-18b to GJ 436b scale).` +
-                  `\n   The radius has been clamped to ${radiusEarth.toFixed(3)} R_Earth — result is an extrapolation.`,
+                  `\n   The radius has been clamped to ${radiusEarth} R_Earth — result is an extrapolation.`,
               );
             }
 
@@ -1580,7 +1674,7 @@ function startCalculation() {
                   const radiusEarth =
                     unit === "1" ? rawRadius / EARTH_RADIUS_KM : rawRadius;
                   const { mass, warning } = radiusToMass(key, radiusEarth);
-                  const density = calcDensity(mass, radiusEarth);
+                  const density = calcDensity(mass, radiusEarth, key);
 
                   console.log(`\nType:             ${comp.label}`);
                   console.log(
@@ -1591,7 +1685,7 @@ function startCalculation() {
                   if (mass >= 1 / M_JUP) {
                     console.log(`                  ${mass / M_JUP} M_Jupiter`);
                   }
-                  console.log(`Mean density:     ${density.toFixed(3)} g/cm³`);
+                  console.log(`Mean density:     ${density} g/cm³`);
                   if (warning) console.log(`\n${warning}`);
 
                   askRepeat();
