@@ -1,0 +1,5256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Gas Giant and Brown Dwarf Map Generator</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23c9a37a'/%3E%3Cpath d='M3 12h26v4H3zM4 20h24v3H4z' fill='%238a5f3c'/%3E%3Cellipse cx='21' cy='18' rx='3' ry='2' fill='%23b8432f'/%3E%3C/svg%3E"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body.loading {
+        overflow: hidden;
+      }
+      body {
+        margin: 0;
+        background: #090b10;
+        color: #e2e6ef;
+        font:
+          14px/1.5 system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      header {
+        padding: 18px 24px;
+        border-bottom: 1px solid #1c2232;
+        background: #0d1018;
+      }
+      h1 {
+        font-size: 21px;
+        margin: 0;
+        letter-spacing: 0.2px;
+      }
+      h2 {
+        font-size: 13px;
+        margin: 0 0 10px;
+        color: #8fb0ff;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+      }
+      header p {
+        margin: 4px 0 0;
+        color: #8a93a8;
+      }
+      main {
+        display: grid;
+        grid-template-columns: 380px minmax(0, 1fr) 340px;
+        gap: 18px;
+        padding: 18px 24px;
+        align-items: start;
+        max-width: 2000px;
+        margin: 0 auto;
+      }
+      @media (max-width: 1250px) {
+        main {
+          grid-template-columns: 380px minmax(0, 1fr);
+        }
+        #side,
+        #info {
+          grid-column: 1/-1;
+        }
+        form {
+          grid-row: auto;
+        }
+      }
+      @media (max-width: 820px) {
+        main {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 12px;
+        }
+      }
+      fieldset {
+        border: 1px solid #1f2637;
+        border-radius: 10px;
+        margin: 0 0 14px;
+        padding: 8px 14px 12px;
+        background: #0f131d;
+      }
+      legend {
+        padding: 0 8px;
+        color: #8fb0ff;
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 4px 8px;
+        align-items: center;
+        margin: 8px 0;
+      }
+      .row label {
+        grid-column: 1/-1;
+        font-size: 12px;
+        color: #a3acc0;
+      }
+      .row input[type="text"] {
+        grid-column: 1;
+      }
+      .row select {
+        grid-column: 2;
+      }
+      .row[hidden] {
+        display: none;
+      }
+      .row.wide select,
+      .row.wide input[type="text"] {
+        grid-column: 1/-1;
+      }
+      #imp {
+        grid-column: 1/-1;
+        white-space: nowrap;
+      }
+      .msg {
+        grid-column: 1/-1;
+        font-size: 12px;
+        color: #ff8f8f;
+      }
+      .msg.warn {
+        color: #ffc86b;
+      }
+      .msg:empty {
+        display: none;
+      }
+      input,
+      select,
+      button {
+        background: #0a0d14;
+        color: #e2e6ef;
+        border: 1px solid #28304a;
+        border-radius: 6px;
+        padding: 7px 9px;
+        font: inherit;
+        min-width: 0;
+      }
+      input:focus,
+      select:focus,
+      button:focus-visible {
+        outline: 2px solid #5b83ff;
+        outline-offset: 1px;
+        border-color: #5b83ff;
+      }
+      input.bad {
+        border-color: #d9534f;
+      }
+      input.warn {
+        border-color: #e0a030;
+      }
+      input:disabled {
+        opacity: 0.5;
+      }
+      input::placeholder {
+        color: #6f9a7c;
+        font-style: italic;
+      }
+      button {
+        cursor: pointer;
+        background: #1b2745;
+        border-color: #34457a;
+        transition: background 0.15s;
+      }
+      button:hover:not(:disabled) {
+        background: #25355e;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: progress;
+      }
+      button.main {
+        background: #3b64e8;
+        border-color: #5b83ff;
+        font-weight: 600;
+      }
+      button.main:hover:not(:disabled) {
+        background: #4d73f2;
+      }
+      .btns {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .btns button {
+        flex: 1;
+        padding: 9px;
+      }
+      #view {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        min-width: 0;
+      }
+      #view canvas {
+        max-width: 100%;
+      }
+      #frame {
+        position: relative;
+        border: 1px solid #1f2637;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #000;
+      }
+      #map {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      #busy {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: rgba(9, 11, 16, 0.88);
+        border: 1px solid #2a3350;
+      }
+      #busy[hidden] {
+        display: none;
+      }
+      #busy progress {
+        flex: 1;
+      }
+      #busytxt {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      .ring {
+        width: 18px;
+        height: 18px;
+        border: 3px solid #28304a;
+        border-top-color: #5b83ff;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        flex: none;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      progress {
+        height: 8px;
+        border: 0;
+        border-radius: 4px;
+        overflow: hidden;
+        background: #1a2036;
+        accent-color: #5b83ff;
+      }
+      progress::-webkit-progress-bar {
+        background: #1a2036;
+      }
+      progress::-webkit-progress-value {
+        background: #5b83ff;
+        transition: width 0.15s;
+      }
+      progress::-moz-progress-bar {
+        background: #5b83ff;
+      }
+      #status {
+        white-space: pre-line;
+        margin: 0;
+        padding: 10px 12px;
+        border: 1px solid #1f2637;
+        border-radius: 10px;
+        background: #0f131d;
+      }
+      #stale {
+        margin: 0;
+        padding: 9px 12px;
+        border: 1px solid #c9922b;
+        border-left-width: 5px;
+        border-radius: 10px;
+        background: #2a1f0a;
+        color: #ffd27a;
+        font-weight: 600;
+      }
+      #stale[hidden] {
+        display: none;
+      }
+      #spheres {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      #spheres figure {
+        margin: 0;
+        display: grid;
+        gap: 6px;
+        justify-items: center;
+      }
+      #spheres figcaption {
+        font-size: 12px;
+        color: #97a0b5;
+        text-align: center;
+      }
+      #sphere,
+      #sphere2 {
+        width: 100%;
+        max-width: 440px;
+        aspect-ratio: 1;
+        justify-self: center;
+        cursor: grab;
+        touch-action: none;
+        border: 1px solid #1f2637;
+        border-radius: 10px;
+        background: #000;
+      }
+      form {
+        grid-row: 1/3;
+      }
+      #side section {
+        border: 1px solid #1f2637;
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+        background: #0f131d;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 4px 12px;
+        margin: 0;
+        font-size: 13px;
+      }
+      dt {
+        color: #97a0b5;
+      }
+      dd {
+        margin: 0;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      #sys {
+        border: 1px solid #1f2637;
+        border-radius: 10px;
+        padding: 12px 14px;
+        background: #0f131d;
+      }
+      .sysbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .sysbar h2 {
+        margin: 0;
+      }
+      .sysbar label {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        color: #a3acc0;
+      }
+      #syscv {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+        background: #020308;
+        cursor: grab;
+        touch-action: none;
+      }
+      .sysctl {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .sysctl label {
+        display: grid;
+        gap: 4px;
+        font-size: 12px;
+        color: #a3acc0;
+      }
+      .sysctl input[type="range"] {
+        padding: 0;
+        accent-color: #5b83ff;
+      }
+      #syscap {
+        margin: 8px 0 0;
+        font-size: 12.5px;
+        color: #97a0b5;
+      }
+      #info {
+        grid-column: 2/-1;
+        font-size: 12.5px;
+        border: 1px solid #1f2637;
+        border-radius: 10px;
+        padding: 12px 14px;
+        background: #0f131d;
+      }
+      /* After the base rules, so the narrow layouts win */
+      @media (max-width: 1250px) {
+        form {
+          grid-row: auto;
+        }
+        #side,
+        #info {
+          grid-column: 1/-1;
+        }
+      }
+      #info code {
+        display: block;
+        background: #0a0d14;
+        padding: 5px 8px;
+        margin: 4px 0;
+        border-radius: 5px;
+        overflow-x: auto;
+        white-space: pre;
+        font-size: 12px;
+      }
+      #info p {
+        margin: 5px 0;
+      }
+      #agents {
+        font-size: 12.5px;
+        color: #97a0b5;
+        margin: 8px 0 0;
+      }
+      #info li {
+        margin: 2px 0;
+      }
+      #loader {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: grid;
+        place-items: center;
+        background: #090b10;
+      }
+      #loader[hidden] {
+        display: none;
+      }
+      #loader .box {
+        width: min(420px, 88vw);
+        padding: 28px;
+        border: 1px solid #1f2637;
+        border-radius: 14px;
+        background: #0f131d;
+        text-align: center;
+      }
+      #loader .ring {
+        width: 42px;
+        height: 42px;
+        border-width: 4px;
+        margin: 0 auto 16px;
+      }
+      #loader h2 {
+        font-size: 17px;
+        text-transform: none;
+        letter-spacing: 0;
+        color: #e2e6ef;
+        margin: 0 0 6px;
+      }
+      #loader p {
+        margin: 4px 0;
+        color: #97a0b5;
+        font-size: 13px;
+      }
+      #loader progress {
+        width: 100%;
+        margin: 14px 0 6px;
+      }
+      #modebar {
+        display: flex;
+        gap: 8px;
+        padding: 12px 24px 0;
+        max-width: 2000px;
+        margin: 0 auto;
+      }
+      #modebar button {
+        flex: none;
+        padding: 8px 18px;
+      }
+      #modebar button[aria-pressed="true"] {
+        background: #3b64e8;
+        border-color: #5b83ff;
+        font-weight: 600;
+      }
+      body.bd #fss,
+      body.bd #sys,
+      body.bd #fig2 {
+        display: none;
+      }
+      #bdnote {
+        display: none;
+        margin: 4px 0 8px;
+        font-size: 12px;
+        color: #97a0b5;
+      }
+      body.bd #bdnote {
+        display: block;
+      }
+    </style>
+  </head>
+  <body class="loading">
+    <div id="loader">
+      <div class="box">
+        <div class="ring"></div>
+        <h2>Loading the generator</h2>
+        <p id="lstep">Starting...</p>
+        <progress id="lprog" max="1" value="0"></progress>
+        <p id="ltime"></p>
+        <p>
+          The first load compiles the map shader on your graphics card. This
+          takes the longest and runs once per visit.
+        </p>
+      </div>
+    </div>
+    <header>
+      <h1>Gas Giant and Brown Dwarf Map Generator</h1>
+      <p>
+        Procedural equirectangular maps for gas giants, ice giants,
+        mini-Neptunes, sub-brown dwarfs and brown dwarfs.
+      </p>
+    </header>
+    <nav id="modebar" aria-label="Mode">
+      <button type="button" id="m_planet" aria-pressed="true">Planet</button
+      ><button type="button" id="m_bd" aria-pressed="false">Brown dwarf</button>
+    </nav>
+    <main>
+      <form id="form" autocomplete="off" novalidate>
+        <fieldset>
+          <legend>Preset</legend>
+          <div class="row wide">
+            <select id="preset" aria-label="Preset"></select>
+          </div>
+        </fieldset>
+        <fieldset id="fsp">
+          <legend>Planet</legend>
+          <p id="bdnote">
+            This mode is for free-floating brown dwarfs and sub-brown dwarfs.
+            For an object that orbits a star, use planet mode and enter a mass
+            of 13 to 75 Jupiter masses.
+          </p>
+          <div class="row wide" id="improw" hidden>
+            <button type="button" id="imp">Import from Space Engine</button
+            ><input
+              type="file"
+              id="impf"
+              aria-label="Space Engine file"
+              accept=".sc,.txt"
+              hidden
+            /><span class="msg" id="impnote"></span>
+          </div>
+        </fieldset>
+        <fieldset id="fss"><legend>Star</legend></fieldset>
+        <fieldset>
+          <legend>Output</legend>
+          <div class="row wide">
+            <label for="aspect">Aspect</label>
+            <select id="aspect">
+              <option value="16:9">16:9</option>
+              <option value="2:1" selected>
+                2:1 (true equirectangular, default)
+              </option>
+            </select>
+          </div>
+          <div class="row wide">
+            <label for="res">Resolution</label>
+            <select id="res">
+              <option value="2048">2048 x 1152</option>
+              <option value="4096">4096 x 2304</option>
+              <option value="8192">8192 x 4608</option>
+            </select>
+          </div>
+          <div class="row">
+            <label for="seed">Seed</label>
+            <input
+              id="seed"
+              type="text"
+              value=""
+              placeholder="Empty is random"
+            /><button type="button" id="rnd">Randomise</button
+            ><span class="msg" id="seedmsg"></span>
+          </div>
+          <div class="btns">
+            <button type="button" id="gen" class="main">Generate</button
+            ><button type="button" id="dl">Download PNG</button>
+          </div>
+        </fieldset>
+      </form>
+      <section id="view">
+        <div id="frame">
+          <canvas id="map" width="2048" height="1152"></canvas>
+          <div id="busy" hidden>
+            <div class="ring"></div>
+            <span id="busytxt"></span
+            ><progress id="busyprog" max="1" value="0"></progress>
+          </div>
+        </div>
+        <p id="status">Ready.</p>
+        <p id="stale" hidden>Press Generate to apply changes.</p>
+        <div id="spheres">
+          <figure>
+            <canvas id="sphere" width="440" height="440"></canvas>
+            <figcaption id="cap1">Reference light (Sun-like white)</figcaption>
+          </figure>
+          <figure id="fig2">
+            <canvas id="sphere2" width="440" height="440"></canvas>
+            <figcaption id="cap2">Under your star</figcaption>
+          </figure>
+        </div>
+        <section id="sys">
+          <div class="sysbar">
+            <h2>Orbit view</h2>
+            <label
+              ><input type="checkbox" id="real" /> Enable realistic scale</label
+            >
+          </div>
+          <canvas id="syscv" width="1000" height="560"></canvas>
+          <div class="sysctl">
+            <label
+              >Mean anomaly <output id="meanv">90°</output
+              ><input
+                type="range"
+                id="mean"
+                aria-label="Mean anomaly"
+                min="0"
+                max="360"
+                step="1"
+                value="90"
+            /></label>
+            <label
+              >Move closer<input
+                type="range"
+                id="zoom"
+                min="0"
+                max="6"
+                step="0.01"
+                value="0"
+                disabled
+            /></label>
+            <label
+              >Focus<select id="sysf">
+                <option value="s">System centre</option>
+                <option value="p">Planet</option>
+              </select></label
+            >
+          </div>
+          <p id="syscap"></p>
+        </section>
+      </section>
+      <aside id="side">
+        <section>
+          <h2>Derived values</h2>
+          <dl id="derived"></dl>
+        </section>
+        <section>
+          <h2>Atmospheric composition</h2>
+          <label
+            ><input type="checkbox" id="se" /> SpaceEngine compatibility</label
+          >
+          <button id="cpy" type="button" hidden>Copy</button>
+          <dl id="comp"><dt>Appears when the map finishes.</dt></dl>
+          <p id="agents"></p>
+        </section>
+      </aside>
+      <section id="info">
+        <h2>Equations and sources</h2>
+        <p>
+          The right sphere shows the map under your star's light. Colour is
+          albedo times a blackbody spectrum at the star's temperature,
+          integrated against the CIE 1931 observer in linear light, with the Sun
+          as white. Brightness is the star's visible flux at the planet, L / (4
+          pi a^2 sqrt(1 - e^2)) times the blackbody luminous efficacy ratio to
+          the Sun, relative to Earth's 1361 W/m^2. Eye adaptation scales it by
+          flux^0.25 (a mild Stevens' law with partial dark adaptation), then a
+          soft shoulder rolls off highlights without clipping the colour. The
+          map itself stays in Sun-like light. Real clouds also absorb by
+          wavelength, so a texture is only a three-band estimate of this.
+        </p>
+        <p>
+          2:1 output is true equirectangular. 16:9 compresses longitude to 8/9
+          of the true width. The sphere preview undoes this.
+        </p>
+        <code>Kepler: P^2 = 4 pi^2 a^3 / (G (Ms + Mp))</code>
+        <code>Stefan-Boltzmann: L = 4 pi Rs^2 sigma Ts^4</code>
+        <code>Equilibrium: Teq = Ts sqrt(Rs / 2a) (1 - Ab)^(1/4)</code>
+        <code>Effective: Te = (Teq^4 + Tint^4)^(1/4)</code>
+        <code>Gravity: g = G Mp / Rp^2</code>
+        <code>Scale height: H = k Te / (mu mH g)</code>
+        <code>Rossby: Ro = U / (2 Omega Rp)</code>
+        <code>Rhines bands: N = sqrt(2 Omega Rp / U)</code>
+        <p>
+          Band count follows the Rhines scale (Rhines 1975, Williams 1978).
+          Jupiter gives about 22 bands, Neptune about 5.
+        </p>
+        <p>
+          Class and subtype follow the thresholds in the config object CFG.
+          Cloud decks follow Sudarsky, Burrows and Hubeny 2000 and Lodders 2003
+          condensation chemistry, tested at 1 bar. Species outside a 0.55 to 1.0
+          window of temperature ratio count as buried or absent.
+        </p>
+        <p>
+          Colour anchors come from Voyager and Cassini imagery of the four solar
+          giants, Evans et al. 2013 for HD 189733 b (blue, geometric albedo 0.40
+          at 450 nm), Bell et al. 2017 for WASP-12 b (albedo below 0.1), and
+          Kreidberg et al. 2014 for GJ 1214 b (flat spectrum, cloudy).
+        </p>
+        <p>
+          Haze optical depth scales with sqrt(g0 / g), a temperature term, weak
+          internal heat, and geometric albedo above the expected value. Noise
+          runs on 3D sphere points, so the left and right edges tile and the
+          poles do not pinch.
+        </p>
+        <p>
+          Composition starts from solar abundances (Asplund et al. 2009) scaled
+          by a metal enrichment that falls with mass, then applies temperature
+          chemistry: CH4 to CO near 700 to 1400 K, NH3 to N2, condensate
+          depletion of H2O, NH3 and H2S, thermal dissociation, and alkali, TiO
+          and silicate vapour in hot atmospheres. Values are mole fractions in
+          units of 0.00000001 percent, so the total is exactly 100.
+        </p>
+        <p>
+          Circumbinary mode sums the mass and luminosity of both stars. The
+          effective radius joins both surface areas and the effective
+          temperature follows from the summed luminosity. This holds when the
+          planet orbits far outside the pair.
+        </p>
+        <p>
+          Storm and cloud features follow published observations. Tidally locked
+          planets keep clouds on the nightside and western dayside, as in
+          Parmentier 2016 and the JWST map of LTT 9779 b. Red spot style storms
+          get their length from vortex strength against jet shear, and their
+          shade from UV exposure at the cloud top. Dark spots on ice giants
+          carry bright methane companions. Strong jet gas giants host a Saturn
+          style convective storm. Uranus style planets get a faint dark spot
+          near 25 N and bands near 45 degrees. Below 950 K a hydrocarbon haze
+          thickens and browns. Tidally locked planets cool enough to
+          redistribute heat keep faint bands and show clouds on the nightside
+          and morning limb.
+        </p>
+        <p>
+          Obliquity raises polar haze depth. Eccentricity shifts Teq by (1 -
+          e^2)^(-1/8) when optional orbital parameters are on. The other
+          optional parameters do not change the map.
+        </p>
+        <p>
+          Polar polygons follow Rossby-wave theory on a strong polar jet: the
+          stationary wavelength is 2 pi sqrt(U / beta_eff), with beta_eff = beta
+          + U / sigma^2, and the polygon number is the jet circumference over
+          that wavelength (Morales-Juberias et al., Barbosa Aguiar et al. 2010).
+          Saturn's jet gives 6. A narrower jet gives more sides, as in the
+          decagon near 63 S (Sanchez-Lavega et al., Science Advances). Weaker
+          polar jets give rings of cyclones, as on Jupiter (8 north, 5 south).
+          Ice giants get a single polar vortex.
+        </p>
+        <p>
+          Brown dwarf mode has no host star. You enter mass and age. Effective
+          temperature follows the Burrows et al. 2001 late-time cooling fit,
+          Teff = 1550 K (t / 1 Gyr)^-0.32 (M / 0.05 solar masses)^0.83, softly
+          capped at 3200 K for young objects. Radius comes from an approximate
+          mass and age fit to published cooling tracks. Enter a measured
+          temperature or radius and it replaces the fit. Below 13 Jupiter masses
+          (the deuterium limit) the object is a sub-brown dwarf. Above 75
+          Jupiter masses (the hydrogen limit) it is a star.
+        </p>
+        <p>
+          Spectral class follows effective temperature: M above 2300 K, L down
+          to 1400 K, the L/T transition near 1200 to 1400 K, T down to 500 K, Y
+          below. Cloud decks follow Morley et al. 2012 and 2014: iron and
+          silicate in L dwarfs, sulfide and chloride clouds in T dwarfs, water
+          clouds in the coldest Y dwarfs. Clouds break into patches at the L/T
+          transition. Luhman 16 B and SIMP 0136+0933 show such patchy clouds.
+          Sulfides form below about 900 K, Na2S peaks near 600 K and water
+          condenses near 350 K. Jet speeds of 150 to 300 m/s sit at the top of
+          the Showman and Kaspi 2013 range in rotational light curves. Bands
+          follow the same Rhines scaling as the planets. The visible colours are
+          estimates, since few measurements exist at these wavelengths. Below
+          350 K the object takes the cold-giant look, with water clouds, ochre
+          bands and storms. WISE 0855 has water features strikingly similar to
+          Jupiter and no measured visible colour. Warm objects add a red thermal
+          glow.
+        </p>
+        <p>
+          Planet mode treats a mass of 13 to 75 Jupiter masses as a star-bound
+          brown dwarf. It uses the brown dwarf cooling fit for internal
+          temperature and radius, and the brown dwarf colours and clouds. A tick
+          box lets you mark the object as planet-formed instead. GJ 504 b is the
+          case in point. Its mass fits 20 to 30 Jupiter masses with a
+          metallicity of [M/H] near 0.67, which tentatively supports planet-like
+          formation (JWST-TST High Contrast study).
+        </p>
+        <p>
+          The composition list covers 60 or more species. Atoms and ions of 24
+          elements use the solar abundances of Asplund et al. 2009. Each element
+          enters the gas when its condensates evaporate, and ionises along a
+          Saha-style ramp set by its first ionisation potential. Cool gas adds
+          PH3, HCl, HF, GeH4, HD and more hydrocarbons. Hot gas adds metal
+          hydrides (FeH, CrH, MgH, CaH), AlO, and the dissociation products of
+          water, CO, N2 and H2S, plus H-, H+ and free electrons. Lithium drops
+          by 99 percent above about 65 Jupiter masses, from the 0.06 to 0.065
+          solar mass lithium limit (Magazzu et al. 1993, Rebolo et al. 1996).
+          Release temperatures for Mg, Al, Ca, Sc, Cr, Mn, Fe, Co, Ni, Cu, Zn,
+          Ga, Ge, Rb, Sr, Y, Zr and Ba use 50 percent condensation temperatures
+          from FastChem equilibrium condensation at 1 bar. FastChem matches
+          Lodders 2003 within 50 K at 1e-4 bar. Ionisation uses the Saha
+          equation at 3 mbar for planets and 1 bar for brown dwarfs. Jupiter
+          anchors: PH3 0.5 to 1.4 ppm, GeH4 0.58 ppb, D/H 2.6e-5. Hydrides,
+          oxides, dissociation products, HCl, HF, HCN and KCl were set to match
+          FastChem 4.0 gas-phase runs (Stock et al. 2018) at solar abundances
+          for 500 to 4000 K. Those runs have no condensation, so the release
+          gates still decide when each element enters the gas. The hydrocarbons
+          are scaled to Jupiter's stratosphere. ISO gives C2H6 near 5 ppm and
+          C2H2 near 0.14 ppm at 3 mbar, a C3H4 column of 1.5e15 per cm2 (about
+          5e-9), a C4H2 upper limit near 7e-10, and C6H6 near 3e-10 (Fouchet et
+          al. 2000, Bezard et al. 2001). C2H4 has an equatorial ISO column of
+          6e14 per cm2 (about 6e-10 to 6e-9), which fits the value used (Bezard
+          et al. 2001). C3H8 is undetected, with upper limits near 10 to 30 ppb
+          at 10 mbar in the north polar region and 8.4e16 per cm2 at the
+          equator, so the value used is only consistent with those limits. CO2
+          follows Moses et al. 2013: below 1 ppm at solar metallicity and rising
+          steeply with metallicity. FeH is firm in L dwarfs but only tentative
+          in hot Jupiters. SpaceEngine mode keeps only its known gases.
+        </p>
+        <p>
+          Mass to radius fill uses Chen and Kipping 2017. Hot planets use KCl,
+          ZnS, Na2S and silicate decks beyond the five core species.
+        </p>
+      </section>
+    </main>
+    <script>
+      "use strict";
+      // Physical constants in SI
+      const G = 6.6743e-11,
+        SB = 5.670374e-8,
+        KB = 1.380649e-23,
+        MH = 1.6735575e-27,
+        AU = 1.495978707e11;
+      const E = {
+        Me: 5.9722e24,
+        Mn: 1.02413e26,
+        Mj: 1.89813e27,
+        Ms: 1.98841e30,
+        Re: 6.378137e6,
+        Rn: 2.4764e7,
+        Rj: 7.1492e7,
+        Rs: 6.957e8,
+        Ls: 3.828e26,
+        Rjo: 7.7857e11,
+      };
+
+      // One place to tune class, subtype and condensation settings
+      const CFG = {
+        mini: [1, 10],
+        ice: [10, 30],
+        miniMinR: 1.6,
+        puffyR: 8,
+        sub: [
+          ["frigid", 50],
+          ["cold", 90],
+          ["cool", 150],
+          ["temperate", 250],
+          ["warm", 500],
+          ["hot", 1000],
+          ["torrid", Infinity],
+        ],
+        win: [0.55, 1.0],
+        // Condensation temperatures near 1 bar, solar composition (Lodders 2003, Morley 2012)
+        cond: [
+          ["methane", 80],
+          ["ammonia", 140],
+          ["ammonium hydrosulfide", 215],
+          ["water", 255],
+          ["KCl", 650],
+          ["ZnS", 750],
+          ["Na2S", 1000],
+          ["silicate", 1750],
+        ],
+        wind: { gas: 60, ice: 180, mini: 100 },
+        mu: { gas: 2.3, ice: 2.6, mini: 2.8 },
+      };
+
+      const TU = [
+        ["K", 1, 0],
+        ["C", 1, 273.15],
+        ["F", 5 / 9, 255.372],
+      ];
+      // Unit lists: [name, factor to SI, offset]
+      const FIELDS = [
+        {
+          id: "pm",
+          g: "p",
+          n: "Mass",
+          u: [
+            ["kg", 1],
+            ["Earth masses", E.Me],
+            ["Neptune masses", E.Mn],
+            ["Jupiter masses", E.Mj],
+          ],
+          d: 3,
+        },
+        {
+          id: "pr",
+          g: "p",
+          n: "Radius",
+          u: [
+            ["km", 1e3],
+            ["Earth radii", E.Re],
+            ["Neptune radii", E.Rn],
+            ["Jupiter radii", E.Rj],
+            ["solar radii", E.Rs],
+          ],
+          d: 3,
+        },
+        { id: "pt", g: "p", n: "Equilibrium temperature", u: TU, d: 0 },
+        { id: "pi", g: "p", n: "Internal temperature", u: TU, d: 0 },
+        {
+          id: "pa",
+          g: "p",
+          n: "Semimajor axis",
+          u: [
+            ["AU", AU],
+            ["km", 1e3],
+            ["Jupiter orbital radii", E.Rjo],
+          ],
+          d: 0,
+        },
+        {
+          id: "pp",
+          g: "p",
+          n: "Orbital period",
+          u: [
+            ["hours", 3600],
+            ["days", 86400],
+            ["years", 3.15576e7],
+          ],
+          d: 1,
+        },
+        {
+          id: "pw",
+          g: "p",
+          n: "Rotation period",
+          u: [
+            ["hours", 3600],
+            ["days", 86400],
+          ],
+          d: 0,
+        },
+        { id: "ag", g: "p", n: "Geometric albedo (0 to 1)", alb: 1 },
+        { id: "ab", g: "p", n: "Bond albedo (0 to 1)", alb: 1 },
+        { id: "tl", g: "p", n: "Tidally locked", chk: 1 },
+        {
+          id: "sm",
+          g: "s",
+          n: "Mass",
+          u: [
+            ["kg", 1],
+            ["solar masses", E.Ms],
+          ],
+          d: 1,
+        },
+        {
+          id: "sr",
+          g: "s",
+          n: "Radius",
+          u: [
+            ["km", 1e3],
+            ["solar radii", E.Rs],
+          ],
+          d: 1,
+        },
+        {
+          id: "sl",
+          g: "s",
+          n: "Bolometric luminosity",
+          u: [
+            ["W", 1],
+            ["solar luminosities", E.Ls],
+          ],
+          d: 1,
+        },
+        {
+          id: "sv",
+          g: "s",
+          n: "Visual luminosity",
+          u: [
+            ["W", 1],
+            ["solar luminosities", E.Ls],
+          ],
+          d: 1,
+        },
+        { id: "st", g: "s", n: "Temperature", u: TU, d: 0 },
+      ];
+      const ANG = [
+        ["degrees", Math.PI / 180],
+        ["radians", 1],
+      ];
+      FIELDS.splice(
+        7,
+        0,
+        { id: "po", g: "p", n: "Obliquity", u: ANG, d: 0, ang: Math.PI },
+        {
+          id: "pn",
+          g: "p",
+          n: "Equatorial ascending node",
+          u: ANG,
+          d: 0,
+          ang: 2 * Math.PI,
+        },
+      );
+      FIELDS.splice(
+        12,
+        0,
+        { id: "op", g: "p", n: "Optional orbital parameters", chk: 1 },
+        { id: "pe", g: "p", n: "Eccentricity (0 to below 1)", ecc: 1, opt: 1 },
+        {
+          id: "pc",
+          g: "p",
+          n: "Inclination",
+          u: ANG,
+          d: 0,
+          ang: Math.PI,
+          opt: 1,
+        },
+        {
+          id: "pl",
+          g: "p",
+          n: "Ascending node",
+          u: ANG,
+          d: 0,
+          ang: 2 * Math.PI,
+          opt: 1,
+        },
+        {
+          id: "pg",
+          g: "p",
+          n: "Argument of periapsis",
+          u: ANG,
+          d: 0,
+          ang: 2 * Math.PI,
+          opt: 1,
+        },
+        {
+          id: "pq",
+          g: "p",
+          n: "Mean anomaly",
+          u: ANG,
+          d: 0,
+          ang: 2 * Math.PI,
+          opt: 1,
+        },
+      );
+      // Circumbinary toggle and a second set of star fields, shown only when it is on
+      FIELDS.splice(
+        FIELDS.findIndex((f) => f.id === "sm"),
+        0,
+        { id: "cb", g: "s", n: "Circumbinary", chk: 1 },
+      );
+      for (const [a, b] of [
+        ["sm", "bm"],
+        ["sr", "br"],
+        ["sl", "bl"],
+        ["sv", "bv"],
+        ["st", "bt"],
+      ]) {
+        FIELDS.push({ ...FIELDS.find((f) => f.id === a), id: b, bin: 1 });
+      }
+      FIELDS.push(
+        {
+          id: "bs",
+          g: "s",
+          n: "Separation",
+          u: [
+            ["km", 1e3],
+            ["AU", AU],
+          ],
+          d: 1,
+          bin: 1,
+          pair: 1,
+        },
+        {
+          id: "be",
+          g: "s",
+          n: "Eccentricity (0 to below 1)",
+          ecc: 1,
+          bin: 1,
+          pair: 1,
+        },
+      );
+      FIELDS.splice(
+        FIELDS.findIndex((f) => f.id === "pr"),
+        0,
+        {
+          id: "pf",
+          g: "p",
+          n: "Formed like a planet, not a star-bound brown dwarf",
+          chk: 1,
+          pf: 1,
+        },
+        {
+          id: "ae",
+          g: "p",
+          n: "Age",
+          u: [
+            ["Myr", 3.15576e13],
+            ["Gyr", 3.15576e16],
+            ["years", 3.15576e7],
+          ],
+          d: 1,
+          bd: 1,
+        },
+      );
+      // Planet only fields, hidden in brown dwarf mode
+      const PONLY = new Set([
+        "pf",
+        "pt",
+        "ag",
+        "ab",
+        "tl",
+        "op",
+        "pe",
+        "pc",
+        "pl",
+        "pg",
+        "pq",
+        "pa",
+        "pp",
+      ]);
+      let mode = "planet";
+      const BYID = Object.fromEntries(FIELDS.map((f) => [f.id, f]));
+
+      // Ten validation presets: [value, unit index]
+      const PRESETS = {
+        Jupiter: {
+          po: [3.13, 0],
+          pe: [0.0489],
+          pc: [1.303, 0],
+          pm: [1, 3],
+          pr: [69911, 0],
+          pi: [100, 0],
+          pa: [5.2044, 0],
+          pp: [11.862, 2],
+          pw: [9.925, 0],
+          ag: [0.538],
+          ab: [0.343],
+          sm: [1, 1],
+          sr: [1, 1],
+          st: [5772, 0],
+        },
+        Saturn: {
+          po: [26.73, 0],
+          pe: [0.0565],
+          pc: [2.485, 0],
+          pm: [95.16, 1],
+          pr: [58232, 0],
+          pi: [78, 0],
+          pa: [9.5826, 0],
+          pp: [29.457, 2],
+          pw: [10.656, 0],
+          ag: [0.499],
+          ab: [0.342],
+          sm: [1, 1],
+          sr: [1, 1],
+          st: [5772, 0],
+        },
+        Uranus: {
+          po: [97.77, 0],
+          pe: [0.0457],
+          pc: [0.773, 0],
+          pm: [14.536, 1],
+          pr: [25362, 0],
+          pi: [5, 0],
+          pa: [19.2184, 0],
+          pp: [84.011, 2],
+          pw: [17.24, 0],
+          ag: [0.488],
+          ab: [0.3],
+          sm: [1, 1],
+          sr: [1, 1],
+          st: [5772, 0],
+        },
+        Neptune: {
+          po: [28.32, 0],
+          pe: [0.0113],
+          pc: [1.77, 0],
+          pm: [17.147, 1],
+          pr: [24622, 0],
+          pi: [53, 0],
+          pa: [30.11, 0],
+          pp: [164.79, 2],
+          pw: [16.11, 0],
+          ag: [0.442],
+          ab: [0.29],
+          sm: [1, 1],
+          sr: [1, 1],
+          st: [5772, 0],
+        },
+        "HD 189733 A b": {
+          po: [0, 0],
+          pm: [1.138, 3],
+          pr: [1.138, 3],
+          pi: [100, 0],
+          pa: [0.03142, 0],
+          pp: [2.21857, 1],
+          tl: 1,
+          ag: [0.4],
+          ab: [0.1],
+          sm: [0.806, 1],
+          sr: [0.756, 1],
+          st: [5050, 0],
+        },
+        "Enaiposha (GJ 1214 b)": {
+          po: [0, 0],
+          pm: [6.26, 1],
+          pr: [2.74, 1],
+          pi: [30, 0],
+          pa: [0.0141, 0],
+          pp: [1.5804, 1],
+          tl: 1,
+          ag: [0.5],
+          ab: [0.33],
+          sm: [0.15, 1],
+          sr: [0.215, 1],
+          st: [3250, 0],
+        },
+        "WASP-12 A b": {
+          po: [0, 0],
+          pm: [1.47, 3],
+          pr: [1.937, 3],
+          pi: [100, 0],
+          pa: [0.0234, 0],
+          pp: [1.09142, 1],
+          tl: 1,
+          ag: [0.064],
+          ab: [0],
+          sm: [1.434, 1],
+          sr: [1.657, 1],
+          st: [6360, 0],
+        },
+        "Cuancoá (LTT 9779 b)": {
+          po: [0, 0],
+          pm: [29.32, 1],
+          pr: [4.72, 1],
+          pi: [50, 0],
+          pa: [0.01679, 0],
+          pp: [0.79205, 1],
+          tl: 1,
+          ag: [0.5],
+          ab: [0.31],
+          sm: [1.02, 1],
+          sr: [0.949, 1],
+          st: [5480, 0],
+        },
+        "Kepler-7 b": {
+          po: [0, 0],
+          pm: [0.433, 3],
+          pr: [1.478, 3],
+          pi: [100, 0],
+          pa: [0.06224, 0],
+          pp: [4.885525, 1],
+          tl: 1,
+          ag: [0.32],
+          ab: [0.2],
+          sm: [1.35, 1],
+          sr: [1.84, 1],
+          st: [5933, 0],
+        },
+        "HD 80606 b": {
+          po: [0, 0],
+          pe: [0.93183],
+          pc: [89.24, 0],
+          pg: [301.113, 0],
+          pq: [0, 0],
+          op: 1,
+          pm: [4.164, 3],
+          pr: [1.032, 3],
+          pi: [100, 0],
+          pa: [0.4603, 0],
+          pp: [111.436765, 1],
+          pw: [93, 0],
+          ag: [0.3],
+          ab: [0.2],
+          sm: [1.05, 1],
+          sr: [1.04, 1],
+          st: [5574, 0],
+        },
+      };
+
+      // Brown dwarf presets. Mass, age, temperature and spin come from the papers listed in the info section.
+      const BDPRESETS = {
+        "Luhman 16 A": {
+          po: [0, 0],
+          pm: [34.2, 3],
+          ae: [700, 0],
+          pi: [1210, 0],
+          pw: [6.94, 0],
+        },
+        "Luhman 16 B": {
+          po: [0, 0],
+          pm: [27.9, 3],
+          ae: [700, 0],
+          pi: [1180, 0],
+          pw: [5.28, 0],
+        },
+        "SIMP 0136+0933": {
+          po: [0, 0],
+          pm: [12.7, 3],
+          ae: [200, 0],
+          pi: [1100, 0],
+          pw: [2.4, 0],
+        },
+        "WISE 0855-0714": { po: [0, 0], pm: [5, 3], ae: [3, 1], pi: [250, 0] },
+        "Gliese 229 Ba": {
+          po: [0, 0],
+          pm: [38.1, 3],
+          ae: [2.45, 1],
+          pi: [860, 0],
+        },
+        "Gliese 229 Bb": {
+          po: [0, 0],
+          pm: [34.4, 3],
+          ae: [2.45, 1],
+          pi: [770, 0],
+        },
+      };
+
+      const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+      const sstep = (a, b, x) => {
+        const t = clamp((x - a) / (b - a), 0, 1);
+        return t * t * (3 - 2 * t);
+      };
+
+      // Fraction of blackbody power in 400 to 700 nm, links visual and bolometric luminosity
+      function visFrac(T) {
+        const h = 6.626e-34,
+          c = 2.998e8,
+          k = KB;
+        let a = 0,
+          b = 0;
+        for (let i = 0; i < 400; i++) {
+          const l = (100 + i * 12) * 1e-9; // 100 nm to 4900 nm
+          const x = (h * c) / (l * k * T);
+          const v = x > 700 ? 0 : 1 / (Math.pow(l, 5) * (Math.exp(x) - 1));
+          b += v;
+          if (l >= 400e-9 && l <= 700e-9) a += v;
+        }
+        return a / b;
+      }
+
+      // Rough mass to radius relation (Chen and Kipping 2017), SI in and out
+      function massToR(m) {
+        const x = m / E.Me;
+        const r =
+          x < 2.04
+            ? 1.008 * Math.pow(x, 0.279)
+            : x < 131.6
+              ? 0.8 * Math.pow(x, 0.589)
+              : 17.74 * Math.pow(x, -0.044);
+        return r * E.Re;
+      }
+      function rToMass(r) {
+        const x = r / E.Re;
+        return (x < 12 ? Math.pow(x / 0.8, 1 / 0.589) : 300) * E.Me;
+      }
+
+      // Fill empty values from physics. Returns filled copy and a source note per key
+      function solve(v) {
+        const d = { ...v },
+          src = {};
+        const set = (k, x, why) => {
+          if (d[k] == null && isFinite(x) && x > 0) {
+            d[k] = x;
+            src[k] = why;
+            return true;
+          }
+          return false;
+        };
+        if (d.ag == null && d.ab != null)
+          set("ag", Math.min(1, d.ab / 0.65), "Bond to geometric ratio 0.65");
+        if (d.ab == null && d.ag != null)
+          ((d.ab = d.ag * 0.65), (src.ab = "Bond to geometric ratio 0.65"));
+        if (d.ab == null && d.ag == null) {
+          d.ab = 0.3;
+          d.ag = 0.46;
+          src.ab = src.ag = "default";
+        }
+        // Eccentric orbits shift the orbit-averaged temperature, only when optional parameters are on
+        const fe = d.op && d.pe ? Math.pow(1 - d.pe ** 2, -0.125) : 1;
+        for (let i = 0; i < 8; i++) {
+          let ch = false;
+          const s = (k, x, w) => {
+            ch = set(k, x, w) || ch;
+          };
+          // Stefan-Boltzmann
+          if (d.sl == null && d.sr && d.st)
+            s(
+              "sl",
+              4 * Math.PI * d.sr ** 2 * SB * d.st ** 4,
+              "Stefan-Boltzmann",
+            );
+          else if (d.sr == null && d.sl && d.st)
+            s(
+              "sr",
+              Math.sqrt(d.sl / (4 * Math.PI * SB * d.st ** 4)),
+              "Stefan-Boltzmann",
+            );
+          else if (d.st == null && d.sl && d.sr)
+            s(
+              "st",
+              Math.pow(d.sl / (4 * Math.PI * SB * d.sr ** 2), 0.25),
+              "Stefan-Boltzmann",
+            );
+          // Visual and bolometric link
+          if (d.st) {
+            const f = visFrac(d.st);
+            if (d.sv == null && d.sl)
+              s("sv", d.sl * f, "blackbody band fraction");
+            if (d.sl == null && d.sv)
+              s("sl", d.sv / f, "blackbody band fraction");
+          }
+          // Mass and radius pair
+          if (d.pr == null && d.pm)
+            s("pr", massToR(d.pm), "mass-radius relation");
+          if (d.pm == null && d.pr)
+            s("pm", rToMass(d.pr), "mass-radius relation");
+          // Kepler third law
+          const mt = (d.sm || 0) + (d.pm || 0);
+          if (d.sm) {
+            if (d.pp == null && d.pa)
+              s("pp", 2 * Math.PI * Math.sqrt(d.pa ** 3 / (G * mt)), "Kepler");
+            if (d.pa == null && d.pp)
+              s(
+                "pa",
+                Math.cbrt((G * mt * d.pp ** 2) / (4 * Math.PI ** 2)),
+                "Kepler",
+              );
+          } else if (d.pa && d.pp) {
+            s(
+              "sm",
+              (4 * Math.PI ** 2 * d.pa ** 3) / (G * d.pp ** 2) - (d.pm || 0),
+              "Kepler",
+            );
+          }
+          // Equilibrium temperature
+          const q = Math.pow(1 - d.ab, 0.25) * fe;
+          if (d.st && d.sr && d.pa)
+            s(
+              "pt",
+              d.st * Math.sqrt(d.sr / (2 * d.pa)) * q,
+              "equilibrium formula",
+            );
+          else if (d.pt && d.st && d.sr && d.pa == null && d.pp == null)
+            s(
+              "pa",
+              (d.sr / 2) * (d.st / d.pt) ** 2 * q * q,
+              "equilibrium formula",
+            );
+          else if (d.pt && d.sr && d.pa && d.st == null)
+            s(
+              "st",
+              d.pt / (Math.sqrt(d.sr / (2 * d.pa)) * q),
+              "equilibrium formula",
+            );
+          if (!ch) break;
+        }
+        if (d.sm == null && d.sr) {
+          d.sm = Math.pow(d.sr / E.Rs, 1.25) * E.Ms;
+          src.sm = "main sequence estimate";
+        }
+        if (d.pi == null && d.pm) {
+          d.pi = clamp(100 * Math.pow(d.pm / E.Mj, 0.25), 10, 400);
+          src.pi = "mass scaling estimate";
+        }
+        if (d.tl && d.pp) {
+          d.pw = d.pp;
+          src.pw = "tidal lock, equals orbital period";
+        }
+        return { d, src };
+      }
+
+      // Brown dwarf limits in Jupiter masses: deuterium burning near 13, hydrogen burning near 75 to 80
+      const BD = { dLim: 13, hLim: 75, minM: 1 };
+      const GYR = 3.15576e16;
+      // Burrows et al. 2001 late-time cooling fit. The soft cap keeps young objects under 3200 K, where a power law fails.
+      function bdTeff(m, t) {
+        const T =
+          1550 * Math.pow(t / GYR, -0.32) * Math.pow(m / E.Ms / 0.05, 0.83);
+        return T / Math.pow(1 + Math.pow(T / 3200, 6), 1 / 6);
+      }
+      const bdMass = (T, t) =>
+        0.05 * E.Ms * Math.pow((T / 1550) * Math.pow(t / GYR, 0.32), 1 / 0.83);
+      // Approximate radius. Trends follow Burrows et al. 2011: a peak near 4 Jupiter masses, a minimum near 60 to 70, about 0.77 RJ at 5 Gyr and 0.9 RJ at 1 Gyr for old-model minima.
+      function bdRadius(m, t) {
+        const tab = [
+          [1, 1.02],
+          [4, 1.05],
+          [10, 1.0],
+          [30, 0.9],
+          [60, 0.78],
+          [70, 0.77],
+          [80, 0.78],
+        ];
+        const x = Math.log(clamp(m / E.Mj, 1, 80));
+        let r = tab[tab.length - 1][1];
+        for (let i = 1; i < tab.length; i++) {
+          if (x <= Math.log(tab[i][0])) {
+            const a = Math.log(tab[i - 1][0]),
+              b = Math.log(tab[i][0]);
+            r =
+              tab[i - 1][1] + ((tab[i][1] - tab[i - 1][1]) * (x - a)) / (b - a);
+            break;
+          }
+        }
+        return r * clamp(Math.pow(t / (4.5 * GYR), -0.1), 0.95, 2) * E.Rj;
+      }
+      function solveBD(v) {
+        const d = { ...v },
+          src = {};
+        const set = (k, x, why) => {
+          if (d[k] == null && isFinite(x) && x > 0) {
+            d[k] = x;
+            src[k] = why;
+          }
+        };
+        set("ae", 3 * GYR, "typical field age, 3 Gyr");
+        if (d.pm == null && d.pi != null)
+          set("pm", bdMass(d.pi, d.ae), "cooling fit solved for mass");
+        if (d.pm != null) {
+          set("pi", bdTeff(d.pm, d.ae), "Burrows 2001 cooling fit");
+          set("pr", bdRadius(d.pm, d.ae), "cooling track fit");
+        }
+        set("pw", 5 * 3600, "typical spin, 2 to 10 hours");
+        set("pt", 2.7, "no host star");
+        d.ab = 0;
+        d.ag = d.pi ? refAlbedo(d.pi) : 0.1;
+        d.bd = true;
+        return { d, src };
+      }
+      function bdChecks(v, d) {
+        const w = {},
+          mj = d.pm / E.Mj;
+        if (d.pm != null && mj < BD.minM)
+          w.pm = "Below 1 Jupiter mass. Use planet mode.";
+        else if (d.pm != null && mj > 80)
+          w.pm =
+            "Above the hydrogen limit of about 75 to 80 Jupiter masses. This object is a star.";
+        if (v.pr != null && (v.pr < 0.6 * E.Rj || v.pr > 2.5 * E.Rj))
+          w.pr = "Brown dwarfs span about 0.7 to 2 Jupiter radii.";
+        if (v.pi != null && v.pi > 3200)
+          w.pi = "Hotter than a brown dwarf. Check mass and age.";
+        if (v.ae != null && v.ae > 13.8 * GYR)
+          w.ae = "Older than the universe.";
+        else if (v.ae != null && v.ae < 1e7 * 3.15576e7 && v.pi == null)
+          w.ae =
+            "Below 10 Myr the cooling fit is least reliable. Enter a temperature if you know it.";
+        return w;
+      }
+      // Compare entered values only. Returns {key: message}
+      function checkConsistency(v, d) {
+        const w = {};
+        const off = (a, b) => Math.abs(a / b - 1) > 0.05;
+        if (v.pp && v.pa && v.sm) {
+          const pk =
+            2 * Math.PI * Math.sqrt(v.pa ** 3 / (G * (v.sm + (d.pm || 0))));
+          if (off(v.pp, pk)) {
+            w.pp =
+              "Period disagrees with Kepler. Expected " +
+              fmt(pk / 86400) +
+              " days.";
+            w.pa = "Axis disagrees with period and star mass.";
+          }
+        }
+        if (v.sl && v.sr && v.st) {
+          const l = 4 * Math.PI * v.sr ** 2 * SB * v.st ** 4;
+          if (off(v.sl, l))
+            w.sl =
+              "Luminosity disagrees with radius and temperature. Expected " +
+              fmt(l / E.Ls) +
+              " solar.";
+        }
+        if (v.pt && v.st && v.sr && v.pa) {
+          const t =
+            v.st *
+            Math.sqrt(v.sr / (2 * v.pa)) *
+            Math.pow(1 - d.ab, 0.25) *
+            (v.op && v.pe ? Math.pow(1 - v.pe ** 2, -0.125) : 1);
+          if (off(v.pt, t))
+            w.pt =
+              "Temperature disagrees with star and orbit. Expected " +
+              fmt(t) +
+              " K.";
+        }
+        if (v.sl && v.sv && v.sv > v.sl)
+          w.sv = "Visual luminosity exceeds bolometric.";
+        return w;
+      }
+
+      // Number format: plain for mid range, exponent for the rest
+      function fmt(x) {
+        if (x == null || !isFinite(x)) return "-";
+        const a = Math.abs(x);
+        if (a !== 0 && (a >= 1e6 || a < 1e-3)) return x.toExponential(4);
+        return String(+x.toPrecision(5));
+      }
+
+      // Planet class from mass and radius
+      function classify(m, r) {
+        const me = m / E.Me,
+          re = r / E.Re;
+        let c = me > CFG.ice[1] ? "gas" : me > CFG.mini[1] ? "ice" : "mini";
+        if (c === "ice" && re > CFG.puffyR) c = "gas";
+        const note =
+          c === "mini" && (me < CFG.mini[0] || re < CFG.miniMinR)
+            ? "Outside the envelope range. Treated as a mini-Neptune."
+            : "";
+        return {
+          c,
+          note,
+          name: { gas: "Gas giant", ice: "Ice giant", mini: "Mini-Neptune" }[c],
+        };
+      }
+      function subtype(T) {
+        return CFG.sub.find((s) => T < s[1])[0];
+      }
+
+      // Visible-atmosphere condensate test near 1 bar
+      function condensates(T) {
+        const hit = CFG.cond.filter((c) => T < c[1] && T >= CFG.win[0] * c[1]);
+        return { hit, top: hit[0] || null };
+      }
+      // Colour anchors by temperature: [T, zone, belt, accent, storm], sRGB 0 to 1
+      const COLD = [
+        // indexed by equilibrium temperature, methane absorption
+        [
+          30,
+          [0.3, 0.48, 0.8],
+          [0.22, 0.38, 0.72],
+          [0.62, 0.8, 0.95],
+          [0.1, 0.16, 0.45],
+        ],
+        [
+          46,
+          [0.52, 0.7, 0.88],
+          [0.43, 0.6, 0.82],
+          [0.8, 0.9, 0.98],
+          [0.18, 0.28, 0.58],
+        ],
+        [
+          60,
+          [0.66, 0.82, 0.88],
+          [0.55, 0.73, 0.84],
+          [0.82, 0.92, 0.95],
+          [0.42, 0.6, 0.78],
+        ],
+        [
+          90,
+          [0.7, 0.82, 0.8],
+          [0.6, 0.74, 0.76],
+          [0.82, 0.9, 0.88],
+          [0.5, 0.66, 0.7],
+        ],
+      ];
+      const WARM = [
+        // indexed by effective temperature
+        [
+          95,
+          [0.94, 0.89, 0.76],
+          [0.82, 0.72, 0.54],
+          [0.86, 0.76, 0.56],
+          [0.7, 0.46, 0.3],
+        ],
+        [
+          125,
+          [0.93, 0.89, 0.8],
+          [0.58, 0.4, 0.28],
+          [0.74, 0.56, 0.38],
+          [0.72, 0.36, 0.22],
+        ],
+        [
+          155,
+          [0.9, 0.86, 0.76],
+          [0.64, 0.5, 0.36],
+          [0.78, 0.66, 0.46],
+          [0.62, 0.36, 0.26],
+        ],
+        [
+          200,
+          [0.86, 0.84, 0.68],
+          [0.62, 0.55, 0.3],
+          [0.97, 0.96, 0.92],
+          [0.72, 0.62, 0.4],
+        ],
+        [
+          260,
+          [0.82, 0.72, 0.42],
+          [0.62, 0.5, 0.22],
+          [0.96, 0.94, 0.86],
+          [0.55, 0.42, 0.18],
+        ],
+        [
+          350,
+          [0.76, 0.62, 0.28],
+          [0.58, 0.42, 0.13],
+          [0.92, 0.86, 0.7],
+          [0.45, 0.32, 0.1],
+        ],
+        [
+          500,
+          [0.7, 0.54, 0.22],
+          [0.5, 0.34, 0.11],
+          [0.8, 0.7, 0.46],
+          [0.35, 0.24, 0.08],
+        ],
+        [
+          700,
+          [0.5, 0.36, 0.18],
+          [0.3, 0.22, 0.12],
+          [0.42, 0.38, 0.38],
+          [0.16, 0.12, 0.08],
+        ],
+        [
+          1000,
+          [0.3, 0.21, 0.17],
+          [0.14, 0.11, 0.11],
+          [0.26, 0.28, 0.42],
+          [0.08, 0.07, 0.08],
+        ],
+        [
+          1500,
+          [0.4, 0.22, 0.15],
+          [0.19, 0.11, 0.09],
+          [0.34, 0.22, 0.18],
+          [0.1, 0.06, 0.05],
+        ],
+        [
+          2500,
+          [0.62, 0.28, 0.12],
+          [0.3, 0.12, 0.07],
+          [0.46, 0.22, 0.12],
+          [0.12, 0.05, 0.04],
+        ],
+      ];
+      const RAYL = [
+        // cloudless Rayleigh gradient with absorber darkening
+        [
+          100,
+          [0.38, 0.58, 0.9],
+          [0.16, 0.3, 0.7],
+          [0.5, 0.7, 0.95],
+          [0.1, 0.2, 0.5],
+        ],
+        [
+          800,
+          [0.3, 0.46, 0.8],
+          [0.12, 0.22, 0.58],
+          [0.4, 0.55, 0.85],
+          [0.08, 0.15, 0.4],
+        ],
+        [
+          1300,
+          [0.2, 0.26, 0.45],
+          [0.09, 0.11, 0.22],
+          [0.3, 0.3, 0.4],
+          [0.06, 0.06, 0.12],
+        ],
+        [
+          2200,
+          [0.11, 0.08, 0.08],
+          [0.05, 0.04, 0.04],
+          [0.2, 0.12, 0.1],
+          [0.04, 0.03, 0.03],
+        ],
+      ];
+
+      const BDPAL = [
+        // brown dwarf visible colour by effective temperature, estimated: warm brown to dark magenta to near black
+        [
+          250,
+          [0.11, 0.08, 0.12],
+          [0.05, 0.04, 0.07],
+          [0.18, 0.13, 0.2],
+          [0.02, 0.02, 0.04],
+        ],
+        [
+          450,
+          [0.17, 0.1, 0.17],
+          [0.08, 0.05, 0.1],
+          [0.26, 0.16, 0.26],
+          [0.03, 0.02, 0.05],
+        ],
+        [
+          700,
+          [0.27, 0.13, 0.22],
+          [0.12, 0.06, 0.12],
+          [0.36, 0.2, 0.3],
+          [0.04, 0.02, 0.05],
+        ],
+        [
+          1000,
+          [0.36, 0.17, 0.24],
+          [0.17, 0.08, 0.14],
+          [0.46, 0.26, 0.34],
+          [0.06, 0.03, 0.06],
+        ],
+        [
+          1300,
+          [0.42, 0.21, 0.2],
+          [0.2, 0.1, 0.1],
+          [0.52, 0.3, 0.26],
+          [0.07, 0.04, 0.04],
+        ],
+        [
+          1700,
+          [0.5, 0.24, 0.14],
+          [0.26, 0.12, 0.08],
+          [0.6, 0.34, 0.2],
+          [0.09, 0.05, 0.03],
+        ],
+        [
+          2300,
+          [0.6, 0.3, 0.14],
+          [0.3, 0.14, 0.07],
+          [0.7, 0.42, 0.22],
+          [0.1, 0.05, 0.03],
+        ],
+        [
+          3000,
+          [0.7, 0.38, 0.16],
+          [0.38, 0.18, 0.08],
+          [0.8, 0.52, 0.26],
+          [0.12, 0.06, 0.03],
+        ],
+      ];
+      const bdSpec = (T) =>
+        T >= 2300
+          ? "late-M spectrum"
+          : T >= 1400
+            ? "L dwarf"
+            : T >= 1200
+              ? "L/T transition"
+              : T >= 500
+                ? "T dwarf"
+                : "Y dwarf";
+      // Cloud decks by Teff (Morley et al. 2012, 2014)
+      function bdClouds(T) {
+        if (T > 2400) return { hit: [], top: null };
+        if (T >= 1400)
+          return { hit: ["silicate", "iron"], top: ["silicate and iron"] };
+        if (T >= 1200)
+          return {
+            hit: ["silicate", "iron", "Na2S"],
+            top: ["patchy silicate and iron"],
+          };
+        if (T >= 900) return { hit: ["Na2S", "MnS"], top: ["thin sulfides"] };
+        if (T >= 600)
+          return {
+            hit: ["Na2S", "MnS", "Cr", "ZnS", "KCl"],
+            top: ["sodium sulfide"],
+          };
+        if (T >= 350)
+          return {
+            hit: ["Na2S", "ZnS", "KCl"],
+            top: ["sulfides and chlorides"],
+          };
+        return { hit: ["water"], top: ["water ice"] };
+      }
+      const mix3 = (a, b, t) => a.map((x, i) => x + (b[i] - x) * t);
+
+      // Smooth blend between anchor rows
+      function rowAt(tab, x) {
+        if (x <= tab[0][0]) return tab[0].slice(1);
+        for (let i = 1; i < tab.length; i++) {
+          if (x <= tab[i][0]) {
+            const t = sstep(tab[i - 1][0], tab[i][0], x);
+            return [1, 2, 3, 4].map((k) => mix3(tab[i - 1][k], tab[i][k], t));
+          }
+        }
+        return tab[tab.length - 1].slice(1);
+      }
+
+      // Expected geometric albedo by temperature, tones shift away from it
+      function refAlbedo(T) {
+        return T < 250
+          ? 0.5
+          : T < 500
+            ? 0.5 - 0.2 * sstep(250, 500, T)
+            : T < 1000
+              ? 0.3 - 0.2 * sstep(500, 1000, T)
+              : 0.1 -
+                0.04 * sstep(1000, 1500, T) +
+                0.12 * sstep(900, 1300, T) * (1 - sstep(1700, 2100, T));
+      }
+      function shiftAlb(c, k) {
+        return c.map((x) =>
+          clamp(k > 0 ? x + k * (1 - x) * 1.2 : x * (1 + k * 1.6), 0, 1),
+        );
+      }
+
+      // FNV hash and mulberry32 so one seed string gives one map
+      function seedNums(s) {
+        let h = 2166136261;
+        for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+        const r = () => {
+          h = (h + 0x6d2b79f5) >>> 0;
+          let t = Math.imul(h ^ (h >>> 15), 1 | h);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+        return [0, 0, 0, 0, 0, 0].map(() => r() * 60 + 3);
+      }
+
+      // Turn physical values into shader inputs and a status line
+      function makeParams(d, seed) {
+        // Orbit position (optional orbital parameters only): distance sets the heating now, and the season sets which hemisphere is in summer
+        let sea = 0,
+          phaseTxt = "",
+          shl = 0,
+          shi = 0,
+          shg = 0,
+          shTxt = "";
+        // Periapsis shockwave (Langton and Laughlin 2008, Lewis 2017). Strength follows the heating jump and how fast it happens.
+        // The front is born at the east terminator at periapsis, runs east at the sound speed and dies off over a few laps.
+        if (d.op && d.pe > 0.05 && d.pq != null && d.pa && d.pp && !d.tl) {
+          const e = d.pe,
+            t0 = d.pt;
+          const tPeri = t0 * Math.pow(1 - e, -0.5) * Math.pow(1 - e * e, 0.125),
+            tApo = t0 * Math.pow(1 + e, -0.5) * Math.pow(1 - e * e, 0.125);
+          const n = (2 * Math.PI) / d.pp,
+            tPass = Math.pow(1 - e, 1.5) / (n * Math.sqrt(1 + e));
+          const fast = 1 / (1 + (tPass / 86400) ** 2);
+          const full =
+            sstep(80, 700, tPeri - tApo) *
+            (0.35 + 0.65 * sstep(400, 1800, tPeri)) *
+            fast;
+          const cs = Math.sqrt(1.4 * 3646 * tPeri),
+            lap = (2 * Math.PI * d.pr) / cs,
+            tau = Math.max(1.5 * lap, 21600);
+          const M = d.pq,
+            tt =
+              (((((M + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) %
+                (2 * Math.PI)) -
+                Math.PI) /
+              n;
+          const kv = kepler(M, e, 1),
+            fl = ((1 + e * Math.cos(kv.nu)) / (1 + e)) ** 2;
+          const env = tt < 0 ? fl ** 6 : Math.exp(-tt / tau);
+          shi = full * env;
+          shg = sstep(1100, 2200, tPeri);
+          shl = Math.PI / 2 + (cs / d.pr) * Math.max(tt, 0);
+          if (full > 0.02)
+            shTxt = `Periapsis shockwave: strength ${fmt(full)} at periapsis (${fmt(tPeri)} K there, ${fmt(tApo)} K at apoapsis), lap time ${fmt(lap / 3600)} h, ${shi > 0.02 ? "visible now at strength " + fmt(shi) : "not visible at this orbit position"}.`;
+        }
+        if (d.op && d.pq != null && d.pa) {
+          const e = d.pe || 0,
+            kp = kepler(d.pq, e, 1);
+          const pt =
+            d.pt * Math.pow(1 / kp.r, 0.5) * Math.pow(1 - e * e, 0.125);
+          sea = d.tl
+            ? 0
+            : Math.sin(d.po || 0) * Math.sin(kp.nu + (d.pg || 0) - (d.pn || 0));
+          phaseTxt = ` Orbit position: mean anomaly ${fmt((d.pq * 180) / Math.PI)} deg, distance ${fmt((kp.r * d.pa) / AU)} AU, equilibrium T ${fmt(pt)} K here.`;
+          d = { ...d, pt };
+        }
+        const Te = Math.pow(d.pt ** 4 + d.pi ** 4, 0.25);
+        const bd = !!(d.bd || d.bdp),
+          mjb = d.pm / E.Mj;
+        const cls = bd
+          ? {
+              c: "gas",
+              note: "",
+              name:
+                mjb < BD.dLim
+                  ? "Sub-brown dwarf"
+                  : mjb <= BD.hLim
+                    ? "Brown dwarf"
+                    : "Low-mass star",
+            }
+          : classify(d.pm, d.pr);
+        const sub = bd ? bdSpec(Te) : subtype(Te);
+        // Below 350 K water clouds form and the object looks like a cold giant, so it keeps the planet look
+        const bdx = bd && Te >= 350;
+        const g = (G * d.pm) / d.pr ** 2;
+        const cd = bd ? bdClouds(Te) : condensates(Te);
+        const cloudless = bd ? Te > 2400 : !cd.top;
+        const prot = d.pw / 3600;
+        const om = (2 * Math.PI) / d.pw;
+        // Brown dwarf jets: Showman and Kaspi 2013 predict 10 to 300 m/s. Luhman 16 light curves suggest faster, so the top of that range is used and it grows with Teff.
+        const U = bd
+          ? 150 + 150 * sstep(900, 1800, Te)
+          : (CFG.wind[cls.c] +
+              (cls.c === "gas" ? 100 * (1 - sstep(90, 125, Te)) : 0)) *
+            (1 + 20 * sstep(900, 1800, Te));
+        const nbRaw = Math.sqrt((2 * om * d.pr) / U);
+        const tl = !!d.tl;
+        const k = bd ? 0 : d.ag - refAlbedo(Te);
+        // Silicate clouds reflect at optical wavelengths between about 950 and 1900 K
+        const sil =
+          cloudless || bd
+            ? 0
+            : sstep(900, 1300, Te) * (1 - sstep(1700, 2100, Te));
+        const so = seedNums(seed),
+          so0 = so[0];
+        // Palette
+        let pal;
+        if (cloudless) pal = rowAt(RAYL, Te);
+        else {
+          const cold = rowAt(COLD, d.pt),
+            warm = rowAt(WARM, Math.max(Te, 95)),
+            w = sstep(70, 95, Te);
+          pal = cold.map((c, i) => mix3(c, warm[i], w));
+        }
+        // Between 350 and 550 K the palette moves from the cold giant look to the dark T dwarf look
+        if (bd) {
+          const wy = 1 - sstep(350, 550, Te),
+            wr = rowAt(WARM, Math.max(Te, 95));
+          pal = rowAt(BDPAL, Te).map((c, i) => mix3(c, wr[i], wy));
+        }
+        pal = pal.map((c) => shiftAlb(c, k * (1 - 0.5 * sstep(400, 800, Te))));
+        pal = pal.map((c) => mix3(c, [0.86, 0.82, 0.76], 0.3 * sil));
+        // Polar tint: desaturated and cooler, as in Juno and Cassini polar views
+        const avg = mix3(pal[0], pal[1], 0.5),
+          gy = 0.3 * avg[0] + 0.59 * avg[1] + 0.11 * avg[2];
+        let cp = mix3([gy, gy, gy], avg, 0.4).map((x) => x * 0.92);
+        if (!bdx)
+          cp = mix3(
+            cp,
+            [cp[0] - 0.02, cp[1] + 0.03, cp[2] + 0.07],
+            1 - sstep(300, 600, Te),
+          );
+        if (cls.c === "gas" && Te < 150)
+          cp = mix3(cp, [0.55, 0.65, 0.68], 0.45 * (1 - sstep(125, 150, Te)));
+        if (cls.c !== "gas" || cloudless) cp = mix3(cp, avg, 0.6);
+        cp = cp.map((x) => clamp(x, 0, 1));
+        // Haze: tint by composition, depth by gravity, temperature, weak internal heat, excess albedo
+        let tint =
+          Te < 150
+            ? [0.55, 0.38, 0.2]
+            : Te < 250
+              ? mix3([0.55, 0.38, 0.2], [0.85, 0.75, 0.35], sstep(150, 250, Te))
+              : mix3(
+                  [0.85, 0.75, 0.35],
+                  [0.3, 0.45, 0.95],
+                  sstep(450, 800, Te) * clamp(0.3 + 3 * k, 0, 1),
+                );
+        let tau =
+          (Te < 150 ? 0.2 : 0.3) *
+          Math.sqrt(24.8 / g) *
+          (0.7 + 0.6 * sstep(100, 600, Te));
+        if (cls.c === "gas" && Te < 125)
+          tau *= 1 + 0.8 * (1 - sstep(90, 125, Te));
+        if (cls.c === "ice" && Te < 150) tau *= 0.6;
+        if (Te < 150) tau *= 1 + 0.5 * (1 - clamp(d.pi / 50, 0, 1));
+        tau *= 1 + 4 * Math.max(k, 0) * sstep(400, 800, Te);
+        // Methane photolysis hazes dominate below about 950 K and mask the clouds beneath
+        // Sub-Neptunes haze most near 600 K and clear up below 400 K and above 800 K
+        const soot =
+          cls.c === "mini"
+            ? sstep(350, 550, Te) * (1 - sstep(700, 950, Te))
+            : sstep(250, 450, Te) * (1 - sstep(850, 1000, Te));
+        tau *= 1 + (cls.c === "mini" ? 2.2 : 0.8) * soot;
+        tau *= 1 - sstep(1500, 1800, Te);
+        if (cloudless) tau *= 0.5;
+        tau = clamp(tau, 0, 2.5);
+        tint = mix3(tint, [0.5, 0.34, 0.2], 0.7 * soot);
+        if (bdx) {
+          tau = 0.15;
+          tint = mix3(pal[2], pal[0], 0.5);
+        }
+        // Thermal glow, orange to deep red
+        const emi = bd
+          ? 1.1 * sstep(700, 1900, Te)
+          : 0.6 * sstep(1100, 2200, Te);
+        // Brown dwarfs glow deep red when cool and orange when warm
+        const em = bd
+          ? mix3(
+              mix3([0.5, 0.04, 0.02], [0.9, 0.22, 0.05], sstep(800, 1600, Te)),
+              [1, 0.5, 0.16],
+              sstep(1600, 2800, Te),
+            )
+          : mix3([0.7, 0.1, 0.03], [1, 0.5, 0.12], sstep(1000, 2600, Te));
+        // Rotation regime
+        const reg = tl
+          ? "locked"
+          : prot < 12
+            ? "fast"
+            : prot < 40
+              ? "medium"
+              : "slow";
+        const bw = { fast: 1, medium: 0.75, slow: 0.25, locked: 0 }[reg];
+        const fs = { fast: 1.4, medium: 1, slow: 0.55, locked: 1 }[reg];
+        const nvBase = { gas: 8, ice: 4, mini: 2 }[cls.c];
+        const nvBase2 = { gas: 3, ice: 2, mini: 1 }[cls.c];
+        const nvR = {
+          fast: nvBase2,
+          medium: Math.max(1, nvBase2 - 1),
+          slow: 0,
+          locked: 0,
+        }[reg];
+        const nv = bdx || (cls.c === "gas" && Te < 110) ? 0 : nvR;
+        const cc = { gas: 1, ice: 0.5, mini: 0.4 }[cls.c];
+        let con =
+          cc *
+          Math.max(bw, tl ? 0.5 : 0) *
+          (0.45 + 0.55 * clamp(d.pi / 50, 0, 1));
+        if (cls.c === "mini") con *= 1 - 0.6 * soot;
+        // Slow rotators with Rossby number near 1 have few, broad bands and a wide tropical zone
+        const ro = 1 / (nbRaw * nbRaw);
+        const sl = tl ? 0 : sstep(0.1, 1, ro);
+        con *= 1 - 0.4 * sl;
+        // Magnetic drag on ultra-hot planets damps the jet and moves the hot spot toward the substellar point
+        const drag = sstep(1800, 2600, Te);
+        const hoff = 0.7 - 0.6 * sstep(1200, 2600, Te);
+        // West dayside cloud crescent (Parmentier 2016, Roman 2021, LTT 9779 b): cold western gas keeps clouds that vanish above about 2300 K.
+        // A high geometric albedo asks for reflective clouds, a low one for thin or dark cover. Cloud colour follows the condensate.
+        const wc = tl
+          ? (1 - sstep(2200, 2900, Te)) *
+            (0.25 + 0.75 * clamp(d.ag / 0.5, 0, 1))
+          : 0;
+        const wb =
+          0.5 + 0.35 * sstep(1000, 1400, Te) * (1 - sstep(2000, 2500, Te));
+        if (cls.c === "gas") con *= 0.75 + 0.25 * sstep(90, 118, Te);
+        // Small-scale detail, oval density and cirrus by class, regime and temperature
+        const dt =
+          cls.c === "gas"
+            ? Te < 500
+              ? 0.3 + 0.7 * sstep(90, 118, Te)
+              : 0.6
+            : cls.c === "ice"
+              ? 0.2 + 0.15 * clamp(d.pi / 50, 0, 1)
+              : 0.4;
+        const ovB = { gas: 0.8, ice: 0.12, mini: 0.1 }[cls.c];
+        // Patchy clouds peak at the L/T transition near 1300 K
+        const ov = bdx
+          ? (0.12 + 0.35 * Math.exp(-(((Te - 1300) / 300) ** 2))) *
+            { fast: 1, medium: 0.6, slow: 0.2, locked: 0.3 }[reg]
+          : ovB *
+            (cls.c === "gas" ? 0.1 + 0.9 * sstep(90, 118, Te) : 1) *
+            { fast: 1, medium: 0.6, slow: 0.2, locked: 0.3 }[reg] *
+            (Te > 1000 ? 0.3 : 1);
+        const ci =
+          cls.c === "ice"
+            ? 0.45 * (0.4 + 0.6 * clamp(d.pi / 50, 0, 1))
+            : cls.c === "mini"
+              ? 0.6
+              : Te < 150
+                ? 0.25
+                : Te < 400
+                  ? 0.6
+                  : Te < 800
+                    ? 0.35
+                    : 0.1;
+        const obl = d.po || 0;
+        const hs = (so0 > 31 ? 1 : -1) * 0.1 * clamp((obl - 0.4) / 0.8, 0, 1);
+        // Polar structure: strong polar jets carry a stationary Rossby wave, weaker ones hold cyclone rings
+        const nbC = clamp(nbRaw, 1.2, 40);
+        const Lb = Math.sqrt((U * d.pr) / (2 * om)),
+          S = U / 60;
+        const hz = (i) => (so[i] * 7.13) % 1;
+        const polyN = (jit) => {
+          const th = (0.8 * Math.PI) / nbC,
+            sg = 0.42 * Lb * jit;
+          return Math.round(
+            d.pr *
+              Math.sin(th) *
+              Math.sqrt((2 * om * Math.sin(th)) / (d.pr * U) + 1 / (sg * sg)),
+          );
+        };
+        const cycN = (jit) =>
+          Math.round(
+            Math.PI /
+              Math.asin(
+                clamp(
+                  (((1.7 * Lb) / d.pr) * jit) / ((1.3 * Math.PI) / nbC),
+                  0.1,
+                  0.9,
+                ),
+              ),
+          );
+        let pol = [0, 0, 0, 0];
+        if (
+          !bdx &&
+          cls.c === "gas" &&
+          Te < 500 &&
+          (reg === "fast" || reg === "medium") &&
+          !cloudless
+        ) {
+          if (S >= 1.8)
+            pol = [
+              1,
+              clamp(polyN(1 + 0.09 * hz(0)), 3, 12),
+              1,
+              clamp(polyN(0.55 + 0.04 * hz(1)), 3, 12),
+            ];
+          else if (S >= 0.8)
+            pol = [
+              2,
+              clamp(cycN(0.8 + 0.4 * hz(0)), 3, 9),
+              2,
+              clamp(cycN(0.9 + 0.9 * hz(1)), 3, 9),
+            ];
+        } else if (cls.c === "ice" && (reg === "fast" || reg === "medium"))
+          pol = [3, 0, 3, 0];
+        // Storm kind: 1 red-spot style anticyclone, 2 dark spot with bright companions, 3 planet-encircling convective storm
+        // Cold gas giants with strong jets, like Saturn, still host one big storm of the convective kind
+        const gws =
+          !bdx &&
+          cls.c === "gas" &&
+          nv === 0 &&
+          Te < 110 &&
+          S >= 1.8 &&
+          (reg === "fast" || reg === "medium") &&
+          !cloudless;
+        const nvOut = gws ? 1 : nv;
+        const sk = bdx
+          ? 0
+          : nvOut > 0
+            ? cls.c === "gas"
+              ? S >= 1.8
+                ? 3
+                : 1
+              : cls.c === "ice"
+                ? clamp(d.pi / 50, 0, 1) < 0.35
+                  ? 4
+                  : 2
+                : 0
+            : 0;
+        // Red spot shape and colour. Shape: vortex strength against the shear of the jets that bound it (Rossby number over normalised shear).
+        // Strength grows with merger feed from small storms, internal heat and storm age. Colour: UV photochemistry of ammonia and acetylene
+        // at the cloud top, stronger for taller storms and brighter starlight, muted by haze, absent once ammonia is gone.
+        // Storm latitude in degrees, with weights from observed events. Jupiter: GRS 22 S, Oval BA 33 S, red vortex peaks near 20 N and 40 S
+        // (Hueso 2022 vortex survey). Neptune: GDS-89 22 S, NDS-2018 23 N, SDS-2015 46 S, NDS-2018 later drifted to 15 N. Saturn: equator in
+        // 1876, 1933 and 1990, mid latitude in 1903 and 2010, subpolar in 1960, mostly north. Uranus: dark spot 27 N, bright features 30 N and 25 S.
+        const STORM_LAT = {
+          1: [
+            [-22, 0.4],
+            [20, 0.2],
+            [-33, 0.15],
+            [-40, 0.15],
+            [40, 0.1],
+          ],
+          2: [
+            [-22, 0.35],
+            [23, 0.35],
+            [-46, 0.2],
+            [15, 0.1],
+          ],
+          3: [
+            [3, 0.4],
+            [33.5, 0.27],
+            [57, 0.13],
+            [-3, 0.1],
+            [-33.5, 0.07],
+            [-57, 0.03],
+          ],
+          4: [
+            [27, 0.35],
+            [30, 0.1],
+            [-25, 0.3],
+            [-30, 0.25],
+          ],
+        };
+        // The four real planets keep the latitudes seen on them
+        const REAL_LAT = {
+          Jupiter: -0.39,
+          Saturn: 0.585,
+          Neptune: -0.385,
+          Uranus: 0.445,
+        };
+        let scy = 0,
+          tsh = 0;
+        if (sk) {
+          let tot = STORM_LAT[sk].reduce((s, e) => s + e[1], 0) * hz(4),
+            deg = STORM_LAT[sk][0][0];
+          for (const e of STORM_LAT[sk]) {
+            tot -= e[1];
+            if (tot <= 0) {
+              deg = e[0];
+              break;
+            }
+          }
+          scy =
+            REAL_LAT[d.pre] != null
+              ? REAL_LAT[d.pre]
+              : ((deg + (hz(5) - 0.5) * (sk === 3 ? 4 : 6)) * Math.PI) / 180;
+          if (sk === 1) {
+            // A red spot sits in the middle of a light zone, where the shear is anticyclonic. Bend the bands near it so a zone crosses its latitude.
+            // The real Jupiter keeps its exact latitude. Other planets move the spot half way and bend the bands the rest.
+            const t0 = (scy / Math.PI) * nbC;
+            let kc = Math.floor(t0);
+            if (((kc % 2) + 2) % 2 > 0.5) kc += t0 - kc > 0.5 ? 1 : -1;
+            const dz = kc + 0.5 - t0,
+              f = REAL_LAT[d.pre] != null ? 1 : 0.5;
+            tsh = f * dz;
+            scy = clamp(scy + ((1 - f) * dz * Math.PI) / nbC, -0.8, 0.8);
+          }
+        }
+        const sLatTxt =
+          Math.abs(scy * 57.2958) < 0.5
+            ? "on the equator"
+            : `near ${Math.round(Math.abs(scy) * 57.2958)} ${scy < 0 ? "S" : "N"}`;
+        let sa = 0.12,
+          sb = 0.062,
+          ssh = 0.5,
+          ssw = 0,
+          sLen = 0,
+          sHgt = 0;
+        if (sk === 1) {
+          const act = clamp(d.pi / 50, 0, 1),
+            feed = clamp(ov / 0.8, 0, 1.2),
+            age = hz(3);
+          const st = clamp(0.25 * feed + 0.25 * act + 0.5 * age, 0, 1);
+          const f = 2 * om * Math.max(Math.sin(Math.abs(scy)), 0.15),
+            sig = (2 * U) / ((Math.PI * d.pr) / nbC) / f;
+          const roX = 0.6 * 0.05 * (1 + 14 * Math.pow(st, 1.5));
+          const q = (-roX * roX) / sig,
+            disc = Math.max(q * q - 4 * q, 0);
+          const beta = clamp(
+            (-(q - 1) - Math.sqrt(disc)) / (2 * q + 1 || 1e-6),
+            0,
+            0.95,
+          );
+          const ar = Math.sqrt((1 + beta) / (1 - beta));
+          sb = clamp((0.7 * Math.PI) / nbC, 0.03, 0.1);
+          sa = clamp(sb * ar, 0.07, 0.3);
+          const uv = clamp(
+            0.5 + 0.125 * Math.log2(Math.pow(Math.max(d.pt, 20) / 110, 4)),
+            0,
+            1,
+          );
+          ssh = clamp(
+            (0.1 + 0.55 * st + 0.5 * uv) * (1 - 0.5 * clamp(tau / 1.5, 0, 1)),
+            0,
+            1,
+          );
+          ssw = 1 - sstep(150, 260, Te);
+          sLen = ((2 * sa) / Math.cos(scy)) * 57.2958;
+          sHgt = 2 * sb * 57.2958;
+        }
+        const skName = [
+          "",
+          "Great Red Spot analogue",
+          "Great Dark Spot analogue",
+          "Great White Spot analogue",
+          "Uranus dark spot analogue",
+        ][sk];
+        const pn = [
+          "",
+          "",
+          "",
+          "triangle",
+          "square",
+          "pentagon",
+          "hexagon",
+          "heptagon",
+          "octagon",
+          "nonagon",
+          "decagon",
+          "hendecagon",
+          "dodecagon",
+        ];
+        const pd = (m, c) =>
+          m === 1
+            ? pn[c] + " jet"
+            : m === 2
+              ? c + " circumpolar cyclones"
+              : m === 3
+                ? "polar vortex"
+                : "plain";
+        let status =
+          `${cls.name}, ${sub}. Te ${fmt(Te)} K.` +
+          (phaseTxt ? "\n" + phaseTxt.trim() : "") +
+          (shTxt ? "\n" + shTxt : "") +
+          "\n";
+        if (cloudless)
+          status +=
+            (Te > 1750
+              ? `Cloudless: no condensates stable at 1 bar (Te above the silicate curve).`
+              : `Cloudless: no condensates stable at 1 bar (every deck is buried or evaporated).`) +
+            `\nRegime: ${reg} rotation.`;
+        else
+          status += `Cloud deck: ${cd.top[0]} (${cd.hit.length} species stable).\nRegime: ${reg} rotation.`;
+        if (pol[0])
+          status += `\nPoles: N ${pd(pol[0], pol[1])}, S ${pd(pol[2], pol[3])}.`;
+        if (sk) status += `\nStorm: ${skName} ${sLatTxt}.`;
+        if (sk === 1)
+          status += ` Spot ${fmt(sLen)} by ${fmt(sHgt)} degrees, ${ssh < 0.25 ? "pale orange" : ssh < 0.5 ? "orange" : ssh < 0.75 ? "red-orange" : "deep red"}.`;
+        if (d.bd)
+          status += `\nSelf-luminous, no host star. ${fmt(mjb)} Jupiter masses, radius ${fmt(d.pr / E.Rj)} Jupiter radii, age ${fmt(d.ae / GYR)} Gyr.`;
+        if (bd && Te >= 1200 && Te < 1400)
+          status += "\nPatchy clouds expected at the L/T transition.";
+        if (d.bdp)
+          status +=
+            "\nTreated as a star-bound brown dwarf (13 to 75 Jupiter masses). Tick the planet-formed box to treat it as a planet.";
+        else if (d.pf && mjb >= BD.dLim && mjb <= BD.hLim)
+          status +=
+            "\nTreated as a massive planet-formed object, as for GJ 504 b.";
+        if (cls.note) status += "\n" + cls.note;
+        return {
+          hp: 0.9 * (1 + 0.5 * clamp((d.po || 0) / (Math.PI / 2), 0, 1.2)),
+          cp,
+          dt,
+          ov,
+          ci,
+          hs,
+          dr: drag,
+          hoff,
+          sl,
+          wc,
+          wb,
+          sea,
+          shl,
+          shi,
+          shg,
+          scy,
+          tsh,
+          sa,
+          sb,
+          ssh,
+          ssw,
+          pol,
+          sk,
+          te: Te,
+          cls: { gas: 0, ice: 1, mini: 2 }[cls.c],
+          act: clamp(d.pi / 50, 0, 1),
+          pr: Math.PI / nbC,
+          cz: pal[0],
+          cb: pal[1],
+          ca: pal[2],
+          cs: pal[3],
+          hz: tint,
+          ht: tau,
+          em,
+          emi,
+          nb: clamp(nbRaw, 1.2, 40),
+          con: cloudless ? 0.15 : con,
+          nv: nvOut,
+          fs,
+          bw: cloudless ? 0.3 : bw,
+          wind: 0.5 + 0.9 * bw,
+          tl: tl ? 1 : 0,
+          cl: cloudless ? 1 : 0,
+          so,
+          status,
+          info: {
+            bd,
+            Te,
+            cls: cls.name,
+            sub,
+            g,
+            reg,
+            om,
+            U,
+            nbRaw,
+            cloudless,
+            deck: cd.top ? cd.top[0] : "none",
+          },
+        };
+      }
+      // Map shader. Noise runs on 3D sphere points, so edges tile and poles do not pinch
+      const VS = `#version 300 es
+in vec2 a;
+void main(){gl_Position=vec4(a,0.,1.);}`;
+
+      const FS = `#version 300 es
+precision highp float;
+uniform vec2 u_res; uniform float u_y0;
+uniform vec3 u_so,u_ho,u_cz,u_cb,u_ca,u_cs,u_cp,u_hz,u_em;
+uniform vec4 u_pol;
+uniform float u_te,u_cls,u_act,u_sk,u_pr,u_ht,u_emi,u_nb,u_con,u_nv,u_fs,u_bw,u_wind,u_tl,u_cl,u_hp,u_dt,u_ov,u_ci,u_hs,u_dr,u_hoff,u_sl,u_wc,u_wb,u_sea,u_sa,u_sb,u_ssh,u_ssw,u_shl,u_shi,u_shg,u_scy,u_tsh;
+out vec4 o;
+const float PI=3.14159265;
+vec3 h33(vec3 p){p=fract(p*vec3(.1031,.1030,.0973));p+=dot(p,p.yxz+33.33);return fract((p.xxy+p.yxx)*p.zyx);}
+float cg(vec3 c,vec3 d){return dot(h33(c)*2.-1.,d);}
+float gn(vec3 p){
+  p+=u_so;
+  vec3 i=floor(p),f=fract(p),u=f*f*f*(f*(f*6.-15.)+10.);
+  float a=cg(i,f),b=cg(i+vec3(1,0,0),f-vec3(1,0,0)),c=cg(i+vec3(0,1,0),f-vec3(0,1,0)),d=cg(i+vec3(1,1,0),f-vec3(1,1,0));
+  float e=cg(i+vec3(0,0,1),f-vec3(0,0,1)),g=cg(i+vec3(1,0,1),f-vec3(1,0,1)),h=cg(i+vec3(0,1,1),f-vec3(0,1,1)),k=cg(i+vec3(1,1,1),f-vec3(1,1,1));
+  return 1.6*mix(mix(mix(a,b,u.x),mix(c,d,u.x),u.y),mix(mix(e,g,u.x),mix(h,k,u.x),u.y),u.z);
+}
+float fbm(vec3 p,int n){float s=0.,a=.5;for(int i=0;i<6;i++){if(i>=n)break;s+=a*gn(p);p=p*2.03+vec3(1.7,9.2,3.1);a*=.5;}return s;}
+vec3 ry(vec3 p,float a){float c=cos(a),s=sin(a);return vec3(c*p.x+s*p.z,p.y,-s*p.x+c*p.z);}
+float wr(float x){return mod(x+PI,2.*PI)-PI;}
+// Longitude grows toward +x then -z, so east points right when viewed from outside
+vec3 sp(float lon,float lat){return vec3(cos(lat)*cos(lon),sin(lat),-cos(lat)*sin(lon));}
+vec3 flow(vec3 p,float s){return vec3(gn(p*s+1.),gn(p*s+6.),gn(p*s+11.));}
+// Stream function noise. Its perpendicular gradient is a divergence-free flow, as in curl-noise gas giant generators
+float psi(vec3 p){vec3 q=p*vec3(4.,7.,4.);return gn(q)+.5*gn(q*2.3+4.)+.25*gn(q*5.1+9.);}
+// Trace the sample point back along the flow so clouds form real eddies and curls
+vec3 adv(vec3 p,float amp){
+  for(int i=0;i<9;i++){
+    float f0=psi(p),e=.008;
+    vec3 g=vec3(psi(p+vec3(e,0.,0.))-f0,psi(p+vec3(0.,e,0.))-f0,psi(p+vec3(0.,0.,e))-f0)/e;
+    p=normalize(p+cross(p,g)*amp*.00022);
+  }
+  return p;
+}
+// Band tone per band: zones and belts alternate with jitter so widths and tones vary
+float bv(float k){vec3 h=h33(vec3(k,13.7,u_so.x*.3));return (mod(k,2.)<.5?.62:-.42)+(h.x-.5);}
+float bh(float k){return h33(vec3(k,29.1,u_so.y*.3)).y;}
+// Oval storms on a lat-lon grid. Each row holds a whole number of cells, so longitude wraps cleanly
+vec4 ovals(vec2 q,float ch,float prob,float amin,float amax,float so){
+  vec4 r=vec4(0.);
+  float j0=floor(q.y/ch);
+  for(int dj=-1;dj<=1;dj++){
+    float j=j0+float(dj);
+    float lc=clamp((j+.5)*ch,-1.5,1.5);
+    float nj=max(1.,floor(2.*PI*cos(lc)/(ch*1.4)));
+    float u=(q.x+PI)/(2.*PI)*nj;
+    float i0=floor(u);
+    for(int di=-1;di<=1;di++){
+      float ii=mod(i0+float(di),nj);
+      vec3 h=h33(vec3(ii,j,so+u_so.z));
+      if(h.x>prob)continue;
+      vec3 h2=h33(h*57.1+j);
+      float cx=(ii+h2.x)/nj*2.*PI-PI;
+      float cy=(j+.2+.6*h2.y)*ch;
+      float a=amin*pow(amax/amin,h2.z*h2.z);
+      vec2 d=vec2(wr(q.x-cx)*cos(cy),q.y-cy)/vec2(a*1.7,a);
+      float rr=length(d);
+      if(rr>1.6)continue;
+      float sw=.9+.1*gn(vec3(d*2.,h.y*9.));
+      float m=smoothstep(1.02,.8,rr)*sw*(1.-.25*smoothstep(.5,0.,rr));
+      float ring=exp(-pow(rr-1.1,2.)*70.);
+      float t=h.y;
+      r.x=max(r.x,t<.72?m:0.);
+      r.y=max(r.y,(t>=.72&&t<.965)?m:0.);
+      r.z=max(r.z,t>=.965?m:0.);
+      r.w=max(r.w,ring);
+    }
+  }
+  return r;
+}
+// Polar cyclones on a flat grid around the pole, so ovals stay round with no radial wedges
+vec4 ovalsP(vec2 x,float cs,float prob,float amin,float amax,float so){
+  vec4 r=vec4(0.);
+  vec2 g=floor(x/cs);
+  for(int dj=-1;dj<=1;dj++){
+    for(int di=-1;di<=1;di++){
+      vec2 cell=g+vec2(float(di),float(dj));
+      vec3 h=h33(vec3(cell,so+u_so.z));
+      if(h.x>prob)continue;
+      vec3 h2=h33(h*57.1+cell.x);
+      vec2 c=(cell+.2+.6*h2.xy)*cs;
+      float a=amin*pow(amax/amin,h2.z*h2.z);
+      vec2 d=(x-c)/a;
+      float rr=length(d);
+      if(rr>1.6)continue;
+      float m=smoothstep(1.05,.8,rr);
+      float ring=exp(-pow(rr-.95,2.)*30.);
+      float ga=2.4*(h.y<.36?-1.:1.)*(1.2-min(rr,1.2));vec2 dr=vec2(cos(ga)*d.x-sin(ga)*d.y,sin(ga)*d.x+cos(ga)*d.y);
+      float spr=smoothstep(.0,.5,gn(vec3(dr*5.,h.y*9.))+.5*gn(vec3(dr*11.,7.)))*m*smoothstep(0.,.25,rr);
+      r.x=max(r.x,h.y<.8?m:0.);
+      r.y=max(r.y,h.y>=.8?m:0.);
+      r.z=max(r.z,h.y<.8?spr:0.);
+      r.w=max(r.w,ring);
+    }
+  }
+  return r;
+}
+// One cyclone: core, bright rim and spiral arms
+// Soft single vortex for the polar jet centre and ice giant poles
+vec4 cycV(vec2 d,float a){
+  float rr=length(d)/a;
+  float m=smoothstep(1.1,.15,rr);
+  float ring=exp(-pow(rr-1.08,2.)*16.);
+  float ga=2.6*(1.2-min(rr,1.2));vec2 dr=vec2(cos(ga)*d.x-sin(ga)*d.y,sin(ga)*d.x+cos(ga)*d.y)/a;
+  float s=smoothstep(.0,.5,gn(vec3(dr*5.,3.+u_so.x))+.5*gn(vec3(dr*11.,7.)))*m*smoothstep(0.,.25,rr);
+  return vec4(m,ring,s,rr);
+}
+vec4 cyc(vec2 d,float a){
+  // Slightly wobbly outline, thin concentric wall lines, and two spiral arms that wind inward
+  float ang=atan(d.y,d.x);
+  float rr=length(d)/a*(1.+.05*gn(vec3(cos(ang)*1.5,sin(ang)*1.5,a*40.+u_so.x)));
+  float m=smoothstep(1.02,.93,rr);
+  float ring=exp(-pow((rr-.97)/.035,2.))+.6*exp(-pow((rr-.86)/.03,2.))+.35*exp(-pow((rr-1.06)/.03,2.));
+  float moat=exp(-pow((rr-1.13)/.08,2.));
+  float ph=2.*ang+6.5*rr+.7*gn(vec3(d/a*2.,5.+u_so.x));
+  float s=smoothstep(.45,.95,.5+.5*sin(ph))*m*smoothstep(.12,.35,rr)*smoothstep(1.,.75,rr);
+  return vec4(m,ring,s,moat);
+}
+void main(){
+  vec2 fc=gl_FragCoord.xy+vec2(0.,u_y0);
+  float lon=(fc.x/u_res.x-.5)*2.*PI, lat=(fc.y/u_res.y-.5)*PI;
+  float cl=1.-u_cl;
+  vec2 q=vec2(lon,lat);
+  // Polar cyclone ring: each cyclone rotates the sample point about its centre in a flat polar plane,
+  // so bands, flow and noise all follow the spirals
+  float pcy=0.,pty=0.;
+  {
+    float hw=lat<0.?-1.:1.;
+    float mw=hw>0.?u_pol.x:u_pol.z,nw=hw>0.?u_pol.y:u_pol.w;
+    if(mw==2.){
+      float cw=PI*.5-abs(lat),rw=u_pr*1.65,sr=rw*sin(PI/nw)*.62;
+      vec2 P0=cw*vec2(cos(lon),sin(lon)),P=P0;
+      for(int k=0;k<11;k++){
+        if(float(k)>nw)break;
+        float ak=u_so.z+2.*PI*float(k-1)/nw;
+        vec3 hk=h33(vec3(float(k)*5.3,u_so.z*1.3,hw));
+        // Each storm gets its own size, strength and offset, so the ring is not a symmetric flower
+        vec2 ck=k==0?vec2(0.):rw*vec2(cos(ak),sin(ak))+(hk.xy-.5)*sr*.5;
+        vec2 d=P0-ck;
+        float r=length(d)/((k==0?sr*1.3:sr)*(.85+.3*hk.z))*(1.+.2*gn(vec3(d/sr*1.6,float(k))));
+        float an=hw*2.2*(.8+.4*hk.x)*exp(-r*r*.8),cs=cos(an),sn=sin(an);
+        P+=vec2(cs*d.x-sn*d.y,sn*d.x+cs*d.y)-d;
+        pcy+=exp(-r*r*1.6)*(k==0?1.:.8);
+      }
+      // Smaller storms scattered outside the ring
+      for(int j=0;j<7;j++){
+        vec3 hj=h33(vec3(float(j)*3.7,u_so.z*1.9+hw,2.3));
+        float sj=sr*(.28+.22*hj.z);
+        float aj=2.*PI*hj.x,rj=rw+sr+sj*1.5+sj*1.8*hj.y;
+        vec2 d=P0-rj*vec2(cos(aj),sin(aj));
+        float r=length(d)/sj,an=hw*2.4*exp(-r*r*.8),cs=cos(an),sn=sin(an);
+        P+=vec2(cs*d.x-sn*d.y,sn*d.x+cs*d.y)-d;
+        pcy+=exp(-r*r*1.6)*.55;
+      }
+      lon=atan(P.y,P.x);lat=hw*(PI*.5-length(P));q=vec2(lon,lat);pty=1.;
+    }
+  }
+  float vm=0.,vs=1.,vr=0.,vsz=0.,wake=0.,moat=0.,vsp=.5,vf=0.,vcl=0.,vrr=1.,varc=0.;
+  vec2 eG=vec2(99.);
+  float gcx=0.;
+  // Large vortices: a mild rotation of sample positions gives concentric flow with thin spiral arms
+  if(u_tl<.5&&u_cl<.5){
+    for(int i=0;i<12;i++){
+      if(float(i)>=u_nv)break;
+      vec3 r=h33(vec3(float(i)*1.37,u_so.x*.1+3.1,u_so.y*.1+7.7));
+      vec3 r2=h33(r*91.7+float(i));
+      float cy=(r.x*2.-1.)*.55,cx=(r.y*2.-1.)*PI;
+      float a=mix(.03,.06,r.z*r.z)*(1.-.4*abs(cy)),b=a*mix(.8,.95,r2.x);
+      float sg=r2.y<.4?-1.:1.;
+      if(i==0){
+        if(u_sk>3.5){
+          // Uranus dark spot: about 9.5 by 3.5 degrees near 25.5 N, with bright companions to its north
+          cy=u_scy;a=.085;b=a*.37;sg=-1.;
+        }else if(u_sk>2.5){
+          // Saturn-style storm: the anticyclone sits just east of the bright head, near 34 N
+          cy=u_scy;a=.1;b=a*.9;sg=-1.;
+        }else if(u_sk>1.5){
+          // Dark spot: about 13000 by 6600 km on a Neptune-sized planet, near 23 S
+          cy=u_scy;a=.24;b=a*.5;sg=1.;
+        }else{
+          // The big storm sits in the light zone chosen on the CPU, so the shear there is anticyclonic
+          cy=u_scy;a=.12;b=a*(u_sk>.5?.52:.72);sg=1.;
+          if(u_sk>.5){a=u_sa;b=u_sb;}
+        }
+        gcx=cx;
+        // The convective head is drawn separately below, so no companion vortex here
+        if(u_sk>2.5&&u_sk<3.5)continue;
+      }
+      // The storms are drawn for one hemisphere. Placed in the other, the picture mirrors, so the spin, wake and companions flip with the Coriolis force.
+      float ym=1.;
+      if(i==0&&u_sk>.5){float dsg=(u_sk>.5&&u_sk<2.5)?-1.:1.;ym=u_scy*dsg>0.?1.:-1.;}
+      vec2 e=vec2(wr(q.x-cx)*cos(cy),(q.y-cy)*ym)/vec2(a,b);
+      float rr=length(e);
+      float bigv=smoothstep(.07,.1,a);
+      float an=sg*(.65*smoothstep(1.6,.6,rr)+1.3*smoothstep(.95,.15,rr))*mix(.25,1.,bigv);
+      // Red spot: calm hollow core, fast collar near the rim, weak opposite shear just outside
+      if(u_sk>.5&&u_sk<1.5&&i==0)an=sg*(.3*smoothstep(.6,0.,rr)+1.05*exp(-pow((rr-.85)/.34,2.))-.14*exp(-pow((rr-1.55)/.25,2.)));
+      float ca=cos(an),sa=sin(an);
+      if(i==0)eG=e;
+      // Belts bulge around the storm as if it were an obstacle in the flow
+      float defl=1.-.62*bigv*exp(-e.x*e.x*.2)*exp(-e.y*e.y*.1);
+      vec2 e2=vec2(ca*e.x-sa*e.y,(sa*e.x+ca*e.y)*defl)*vec2(a,b);
+      // Dark arc on the upper-left of the storm, where the flow bends sharply
+      float ex=min(e.x,0.);
+      // The arc continues west as a tapering streak along the belt edge, like the tail on Jupiter
+      float tl=exp(-pow((e.y-(1.5+.08*min(-ex,7.)))/(.32+.07*min(-ex,7.)),2.))*smoothstep(.2,-1.2,e.x)*exp(.35*ex);
+      float hd=exp(-pow((rr-1.55)/.3,2.))*smoothstep(.0,.9,-e.x*.5+e.y*.85);
+      
+      float m=smoothstep(1.1,.2,rr);
+      if(m>vm){vm=m;vs=sg;vsz=a;vsp=.5+.5*smoothstep(.3,1.,rr);vrr=rr;}
+      float ff=smoothstep(1.08,.7,rr);if(ff>vf){vf=ff;vs=sg;vsz=a;vrr=rr;}
+      vcl=max(vcl,smoothstep(.9,1.3,rr)*smoothstep(1.9,1.35,rr)*(sg>0.?1.:-.5));
+      moat=max(moat,exp(-pow((rr-1.15)/.12,2.)));
+      vr=max(vr,exp(-pow(rr-1.3,2.)*6.));
+      wake=max(wake,exp(-e.y*e.y/2.5)*smoothstep(.5,-.5,e.x)*exp(.25*min(e.x,0.))*smoothstep(.9,1.3,rr));
+      q=vec2(cx+e2.x/cos(cy),cy+e2.y*ym);
+      // Turbulent wake: the sample position is shaken downstream, giving ragged filaments
+      float wk=exp(-e.y*e.y/2.5)*smoothstep(.5,-.5,e.x)*exp(.18*min(e.x,0.))*smoothstep(.9,1.3,rr)*bigv;
+      q+=wk*.03*vec2(gn(vec3(q*34.,3.1)),gn(vec3(q*34.,8.2)));
+      // Tail as a real flow feature: along a lane that leaves the storm's upper left, the sample is pulled
+      // from the belt to the south, so dark belt material is drawn out into the zone as a tapering streak
+      float exl=min(e.x,0.);
+      float lane=exp(-pow((e.y-(1.5+.06*min(-exl,9.)))/(.42+.07*min(-exl,9.)),2.))*smoothstep(.2,-1.2,e.x)*exp(.2*exl)*bigv*smoothstep(5.,8.,u_nb)*step(.5,u_sk)*step(u_sk,1.5);
+      q.y-=lane*.02*ym;
+      varc=max(varc,lane);
+    }
+  }
+  vec3 p=sp(q.x,q.y);
+  float L=q.y;
+  if(u_tl<.5&&u_cl<.5){
+    float po0=smoothstep(.85,1.35,abs(L));
+    float am=(.25+.75*exp(-pow(sin(L*u_nb),2.)*3.))*(1.-po0)*u_dt;
+    p=adv(p,am);
+    L=asin(clamp(p.y,-1.,1.));
+  }
+  vec3 c; vec3 em=vec3(0.);
+  vec3 w3=flow(p,2.);
+  float hemi=lat<0.?-1.:1.;
+  float rpc=1.5708-abs(lat);
+  float cap=1.-smoothstep(.3,.7,rpc+.28*gn(p*2.2+2.));
+  float po=smoothstep(.85,1.35,abs(lat));
+  float modeP=hemi>0.?u_pol.x:u_pol.z,cntP=hemi>0.?u_pol.y:u_pol.w;
+  float plain=modeP==1.||modeP==2.?0.:1.;
+  if(plain>.5)cap=1.-smoothstep(.34,.62,rpc+.05*gn(p*2.2+2.));
+  float capB=modeP==1.||modeP==2.?.35*cap:cap;
+  vec3 bright=mix(u_cz,vec3(1.),.55);
+  float day=.5;
+  if(u_tl>.5){
+    // Tidal lock: no bands, eastward equatorial jet, bright dayside, thick nightside
+    float eq=exp(-pow(L/.5,2.));
+    vec3 pr=ry(p,-2.4*eq*cl*(1.-.9*po)*(1.-.85*u_dr));
+    vec3 ps=vec3(pr.x*mix(1.1*u_fs,3.2,po),pr.y*3.2,pr.z*mix(1.1*u_fs,3.2,po));
+    float n=fbm(ps+w3*.8,6);
+    float nf=fbm(vec3(pr.x*30.,pr.y*20.,pr.z*30.)+w3,4);
+    float cz=cos(L)*cos(lon);
+    day=smoothstep(-.2,.55,cz);
+    // Chevron hot spot: shifted east at the equator, west at mid latitudes
+    float hs=cos(L)*cos(lon-u_hoff*(1.-1.4*min(abs(L)/.8,1.)));
+    vec3 dc=mix(u_cb,u_cz,.7),nc=mix(u_cb,u_cz,.25)*.85;
+    // Day-night contrast is small below about 1500 K, large near 2000 K and above, and falls again past 2300 K
+    float ctr=smoothstep(900.,1600.,u_te)*(1.-.5*smoothstep(2400.,3300.,u_te));
+    nc=mix(dc,nc,ctr);
+    c=mix(nc,dc,day);
+    // Cooler planets keep faint zonal bands because heat redistribution is efficient
+    c*=1.+.07*(1.-smoothstep(1000.,1700.,u_te))*sin(L*max(u_nb,2.)*2.+.8*gn(vec3(pr.x*2.,pr.y*2.,pr.z*2.)))*(1.-po);
+    float cn=max(u_con,.35)*cl;
+    c*=1.+(n*.5+nf*.2*u_dt)*cn*mix(.5,1.,day);
+    float ej=eq*(.5+.5*gn(vec3(pr.x*4.,pr.y*14.,pr.z*4.)));
+    c=mix(c,u_ca,ej*.35*cn);
+    c=mix(c,nc*.9,(1.-day)*.35*cl);
+    c=mix(c,mix(u_cb,u_cz,.5),(1.-cl)*.6);
+    // Clouds form where it is cold: on the nightside and along the morning limb, and boil off the hot dayside
+    float cloudy=cl*(1.-smoothstep(2200.,2900.,u_te));
+    // Features keep their strength at the poles and stretch along longitude there, as arc length across a meridian shrinks with cos(L)
+    float dm=lon+1.25; dm=atan(sin(dm),cos(dm));
+    float morn=exp(-pow(dm*cos(L)/.55,2.));
+    float cvr=clamp(morn*.55+(1.-day)*.3,0.,1.)*cloudy*(.45+.8*n);
+    c=mix(c,mix(u_ca,vec3(1.),.4),clamp(cvr,0.,1.)*.5);
+    // Western dayside crescent: cold gas west of the hot spot holds reflective clouds, the hot spot stays clear
+    float dw=lon+.65; dw=atan(sin(dw),cos(dw));
+    float wd=(1.-smoothstep(.45,1.25,abs(dw*cos(L))))*(1.-smoothstep(.3,.9,hs));
+    // The west stays cold enough for clouds even when the planet average sits above the condensation curve
+    float wcv=wd*u_wc*smoothstep(-.25,.45,.55+.9*n);
+    c=mix(c,mix(u_ca,vec3(1.,.98,.95),u_wb),clamp(wcv,0.,1.)*.85);
+    c*=1.+.14*nf*clamp(wcv,0.,1.);
+    // Local temperature: sharp substellar peak with weak redistribution, broad dayside plateau with strong redistribution
+    float tn=u_te*mix(.95,.5,ctr),ts=u_te*1.27;
+    float tl2=tn+(ts-tn)*pow(smoothstep(-.3,1.,hs),mix(1.,.85,ctr)*2.2)*(.94+.12*n);
+    float ev=smoothstep(1300.,3700.,tl2);
+    vec3 bb=mix(u_em,vec3(1.,.8,.55),smoothstep(1800.,3300.,tl2));
+    bb=mix(bb,vec3(1.,.93,.82),smoothstep(3200.,4200.,tl2));
+    em=bb*ev*.7;
+    // Cloudless nightsides stay dark brown, not black
+    c=max(c,vec3(.075,.062,.058));
+  }else{
+    float eqw=1.+1.5*exp(-pow((abs(L)-.2)/.1,2.));
+    // Irregular band widths, wavy edges and festoon ripples near the equator
+    float wv=(.3*gn(vec3(p.x*2.5,L*2.,p.z*2.5)+3.)+.035*eqw*gn(vec3(p.x*5.,L*u_nb*.5,p.z*5.)+8.))*(1.-.5*capB)*u_bw;
+    // Saturn's wide equatorial jet stretches the bands near the equator
+    float Lt=(u_sk>2.5&&u_sk<3.5)?L-.4*L*exp(-L*L/.12):L;
+    // Jupiter: an equatorially trapped Rossby wave of wavenumber 11 scallops the NEB southern edge near 7 N
+    float eqM=step(.5,u_sk)*step(u_sk,1.5);
+    float fw=eqM*.022*sin(11.*lon+u_so.z)*exp(-pow((L-.12)/.08,2.));
+    float t=Lt/PI*u_nb+u_tsh*exp(-pow((L-u_scy)/.45,2.))+wv+.45*gn(vec3(L*u_nb*.3+3.,2.,2.))*u_bw+fw*u_nb/PI;
+    float k=floor(t),f=fract(t);
+    float hk=h33(vec3(k,41.,u_so.x*.2)).z;
+    float ed=smoothstep(0.,mix(.07,.3,hk),f);
+    float B=mix(bv(k-1.),bv(k),ed);
+    // Sub-bands inside belts and slow variation along longitude
+    B+=.22*gn(vec3(3.7,t*2.3,5.))+.22*gn(vec3(p.x*1.6,L*u_nb*.25,p.z*1.6)+5.);
+    B=clamp(B,-1.,1.);
+    float hh=mix(bh(k-1.),bh(k),ed);
+    float bnd=exp(-pow(sin(PI*t),2.)*3.);
+    vec3 pr=ry(p,u_wind*cos(PI*t)*0.*cl*(1.-.9*po));
+    float fy=max(u_nb,3.)*.7;
+    float fx=fy*mix(.3*u_fs,1.,po);
+    float fl=mix(40.*u_fs,max(u_nb,3.)*4.,po);
+    float tm=mix(max(.3+.7*bnd,max(vm,max(vr*.6,wake))),.7,po);
+    // Three levels of eddies bend the sample point, from large swirls to small curls
+    vec3 pw=pr+flow(pr*vec3(1.,1.4,1.),3.)*.07*tm*(1.-po);
+    pw+=flow(pw,14.)*.01*tm*(1.-po);
+    
+    vec3 ps=vec3(pw.x*fx,pw.y*fy,pw.z*fx);
+    float n0=fbm(ps*1.7+w3,3);
+    float n=fbm(ps+w3*.8+vec3(n0,n0*.7,n0*.4)*1.1,6);
+    float nf=fbm(vec3(pw.x*fl*.6,pw.y*max(u_nb,3.)*1.6,pw.z*fl*.6)+w3,3);
+    if(u_cl>.5){
+      // Cloudless: Rayleigh gradient with faint thermal bands
+      float g=1.-abs(L)/1.57;
+      c=mix(u_cb,u_cz,clamp(g*.8+.1+.08*sin(PI*t)*u_bw,0.,1.));
+      c*=1.+n*.03;
+      em=u_em*u_emi*.25;
+    }else{
+      float cb=clamp(u_con*1.4,0.,1.);
+      float Bv=B*cb;
+      vec3 mid=mix(u_cb,u_cz,.5);
+      c=Bv<0.?mix(mid,u_cb,-Bv):mix(mid,u_cz,Bv);
+      // Chromophore patches and per-band hue
+      float chrom=smoothstep(.1,.7,fbm(vec3(pw.x*1.6,L*u_nb*.9,pw.z*1.6)+5.,3)*1.3+.15+.2*hh);
+      c=mix(c,u_ca,(smoothstep(.55,1.,hh)*.3+chrom*.35)*cb*(1.-capB));
+      float amp=u_dt*(.25+.75*cb);
+      c*=1.+(n*.55*(.5+.5*tm)+nf*.3*tm)*amp;
+      // Gas giants: zones are smooth with high ammonia cloud, belts are clearer and broken
+      float gasM=step(u_cls,.5)*(1.-capB);
+      float zn=smoothstep(.1,.7,B),bl=smoothstep(-.1,-.7,B);
+      c*=1.+(bl*.25-zn*.2)*gasM*(n*.55*(.5+.5*tm)+nf*.3*tm)*amp;
+      float hole=smoothstep(.5,.8,fbm(vec3(pw.x*fl*.9,pw.y*fy*2.,pw.z*fl*.9)+w3+11.,4)+.2)*bl;
+      c=mix(c,u_cb*.8,hole*.3*gasM*cb);
+      float gr=fbm(vec3(pw.x*fx*14.,pw.y*fy*18.,pw.z*fx*14.)+w3,5);
+      c*=1.+gr*.28*amp*(.6+.4*tm);
+      // Bright cloud clumps along band edges, dark gaps between them
+      float cu=smoothstep(.25,.7,fbm(vec3(pw.x*fl*.5,pw.y*fy*3.,pw.z*fl*.5)+w3,4)+.3*bnd);
+      c=mix(c,mix(u_ca,vec3(1.),.45),cu*.35*u_dt*u_ci*(1.-capB));
+      vec4 lu=ovals(vec2(lon,lat),.03,.5,.004,.012,3.);
+      c=mix(c,bright,lu.x*.35*tm*u_dt*(1.-cap));
+      c*=1.-lu.y*.15*tm*u_dt;
+      // Thin bright cirrus streaks, mainly ice giants
+      float sk=smoothstep(.22,.5,fbm(vec3(pr.x*1.3,pr.y*22.,pr.z*1.3)+w3*.4,4));
+      float lm=(1.-po)*smoothstep(.15,.5,abs(L))*(1.-smoothstep(1.2,1.45,abs(L)))*(.4+.6*smoothstep(-.2,.4,gn(vec3(p.x*2.,L,p.z*2.)+17.)));
+      c=mix(c,mix(u_ca,vec3(1.),.4),sk*lm*clamp((u_ci-.3)*1.4,0.,1.)*.8);
+      // Jupiter equatorial hot spots (dark, cloud-free) and bright plumes between them
+      if(eqM>.5){
+        float hu=lon*11./(2.*PI)+.12*gn(vec3(2.,2.,u_so.z));
+        float id=mod(floor(hu),11.);
+        vec3 hh3=h33(vec3(id,5.,u_so.z));
+        float dh=(fract(hu)-.5+.5*(hh3.x-.5))*(2.*PI/11.);
+        float sz=.7+.7*hh3.y;
+        float wz=(dh>0.?.065:.13)*sz;
+        float ragged=clamp(.65+.7*gn(vec3(lon*22.,lat*70.,3.))+.35*gn(vec3(lon*60.,lat*160.,6.)),0.,1.3);
+        // Taper to zero at the cell edge so neighbouring cells do not leave a seam
+        float hs=exp(-pow(dh/wz,2.)-pow((lat-.125-.01*hh3.z)/(.03*sz),2.))*ragged*(1.-smoothstep(.55,.9,abs(fract(hu)-.5)*2.));
+        float dp=(fract(hu+.5)-.5)*(2.*PI/11.);
+        float pl=exp(-pow(dp/.22,2.)-pow((lat-.085-.2*dp)/.03,2.))*(.5+.7*smoothstep(.1,.7,nf+.5))*(1.-smoothstep(.55,.9,abs(fract(hu+.5)-.5)*2.));
+        c=mix(c,vec3(1.,.97,.93),clamp(pl,0.,1.)*.85);
+        c=mix(c,u_cb*.5*vec3(.88,.96,1.1),hs*.85);
+      }
+      // Neptune-like zones near 0, 20, 45 and 70 degrees, with a dark belt near 60 S, scaled by internal heat
+      if(u_cls>.5&&u_cls<1.5){
+        float ad=abs(lat)*57.2958,sh=mix(1.,.55,smoothstep(-.06,.06,lat));
+        float Z=exp(-pow(ad/7.,2.))+exp(-pow((ad-20.)/7.,2.))+exp(-pow((ad-45.)/8.,2.))+exp(-pow((ad-70.)/7.,2.));
+        c*=1.+(Z-.5)*.2*u_act*sh*(1.-capB);
+        c*=1.-.07*exp(-pow((ad-60.)/5.,2.))*step(lat,0.)*u_act;
+      }
+      if(u_sk>3.5){
+        // Uranus: a bright band near 45 S (old polar cap edge), a growing one near 45 N, broad faint equatorial clouds near 4 N
+        float ad2=lat*57.2958;
+        float bb=exp(-pow((ad2+45.)/4.5,2.))*1.+exp(-pow((ad2-44.)/4.5,2.))*.6;
+        c=mix(c,mix(u_ca,vec3(1.),.45),bb*.4*(1.-capB));
+        float eu=lon*9./(2.*PI)+.1*gn(vec3(1.,3.,u_so.z));
+        float de=(fract(eu)-.5)*(2.*PI/9.);
+        float eqc=exp(-pow(de/.11,2.)-pow((lat-.07)/.045,2.))*(.5+.5*smoothstep(.1,.6,nf+.5));
+        c=mix(c,mix(u_ca,vec3(1.),.5),eqc*.3);
+      }
+      // Oval storms
+      float st=clamp(u_con*2.,0.,1.);
+      vec4 ov=ovals(vec2(lon,lat),.12,.16*u_ov,.01,.035,1.);
+      c=mix(c,bright,ov.x*.55*(.8+.4*nf)*(1.-cap));
+      c=mix(c,u_cs*1.1,ov.y*.7*(.8+.4*nf)*(1.-cap));
+      c=mix(c,u_cs,ov.z*.85*(.8+.4*nf)*(1.-cap));
+      c=mix(c,bright*.95,ov.w*.16*(1.-cap));
+      c*=1.-ov.w*.08;
+      // Large vortices: salmon core, dark moat, pale collar, turbulent wake
+      float big=smoothstep(.04,.07,vsz);
+      vec3 vcol=vs>0.?mix(bright*.95,u_cs,big):u_cb*.6;
+      float gdsK=step(1.5,u_sk)*step(u_sk,2.5)+step(3.5,u_sk);
+      if(u_sk>.5&&u_sk<1.5){
+        // Orange when the chromophore is thin, deep red when a tall storm carries it into strong UV
+        vec3 shd=mix(vec3(.88,.58,.34),vec3(.62,.18,.12),u_ssh);
+        vcol=mix(vcol,shd,.75*big*u_ssw);
+      }
+      if(gdsK>.5)vcol=u_cb*.34*vec3(.85,.95,1.15);
+      if(u_sk>2.5&&u_sk<3.5)vcol=u_cb*.7;
+      vec3 sal=u_sk>1.5?vec3(1.):vec3(1.05,.88,.8);
+      float colw=u_sk>1.5?.25:1.;
+      // Filled oval with a deeper core and lighter rim, keeping some cloud texture, then a bright collar around it
+      vec3 vin=mix(vcol,vec3(dot(vcol,vec3(.33))),.25)*mix(1.08,.82,smoothstep(.9,.0,vrr))*(.92+.16*vsp);
+      c=mix(c,mix(c*sal,vin,.5),vf*st);
+      // Pale collar separates the storm from its belt. Light noise keeps the edge uneven.
+      float jit=mix(1.,clamp(.8+.5*gn(vec3(eG*1.3,4.1))+.3*gn(vec3(eG*3.7,9.3)),0.,1.3),.35);
+      c=mix(c,bright*1.04,clamp(vcl,0.,1.)*.62*colw*jit*mix(.35,1.,big)*st);
+      c*=1.+clamp(-vcl,0.,1.)*-.25*st;
+      c*=1.-moat*.12*st;
+      c*=1.-exp(-pow((1.-vm)*3.,2.))*vr*.0;
+      c=mix(c,bright,vr*(1.-vm)*.3*st);
+      c=mix(c,u_cb*.8,wake*.3*(.4+.9*nf)*st);
+      // Filament: a thin thread of belt material leaves the storm's upper left, meanders, frays and breaks into puffs
+      if(eG.x<90.){
+        float fs=max(-eG.x,0.);
+        float wig=(.28*gn(vec3(fs*.8,1.3,u_so.z))+.12*gn(vec3(fs*2.6,4.1,2.)))*min(fs,3.)/3.;
+        float yc=1.4+.09*min(fs,8.)+wig;
+        float fn=eG.y-yc+.07*gn(vec3(fs*7.,eG.y*5.,2.5));
+        float fw=.2*(1.-.55*smoothstep(0.,9.,fs))*smoothstep(.15,.8,fs);
+        float core=exp(-pow(fn/max(fw,.01),2.)),halo=exp(-pow(fn/max(fw*3.5,.01),2.))*.35;
+        float along=smoothstep(.25,1.,fs)*exp(-fs*.09)*smoothstep(-.5,.2,gn(vec3(fs*2.1,7.,3.))+.3);
+        float fil=(core+halo)*along*smoothstep(5.,8.,u_nb)*step(.5,u_sk)*step(u_sk,1.5);
+        c=mix(c,c*vec3(.46,.38,.33),clamp(fil*.8,0.,.62)*st);
+      }
+      if(gdsK>.5&&eG.x<90.){
+        // Bright companion clouds of methane ice, drawn out along the poleward rim of the dark spot
+        float side=u_sk>3.5?-1.:1.;
+        float cy2=exp(-pow((eG.y+1.3*side)/.32,2.));
+        float cx2=smoothstep(-1.9,-.3,eG.x)*smoothstep(2.4,.6,eG.x);
+        float strk=smoothstep(0.,.55,fbm(vec3(eG.x*1.5,eG.y*7.,3.7),3)+.2);
+        c=mix(c,vec3(.92,.96,1.),cy2*cx2*strk*.7);
+      }
+      if(u_sk>2.5&&u_sk<3.5){
+        // Convective eruption at the storm latitude, 34 N on Saturn: bright head, turbulent tail that wraps the latitude, dark region far behind
+        float xh=gcx-.42;
+        float dxe=mod(lon-xh,2.*PI);
+        float dl=lat-(u_scy+.018*gn(vec3(cos(lon-xh)*.9,sin(lon-xh)*.9,u_so.z)));
+        vec2 eh=vec2(wr(lon-xh)*cos(u_scy)/.29,dl/.08);
+        float hl=length(eh);
+        float tn=fbm(vec3(p.x*16.,L*42.,p.z*16.)+4.,5)*.5+.5;
+        float turb=smoothstep(.28,.62,tn);
+        float head=smoothstep(1.,.5,hl+.35*(tn-.5))*(.6+.4*turb);
+        float tail=exp(-pow(dl/(.07+.012*sin(lon-xh)),2.))*smoothstep(.1,.55,dxe)*smoothstep(6.,4.8,dxe)*exp(-dxe*.22)*turb;
+        float dkw=exp(-pow(dl/.075,2.))*smoothstep(2.4,4.2,dxe)*smoothstep(6.1,5.3,dxe);
+        c*=1.-.2*dkw;
+        c*=1.-.1*exp(-pow((hl-1.15)/.14,2.));
+        c=mix(c,vec3(1.,.98,.94),clamp(head*.95+tail*2.4,0.,1.)*.95);
+      }
+            // Polar cap in flat polar coordinates: no pinching, a frozen centre avoids a seam
+      if(cap>.002||modeP==2.){
+        vec2 xp=rpc*smoothstep(0.,3.,rpc/(PI/u_res.y))*vec2(cos(lon),sin(lon)*hemi);
+        float sw=rpc*9.+.6*gn(vec3(xp*3.,8.));xp=mat2(cos(sw*.25),-sin(sw*.25),sin(sw*.25),cos(sw*.25))*xp;
+        vec2 xw=xp+vec2(gn(vec3(xp*6.,1.5)),gn(vec3(xp*6.,4.5)))*.05;
+        xw+=vec2(gn(vec3(xw*22.,7.5)),gn(vec3(xw*22.,9.5)))*.012;
+        
+        float pn=fbm(vec3(xw*14.,3.3),4),pn2=fbm(vec3(xw*45.,6.1),2);
+        vec3 cpol=mix(u_cp*.86,u_cp*1.12+.02,smoothstep(.1,.75,pn*.9+pn2*.1+.5));
+        float pb2=.5+.5*sin(rpc*38.+3.*gn(vec3(xp*4.,2.)));
+        cpol=mix(cpol,mix(c,u_cp,.7)*(.88+.24*pb2),.15);
+        cpol=mix(cpol,cpol*vec3(.88,.97,1.12),smoothstep(.15,.6,gn(vec3(xp*2.5,6.))));
+        cpol=mix(cpol,cpol*vec3(1.08,1.0,.9),smoothstep(-.2,.5,gn(vec3(xp*5.,3.))));
+        vec4 pa=ovalsP(xw,.11,.45,.02,.045,11.+hemi*5.);
+        vec4 pb=ovalsP(xw,.05,.6,.007,.02,9.+hemi*5.);
+        float cm=0.,cr=0.,cs=0.,cmo=0.;
+        cm=(1.-plain)*max(pa.x,pb.x*.8);cr=(1.-plain)*max(pa.w,pb.w*.5);cs=(1.-plain)*max(pa.z,pb.z*.8);
+        float upo=step(3.5,u_sk)*step(0.,hemi);
+        cs=max(cs,upo*pb.x*1.1);
+        float capM=cap;
+        float ph=hemi*lon;
+        if(modeP==1.){
+          // Polygon jet: stationary Rossby wave of integer wavenumber on a polar jet
+          float m=cntP,sec=2.*PI/m;
+          float a=mod(ph+u_so.y,sec)-.5*sec;
+          float Rp=u_pr*.9*cos(PI/m)/cos(a)*(1.+.035*gn(vec3(cos(ph)*2.,sin(ph)*2.,5.)));
+          float d=rpc-Rp+.004*gn(vec3(xp*26.,2.))+.002*gn(vec3(xp*70.,4.));
+          capM=smoothstep(.04,-.03,d)*.9;
+          vec4 ey=cycV(xp,.05);
+          cm=max(cm*.6,ey.x);cs=max(cs*.5,ey.z);cr=max(cr*.5,ey.y);
+          cpol=mix(cpol,vec3(.34,.5,.6)*(.8+.4*pn),.4);
+          c=mix(c,bright*.98,exp(-pow((d-.01)/.045,2.))*.4);
+          c=mix(c,u_cp*.45,exp(-pow((d+.06)/.035,2.))*.3);
+        }else if(modeP==2.){
+          // Circumpolar cyclone ring around a central cyclone
+          float rc=u_pr*1.65,ac=rc*sin(PI/cntP)*.62;
+          // Flow around the cap shears into tangential spiral streaks
+          float ss=ph+8.*rpc;
+          cpol*=1.+fbm(vec3(rpc*34.,cos(ss)*2.2,sin(ss)*2.2)+3.,3)*.42+fbm(vec3(rpc*90.,cos(ss)*5.,sin(ss)*5.)+7.,2)*.12;
+          // A distinct cap edge with a dark band just outside it
+          float eR=rc+ac*2.1+.02,eg=rpc+.04*gn(vec3(xp*5.,3.))+.015*gn(vec3(xp*14.,5.));
+          capM=1.-smoothstep(eR-.025,eR+.015,eg);
+          c=mix(c,c*.8,exp(-pow((eg-eR-.05)/.035,2.))*.6);
+        }else if(modeP==3.){
+          vec4 cc=cycV(xp,.09);
+          cm=max(cm*.5,cc.x);cs=max(cs*.5,cc.z);cr=max(cr*.5,cc.y);
+        }
+        if(modeP==2.){
+          // Pale storms with bright rims and dark moats stand out from a darker, bluer field
+          // Bright cyclone cores with faint dark rims, then a grey cast
+          // Let the planet's own cloud texture and warm tones carry through the cap
+          // Juno-style blue: keep the cloud texture's brightness but shift the hue to teal and blue
+          float lm=dot(c,vec3(.33));
+          cpol=mix(cpol,vec3(.7,.85,1.0)*(.28+.6*lm)*(.85+.3*fbm(vec3(xw*9.,2.2),3)),.9);
+          float pc=clamp(pcy,0.,1.);
+          cpol=mix(cpol,mix(cpol,vec3(.82,.92,1.),.55),pc*.65);
+          cpol*=1.-.15*(clamp(pcy*1.8,0.,1.)-pc);
+          
+        }else{
+          if(plain>.5){
+            // Calm polar hood: smooth tangential streaks over the planet's own tones, no random blobs
+            float s2=ph+6.*rpc;
+            float st=fbm(vec3(rpc*30.,cos(s2)*1.6,sin(s2)*1.6)+9.,3);
+            cpol=mix(u_cp,c,.55)*(1.+.16*st)*(1.+.08*(1.-rpc/.7));
+          }
+          cpol=mix(cpol,u_cp*.5,cm*.55);
+          cpol=mix(cpol,bright,cs*.5);
+          cpol=mix(cpol,bright*.9,cr*.4);
+        }
+        c=mix(c,cpol,capM*.9);
+      }
+      em=u_em*u_emi*.25*(.5-.5*B);
+    }
+    c=mix(c,bright,.3*u_sl*exp(-pow(L/.7,2.)));
+    // Season: the summer hemisphere gets more haze and a warm tint, the winter one a clearer, bluer look (Saturn's north before and after 2009)
+    float sm=tanh(2.5*L)*clamp(u_sea*2.5,-1.,1.)*(1.-smoothstep(300.,600.,u_te));
+    c=mix(c,c*vec3(1.1,1.,.82),.35*max(sm,0.));
+    c=mix(c,c*vec3(.9,.98,1.12),.35*max(-sm,0.));
+    // Periapsis shockwave: a bright compression ridge, a dark lane behind it and a turbulent wake. It fades toward the poles.
+    if(u_shi>.003){
+      float cl2=cos(L);
+      float dl=lon-u_shl-.4*cl2*cl2+.06*gn(p*5.+7.);
+      dl=atan(sin(dl),cos(dl));
+      // Arc distance across the front: it widens toward the poles instead of fading
+      float sd=dl*cl2;
+      float am=u_shi;
+      float wf=.03+.02*u_shi;
+      float ridge=exp(-pow(sd/wf,2.));
+      float lane=exp(-pow((sd+wf*2.4)/(wf*1.3),2.));
+      float wl=.2+.4*u_shi;
+      float wake=smoothstep(-wl,-.05,sd)*(1.-smoothstep(-.06,0.,sd))*(1.-smoothstep(1.9,3.,abs(dl)));
+      float tb=fbm(vec3(p.x*18.,p.y*40.,p.z*18.)+u_ho*.2,4);
+      // Hot gas swept behind the front glows deep red when the periapsis heating is strong (thermal maps of HD 80606 b near periapsis)
+      float hw=smoothstep(-wl*1.6,-.1,sd)*(1.-smoothstep(-.1,.05,sd))*(1.-smoothstep(1.9,3.,abs(dl)));
+      float gl=hw*(.55+.9*(fbm(vec3(p.x*7.,p.y*16.,p.z*7.)+u_ho*.3,4)+.35));
+      em+=vec3(.85,.16,.04)*max(gl,0.)*am*u_shg*1.1;
+      c=mix(c,mix(c,vec3(.98,.95,.9),.55)*1.12,ridge*am*.9);
+      c*=1.-lane*am*.3;
+      c*=1.+wake*am*.35*tb;
+      c=mix(c,vec3(dot(c,vec3(.3,.59,.11))),wake*am*.25);
+    }
+    c*=1.+u_hs*sin(L)+.07*gn(p*1.3+4.);
+  }
+  // Haze layer: own seed offset, thicker toward poles, softens cloud contrast
+  float hn=fbm(p*1.3+u_ho,3)*.5+.5;
+  float tau=u_ht*(.55+.9*hn)*(1.+u_hp*smoothstep(.2,1.5,abs(L)));
+  // Cap haze opacity so thick-haze planets keep faint banding and mottling
+  float a=min(1.-exp(-tau),.8);
+  c=mix(c,mix(u_cb,u_cz,.5),a*.55);
+  c=mix(c,u_hz,a*.7);
+  c=clamp(c+em,0.,1.);
+  c+=(h33(vec3(fc,1.)).x-.5)/255.;
+  o=vec4(c,1.);
+}`;
+
+      // Sphere preview: ray-sphere in one fragment shader, texture sampled by lon and lat
+      const SFS = `#version 300 es
+precision highp float;
+uniform sampler2D t; uniform vec2 r; uniform mat3 m; uniform vec3 il; uniform float ex;
+out vec4 o;
+const float PI=3.14159265;
+void main(){
+  vec2 u=(gl_FragCoord.xy-.5*r)/(.5*min(r.x,r.y))*1.05;
+  float d=dot(u,u);
+  if(d>1.){o=vec4(.03,.04,.07,1.);return;}
+  vec3 n=vec3(u,sqrt(1.-d));
+  vec3 w=m*n;
+  float lat=asin(clamp(w.y,-1.,1.));
+  float la=atan(-w.z,w.x);
+  vec2 uv=vec2(la/(2.*PI)+.5,lat/PI+.5);
+  // Mip level from the angular footprint on the sphere, so poles do not over-blur or pinch
+  float fp=max(length(dFdx(w)),length(dFdy(w)));
+  float lod=max(0.,log2(fp*float(textureSize(t,0).x)/(2.*PI)));
+  vec3 c=textureLod(t,uv,lod).rgb;
+  // Albedo times star spectrum in linear light, then back to sRGB. Hue is kept if a channel would clip
+  c=pow(c,vec3(2.2))*il;
+  // Eye adaptation: perceived brightness follows luminance^0.25, a mild form of Stevens' law that also reflects partial dark adaptation
+  c*=pow(ex,.25);
+  // Soft shoulder on luminance only, so bright light keeps the colour ratios instead of clipping to white
+  float yl=dot(c,vec3(.2126,.7152,.0722));
+  c*=1./(1.+.25*yl);
+  c/=max(1.,max(c.r,max(c.g,c.b)));
+  c=pow(c,vec3(1./2.2));
+  float l=max(dot(n,normalize(vec3(.4,.3,.85))),0.);
+  c*=.3+.8*l;
+  c*=1.-.35*pow(1.-n.z,2.);
+  o=vec4(c,1.);
+}`;
+
+      // Start a compile without waiting. With KHR_parallel_shader_compile the page stays alive while the driver works.
+      function progStart(gl, vs, fs) {
+        const ext = gl.getExtension("KHR_parallel_shader_compile");
+        const mk = (t, s) => {
+          const x = gl.createShader(t);
+          gl.shaderSource(x, s);
+          gl.compileShader(x);
+          return x;
+        };
+        const p = gl.createProgram();
+        gl.attachShader(p, mk(gl.VERTEX_SHADER, vs));
+        gl.attachShader(p, mk(gl.FRAGMENT_SHADER, fs));
+        gl.linkProgram(p);
+        return { gl, p, ext };
+      }
+      const frame = () => new Promise((r) => requestAnimationFrame(r));
+      async function progDone(j) {
+        const { gl, p, ext } = j;
+        if (ext)
+          while (!gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR))
+            await frame();
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+          throw new Error(gl.getProgramInfoLog(p));
+        const b = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, b);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+          gl.STATIC_DRAW,
+        );
+        const loc = gl.getAttribLocation(p, "a");
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+        return p;
+      }
+
+      const mapCv = document.getElementById("map"),
+        mapCtx = mapCv.getContext("2d");
+      const glCv = document.createElement("canvas");
+      // High performance picks the dedicated GPU on laptops. The map is copied out right after each draw, so no buffer copy is needed.
+      const gl = glCv.getContext("webgl2", {
+        powerPreference: "high-performance",
+        antialias: false,
+        depth: false,
+        alpha: false,
+      });
+      let mp = null;
+      let job = 0;
+
+      // Draw in tiles and yield between them so the page stays responsive
+      async function renderMap(pm, W, H, onProg) {
+        const id = ++job;
+        mapCv.width = W;
+        mapCv.height = H;
+        const th = Math.min(H, Math.max(32, Math.floor(8e5 / W)));
+        glCv.width = W;
+        glCv.height = th;
+        gl.useProgram(mp);
+        const U = (n, ...v) => {
+          const l = gl.getUniformLocation(mp, n);
+          gl["uniform" + v.length + "f"](l, ...v);
+        };
+        U("u_res", W, H);
+        U("u_so", ...pm.so.slice(0, 3));
+        U("u_ho", ...pm.so.slice(3));
+        U("u_cp", ...pm.cp);
+        U("u_pol", ...pm.pol);
+        U("u_sk", pm.sk);
+        U("u_cls", pm.cls);
+        U("u_te", pm.te);
+        U("u_act", pm.act);
+        U("u_pr", pm.pr);
+        U("u_cz", ...pm.cz);
+        U("u_cb", ...pm.cb);
+        U("u_ca", ...pm.ca);
+        U("u_cs", ...pm.cs);
+        U("u_hz", ...pm.hz);
+        U("u_em", ...pm.em);
+        for (const k of [
+          "ht",
+          "emi",
+          "nb",
+          "con",
+          "nv",
+          "fs",
+          "bw",
+          "wind",
+          "tl",
+          "cl",
+          "hp",
+          "dt",
+          "ov",
+          "ci",
+          "hs",
+          "dr",
+          "hoff",
+          "sl",
+          "wc",
+          "wb",
+          "sea",
+          "sa",
+          "sb",
+          "ssh",
+          "ssw",
+          "shl",
+          "shi",
+          "shg",
+          "scy",
+          "tsh",
+        ])
+          U("u_" + k, pm[k]);
+        for (let y0 = 0; y0 < H; y0 += th) {
+          if (id !== job) return false;
+          const rows = Math.min(th, H - y0);
+          gl.viewport(0, 0, W, rows);
+          U("u_y0", y0);
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          mapCtx.drawImage(
+            glCv,
+            0,
+            th - rows,
+            W,
+            rows,
+            0,
+            H - y0 - rows,
+            W,
+            rows,
+          );
+          onProg((y0 + rows) / H);
+          await new Promise((r) => requestAnimationFrame(r));
+        }
+        return id === job;
+      }
+
+      // Star colour: blackbody spectrum against CIE 1931 (Wyman et al. 2013 fit), in linear sRGB
+      function bbRGB(T) {
+        const g = (x, m, a, b) => {
+          const s = x < m ? a : b;
+          return Math.exp(-0.5 * ((x - m) * s) ** 2);
+        };
+        let X = 0,
+          Y = 0,
+          Z = 0;
+        for (let l = 380; l <= 780; l += 5) {
+          const w = l * 1e-9,
+            e = 1 / (w ** 5 * (Math.exp(1.4388e-2 / (w * T)) - 1));
+          X +=
+            e *
+            (1.056 * g(l, 599.8, 0.0264, 0.0323) +
+              0.362 * g(l, 442, 0.0624, 0.0374) -
+              0.065 * g(l, 501.1, 0.049, 0.0382));
+          Y +=
+            e *
+            (0.821 * g(l, 568.8, 0.0213, 0.0247) +
+              0.286 * g(l, 530.9, 0.0613, 0.0322));
+          Z +=
+            e *
+            (1.217 * g(l, 437, 0.0845, 0.0278) +
+              0.681 * g(l, 459, 0.0385, 0.0725));
+        }
+        return [
+          3.2406 * X - 1.5372 * Y - 0.4986 * Z,
+          -0.9689 * X + 1.8758 * Y + 0.0415 * Z,
+          0.0557 * X - 0.204 * Y + 1.057 * Z,
+          Y,
+        ];
+      }
+      // Reflected colour is albedo times the star's spectrum. The Sun is the white reference, and luminance stays equal
+      function starMul(T) {
+        // A list of [T, weight] pairs mixes stars by their visible light. A single number is one star.
+        const list = Array.isArray(T) ? T : [[T, 1]],
+          r = bbRGB(5772);
+        const m = [0, 0, 0];
+        let wt = 0;
+        for (const [tt, w] of list) {
+          const s = bbRGB(clamp(tt || 5772, 2000, 60000));
+          for (let i = 0; i < 3; i++)
+            m[i] += w * Math.max(s[i] / s[3] / (r[i] / r[3]), 0);
+          wt += w;
+        }
+        const y = 0.2126 * m[0] + 0.7152 * m[1] + 0.0722 * m[2];
+        return m.map((v) => v / y);
+      }
+      // Visible-band flux at the planet relative to Earth's. Luminous efficacy of a blackbody (Y per sigma T^4) is scaled to the Sun's
+      function fluxRel(d, stars) {
+        if (!d.pa) return 1;
+        const ecc = d.op && d.pe ? d.pe : 0;
+        const eff = (T) => bbRGB(T)[3] / T ** 4 / (bbRGB(5772)[3] / 5772 ** 4);
+        // With orbit parameters on, use the distance at the chosen mean anomaly. Otherwise use the orbit average.
+        const here = d.op && d.pq != null && ecc > 0;
+        const r2 = here
+          ? kepler(d.pq, ecc, d.pa).r ** 2
+          : d.pa ** 2 * Math.sqrt(1 - ecc ** 2);
+        const bol = (l) => l / (4 * Math.PI * r2) / 1361;
+        // Each star adds its own visible light
+        if (stars)
+          return stars.reduce(
+            (s, x) => s + bol(x.l) * eff(clamp(x.t, 2000, 60000)),
+            0,
+          );
+        if (!d.sl) return 1;
+        return bol(d.sl) * eff(clamp(d.st || 5772, 2000, 60000));
+      }
+      // Visible-light mix of the host stars, for the colour of the starlit sphere
+      const starMix = (d, stars) =>
+        stars
+          ? stars.map((x) => [
+              x.t,
+              x.l * (bbRGB(clamp(x.t, 2000, 60000))[3] / x.t ** 4),
+            ])
+          : d.st || 5772;
+      let yaw = Math.PI / 2,
+        pitch = 0,
+        starT = 5772,
+        starF = 1,
+        starS = 5772;
+      const spheres = [];
+      function makeSphere(id, getMul, getF) {
+        const cv = document.getElementById(id),
+          g = cv.getContext("webgl2");
+        const s = {
+          cv,
+          g,
+          prog: null,
+          tex: null,
+          getMul,
+          getF: getF || (() => 1),
+        };
+        if (g) s.tex = g.createTexture();
+        spheres.push(s);
+        return s;
+      }
+      function drawOne(s) {
+        const g = s.g;
+        if (!g || !s.tex || !s.prog) return;
+        const cy = Math.cos(yaw),
+          sy = Math.sin(yaw),
+          cp = Math.cos(pitch),
+          sp_ = Math.sin(pitch);
+        // M = Ry(yaw) * Rx(pitch), columns are images of the basis vectors
+        const f = (v) => {
+          const y = v[1] * cp - v[2] * sp_,
+            z = v[1] * sp_ + v[2] * cp,
+            x = v[0];
+          return [cy * x + sy * z, y, -sy * x + cy * z];
+        };
+        g.useProgram(s.prog);
+        g.viewport(0, 0, s.cv.width, s.cv.height);
+        g.uniform2f(g.getUniformLocation(s.prog, "r"), s.cv.width, s.cv.height);
+        g.uniform3f(g.getUniformLocation(s.prog, "il"), ...s.getMul());
+        g.uniform1f(g.getUniformLocation(s.prog, "ex"), s.getF());
+        g.uniformMatrix3fv(g.getUniformLocation(s.prog, "m"), false, [
+          ...f([1, 0, 0]),
+          ...f([0, 1, 0]),
+          ...f([0, 0, 1]),
+        ]);
+        g.bindTexture(g.TEXTURE_2D, s.tex);
+        g.drawArrays(g.TRIANGLE_STRIP, 0, 4);
+      }
+      function drawSphere() {
+        spheres.forEach(drawOne);
+      }
+      function loadTex() {
+        const w = Math.min(2048, mapCv.width),
+          h = Math.round((w * mapCv.height) / mapCv.width);
+        const c0 = document.createElement("canvas");
+        c0.width = w;
+        c0.height = h;
+        const c = c0.getContext("2d");
+        c.imageSmoothingQuality = "high";
+        c.drawImage(mapCv, 0, 0, w, h);
+        spheres.forEach((s) => {
+          const g = s.g;
+          if (!g) return;
+          g.bindTexture(g.TEXTURE_2D, s.tex);
+          // Canvas row 0 is north, but texture row 0 is the bottom, so flip on upload
+          g.pixelStorei(g.UNPACK_FLIP_Y_WEBGL, true);
+          g.texImage2D(g.TEXTURE_2D, 0, g.RGBA, g.RGBA, g.UNSIGNED_BYTE, c0);
+          g.generateMipmap(g.TEXTURE_2D);
+          g.texParameteri(
+            g.TEXTURE_2D,
+            g.TEXTURE_MIN_FILTER,
+            g.LINEAR_MIPMAP_LINEAR,
+          );
+          g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_S, g.REPEAT);
+          g.texParameteri(g.TEXTURE_2D, g.TEXTURE_WRAP_T, g.CLAMP_TO_EDGE);
+        });
+        drawSphere();
+      }
+      makeSphere("sphere", () => [1, 1, 1]);
+      makeSphere(
+        "sphere2",
+        () => starMul(starS),
+        () => starF,
+      );
+      // Both views share one rotation, so you can compare the same face under both lights
+      let drag = null;
+      spheres.forEach((s) => {
+        const cv = s.cv;
+        cv.addEventListener("pointerdown", (e) => {
+          drag = [e.clientX, e.clientY];
+          cv.setPointerCapture(e.pointerId);
+          cv.style.cursor = "grabbing";
+        });
+        cv.addEventListener("pointerup", () => {
+          drag = null;
+          cv.style.cursor = "grab";
+        });
+        cv.addEventListener("pointermove", (e) => {
+          if (!drag) return;
+          yaw -= (e.clientX - drag[0]) * 0.006;
+          pitch = clamp(pitch - (e.clientY - drag[1]) * 0.006, -1.4, 1.4);
+          drag = [e.clientX, e.clientY];
+          requestAnimationFrame(drawSphere);
+        });
+      });
+
+      // Orbit view: real distances, optional true body sizes, one or two stars
+      const LIN = new Float32Array(256).map((_, i) => Math.pow(i / 255, 2.2));
+      let texData = null,
+        texW = 0,
+        texH = 0,
+        texAvg = [0.3, 0.3, 0.3];
+      function grabTex() {
+        const w = 1024,
+          h = Math.round((w * mapCv.height) / mapCv.width);
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        const x = c.getContext("2d");
+        x.imageSmoothingQuality = "high";
+        x.drawImage(mapCv, 0, 0, w, h);
+        texData = x.getImageData(0, 0, w, h).data;
+        texW = w;
+        texH = h;
+        const s = [0, 0, 0];
+        for (let i = 0; i < texData.length; i += 64)
+          for (let k = 0; k < 3; k++) s[k] += LIN[texData[i + k]];
+        texAvg = s.map((v) => v / (texData.length / 64));
+      }
+      const v3 = {
+        add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]],
+        sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+        mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k],
+        dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+        cross: (a, b) => [
+          a[1] * b[2] - a[2] * b[1],
+          a[2] * b[0] - a[0] * b[2],
+          a[0] * b[1] - a[1] * b[0],
+        ],
+        norm: (a) => {
+          const l = Math.hypot(a[0], a[1], a[2]) || 1;
+          return [a[0] / l, a[1] / l, a[2] / l];
+        },
+        rz: (a, t) => [
+          a[0] * Math.cos(t) - a[1] * Math.sin(t),
+          a[0] * Math.sin(t) + a[1] * Math.cos(t),
+          a[2],
+        ],
+        rx: (a, t) => [
+          a[0],
+          a[1] * Math.cos(t) - a[2] * Math.sin(t),
+          a[1] * Math.sin(t) + a[2] * Math.cos(t),
+        ],
+      };
+      // Kepler's equation by Newton steps. Returns radius and true anomaly.
+      function kepler(M, e, a) {
+        // Wrap M and start high-e orbits at pi, or Newton's method can diverge
+        M =
+          ((((M + Math.PI) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) -
+          Math.PI;
+        let E = e > 0.8 ? (M < 0 ? -Math.PI : Math.PI) : M;
+        for (let i = 0; i < 60; i++)
+          E -= (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+        return {
+          r: a * (1 - e * Math.cos(E)),
+          nu:
+            2 *
+            Math.atan2(
+              Math.sqrt(1 + e) * Math.sin(E / 2),
+              Math.sqrt(1 - e) * Math.cos(E / 2),
+            ),
+        };
+      }
+      const sysView = { yaw: 0.5, pitch: 1.0 };
+      const starCol = (T) => {
+        const c = bbRGB(clamp(T || 5772, 2000, 40000)),
+          m = Math.max(c[0], c[1], c[2], 1e-9);
+        return c
+          .slice(0, 3)
+          .map((v) => Math.round(255 * Math.pow(clamp(v / m, 0, 1), 1 / 2.2)));
+      };
+      function drawStar(c, x, y, r, T) {
+        const [R, G_, B] = starCol(T),
+          gr = Math.max(r * 3.2, 14);
+        let g = c.createRadialGradient(x, y, 0, x, y, gr);
+        g.addColorStop(0, `rgba(${R},${G_},${B},.6)`);
+        g.addColorStop(0.3, `rgba(${R},${G_},${B},.18)`);
+        g.addColorStop(1, `rgba(${R},${G_},${B},0)`);
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(x, y, gr, 0, 7);
+        c.fill();
+        const rr = Math.max(r, 1.6),
+          lt = (k) => Math.round(k + (255 - k) * 0.55);
+        g = c.createRadialGradient(x, y, 0, x, y, rr);
+        g.addColorStop(0, `rgb(${lt(R)},${lt(G_)},${lt(B)})`);
+        g.addColorStop(0.7, `rgb(${R},${G_},${B})`);
+        g.addColorStop(
+          1,
+          `rgb(${Math.round(R * 0.72)},${Math.round(G_ * 0.72)},${Math.round(B * 0.72)})`,
+        );
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(x, y, rr, 0, 7);
+        c.fill();
+      }
+      const planetCv = document.createElement("canvas");
+      // Textured, lit planet disc. Each pixel finds its point on the sphere, its map colour and the light from each star.
+      function drawPlanet(c, x, y, R, cam, body, lights, W, H) {
+        const x0 = Math.max(Math.floor(x - R), 0),
+          x1 = Math.min(Math.ceil(x + R), W),
+          y0 = Math.max(Math.floor(y - R), 0),
+          y1 = Math.min(Math.ceil(y + R), H);
+        const w = x1 - x0,
+          h = y1 - y0;
+        if (w <= 0 || h <= 0) return;
+        planetCv.width = w;
+        planetCv.height = h;
+        const pc = planetCv.getContext("2d"),
+          img = pc.createImageData(w, h),
+          px = img.data;
+        const { right, up, toward } = cam,
+          { bx, by, bz } = body;
+        for (let iy = 0; iy < h; iy++)
+          for (let ix = 0; ix < w; ix++) {
+            const u = (ix + x0 + 0.5 - x) / R,
+              v = -(iy + y0 + 0.5 - y) / R,
+              r2 = u * u + v * v;
+            if (r2 >= 1.02) continue;
+            const ww = Math.sqrt(Math.max(1 - r2, 0));
+            const n = [
+              u * right[0] + v * up[0] + ww * toward[0],
+              u * right[1] + v * up[1] + ww * toward[1],
+              u * right[2] + v * up[2] + ww * toward[2],
+            ];
+            const qx = v3.dot(n, bx),
+              qy = v3.dot(n, by),
+              qz = v3.dot(n, bz);
+            const lat = Math.asin(clamp(qy, -1, 1)),
+              la = Math.atan2(-qz, qx);
+            const fx = (la / (2 * Math.PI) + 0.5) * texW - 0.5,
+              fy = clamp((0.5 - lat / Math.PI) * texH - 0.5, 0, texH - 1);
+            const xa = Math.floor(fx),
+              ya = Math.floor(fy),
+              tx = fx - xa,
+              ty = fy - ya;
+            const xi = ((xa % texW) + texW) % texW,
+              xj = (xi + 1) % texW,
+              yb = Math.min(ya + 1, texH - 1);
+            const o = [
+              (ya * texW + xi) * 4,
+              (ya * texW + xj) * 4,
+              (yb * texW + xi) * 4,
+              (yb * texW + xj) * 4,
+            ];
+            const al = [0, 0, 0];
+            for (let k = 0; k < 3; k++)
+              al[k] =
+                (LIN[texData[o[0] + k]] * (1 - tx) +
+                  LIN[texData[o[1] + k]] * tx) *
+                  (1 - ty) +
+                (LIN[texData[o[2] + k]] * (1 - tx) +
+                  LIN[texData[o[3] + k]] * tx) *
+                  ty;
+            let lr = 0.012,
+              lg = 0.012,
+              lb = 0.012;
+            for (const L of lights) {
+              const lam = Math.max(v3.dot(n, L.dir), 0) * L.w;
+              lr += lam * L.col[0];
+              lg += lam * L.col[1];
+              lb += lam * L.col[2];
+            }
+            const i = (iy * w + ix) * 4;
+            px[i] = 255 * Math.pow(clamp(al[0] * lr * 1.15, 0, 1), 1 / 2.2);
+            px[i + 1] = 255 * Math.pow(clamp(al[1] * lg * 1.15, 0, 1), 1 / 2.2);
+            px[i + 2] = 255 * Math.pow(clamp(al[2] * lb * 1.15, 0, 1), 1 / 2.2);
+            px[i + 3] = 255 * clamp((1 - Math.sqrt(r2)) * R + 0.5, 0, 1);
+          }
+        pc.putImageData(img, 0, 0);
+        c.drawImage(planetCv, x0, y0);
+      }
+      function drawSystem() {
+        const cv = $("syscv"),
+          c = cv.getContext("2d"),
+          W = cv.width,
+          H = cv.height;
+        c.fillStyle = "#020308";
+        c.fillRect(0, 0, W, H);
+        // Fixed background stars
+        let sd = 7;
+        for (let i = 0; i < 120; i++) {
+          sd = (sd * 16807) % 2147483647;
+          const sx = (sd / 2147483647) * W;
+          sd = (sd * 16807) % 2147483647;
+          const sy = (sd / 2147483647) * H;
+          c.fillStyle = `rgba(200,210,255,${0.15 + (0.3 * (i % 5)) / 5})`;
+          c.fillRect(sx, sy, 1.2, 1.2);
+        }
+        if (!lastComp || !texData) return;
+        const { d, p } = lastComp,
+          per = p.per;
+        if (!d.pa || !d.pr) return;
+        const real = $("real").checked,
+          cb = !!(d.cb && per && d.bs && per[0].m && per[1].m);
+        const op = !!d.op,
+          a = d.pa;
+        const e = op && d.pe ? d.pe : 0,
+          inc = op ? d.pc || 0 : 0,
+          node = op ? d.pl || 0 : 0,
+          argp = op ? d.pg || 0 : 0;
+        const frame = (v) => v3.rz(v3.rx(v3.rz(v, argp), inc), node);
+        const Mtot = d.sm || E.Ms;
+        const Pp = 2 * Math.PI * Math.sqrt(a ** 3 / (G * Mtot));
+        const M = (+$("mean").value * Math.PI) / 180,
+          time = (M / (2 * Math.PI)) * Pp;
+        const kp = kepler(M, e, a);
+        const ppos = frame([kp.r * Math.cos(kp.nu), kp.r * Math.sin(kp.nu), 0]);
+        // Stars: one at the centre, or two on their own orbit around the barycentre
+        const stars = [];
+        let be = 0,
+          bs = 0;
+        if (cb) {
+          bs = d.bs;
+          be = d.be || 0;
+          const m1 = per[0].m,
+            m2 = per[1].m,
+            Pb = 2 * Math.PI * Math.sqrt(bs ** 3 / (G * (m1 + m2)));
+          const kb = kepler((2 * Math.PI * time) / Pb, be, bs);
+          const rb = [kb.r * Math.cos(kb.nu), kb.r * Math.sin(kb.nu), 0];
+          stars.push({
+            pos: v3.mul(rb, -m2 / (m1 + m2)),
+            R: per[0].r || d.sr,
+            T: per[0].t || d.st,
+            L: per[0].l || 1,
+            n: "Star 1",
+          });
+          stars.push({
+            pos: v3.mul(rb, m1 / (m1 + m2)),
+            R: per[1].r || d.sr,
+            T: per[1].t || d.st,
+            L: per[1].l || 1,
+            n: "Star 2",
+          });
+        } else
+          stars.push({
+            pos: [0, 0, 0],
+            R: d.sr || E.Rs,
+            T: d.st || 5772,
+            L: 1,
+            n: "Star",
+          });
+        const focus = $("sysf").value === "p" ? ppos : [0, 0, 0];
+        const ext = a * (1 + e) + (cb ? bs * (1 + be) : 0);
+        // Perspective camera. It starts far out, so the default view looks flat, and the slider moves it toward the focus.
+        const sc = (0.85 * (H / 2)) / ext,
+          D0 = 20 * ext,
+          fl = sc * D0;
+        const Rp = d.pr,
+          Rsmax = Math.max(...stars.map((s) => s.R));
+        // Stop where the focus body fills most of the view
+        const minD =
+          Math.max(1.6, (2 * fl) / (0.9 * H)) *
+          ($("sysf").value === "p" ? Rp : Rsmax);
+        const zmax = Math.max(0.01, Math.log10(D0 / minD));
+        $("zoom").max = zmax.toFixed(2);
+        if (+$("zoom").value > zmax) $("zoom").value = zmax;
+        const D = real
+          ? Math.max(D0 * Math.pow(10, -$("zoom").value), minD)
+          : D0;
+        const cy = Math.cos(sysView.yaw),
+          sy = Math.sin(sysView.yaw),
+          cp = Math.cos(sysView.pitch),
+          sp = Math.sin(sysView.pitch);
+        const cam = {
+          right: [cy, -sy, 0],
+          up: [sp * sy, sp * cy, cp],
+          toward: [-cp * sy, -cp * cy, sp],
+        };
+        const proj = (v) => {
+          const w = v3.sub(v, focus),
+            z = v3.dot(w, cam.toward),
+            dep = D - z;
+          // dep <= 0 means the point sits behind the camera
+          const s = dep > D * 1e-4 ? fl / dep : 0;
+          return {
+            x: W / 2 + s * v3.dot(w, cam.right),
+            y: H / 2 - s * v3.dot(w, cam.up),
+            z,
+            s,
+          };
+        };
+        // Orbit paths
+        const path = (fn, col) => {
+          c.strokeStyle = col;
+          c.lineWidth = 1.2;
+          c.beginPath();
+          let pen = false;
+          for (let i = 0; i <= 240; i++) {
+            const q = proj(fn((i / 240) * 2 * Math.PI));
+            if (!q.s) {
+              pen = false;
+              continue;
+            }
+            pen ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y);
+            pen = true;
+          }
+          c.stroke();
+        };
+        path(
+          (nu) =>
+            frame([
+              ((a * (1 - e * e)) / (1 + e * Math.cos(nu))) * Math.cos(nu),
+              ((a * (1 - e * e)) / (1 + e * Math.cos(nu))) * Math.sin(nu),
+              0,
+            ]),
+          "rgba(110,150,255,.6)",
+        );
+        if (cb) {
+          const m1 = per[0].m,
+            m2 = per[1].m;
+          const rbf = (nu) => {
+            const r = (bs * (1 - be * be)) / (1 + be * Math.cos(nu));
+            return [r * Math.cos(nu), r * Math.sin(nu), 0];
+          };
+          path(
+            (nu) => v3.mul(rbf(nu), -m2 / (m1 + m2)),
+            "rgba(255,190,110,.45)",
+          );
+          path(
+            (nu) => v3.mul(rbf(nu), m1 / (m1 + m2)),
+            "rgba(255,190,110,.45)",
+          );
+        }
+        // Sizes in pixels
+        const qp = proj(ppos),
+          qs = stars.map((s) => proj(s.pos));
+        let pPx, sPx;
+        if (real) {
+          pPx = Rp * qp.s;
+          sPx = stars.map((s, i) => s.R * qs[i].s);
+        } else {
+          const dmin = Math.max(
+            (a * (1 - e) - (cb ? 0.5 * bs * (1 + be) : 0)) * sc,
+            24,
+          );
+          pPx = clamp(34, 6, Math.max(6, 0.25 * dmin));
+          const base = Math.min(
+            pPx * clamp(Math.pow(Rsmax / Rp, 0.35), 1, 1.7),
+            Math.max(0.4 * dmin, pPx),
+          );
+          const sepPx = cb ? bs * (1 - be) * sc : 1e9;
+          sPx = stars.map((s) =>
+            Math.min(
+              Math.max(base * Math.pow(s.R / Rsmax, 0.35), 5),
+              Math.max(0.4 * sepPx, 4),
+            ),
+          );
+        }
+        // Light on the planet from each star, weighted by luminosity over distance squared
+        const lights = stars.map((s) => {
+          const dv = v3.sub(s.pos, ppos),
+            dist = Math.hypot(...dv);
+          return {
+            dir: v3.norm(dv),
+            w: s.L / (dist * dist),
+            col: starMul(s.T).map((v) => v),
+          };
+        });
+        const wmax = Math.max(...lights.map((l) => l.w));
+        lights.forEach((l) => {
+          l.w /= wmax;
+        });
+        // Spin axis from the obliquity, and the longitude 0 direction. A locked planet keeps longitude 0 facing its star.
+        const nodeF = (v) => v3.rz(v3.rx(v, inc), node);
+        const by = v3.norm(nodeF(v3.rx([0, 0, 1], d.po || 0)));
+        let ref = d.tl ? lights[0].dir : nodeF([1, 0, 0]);
+        ref = v3.norm(v3.sub(ref, v3.mul(by, v3.dot(ref, by))));
+        const body = { bx: ref, by, bz: v3.cross(ref, by) };
+        // Draw far to near
+        const items = stars.map((s, i) => ({
+          k: "s",
+          s,
+          px: sPx[i],
+          q: proj(s.pos),
+        }));
+        items.push({ k: "p", px: pPx, q: qp });
+        items.sort((u, v) => u.q.z - v.q.z);
+        c.font = "12px system-ui,sans-serif";
+        for (const it of items) {
+          const { x, y } = it.q;
+          if (!it.q.s) continue;
+          if (it.k === "s") drawStar(c, x, y, it.px, it.s.T);
+          else if (it.px < 2) {
+            c.fillStyle = `rgb(${texAvg.map((v) => Math.round(255 * Math.pow(clamp(v * 1.4, 0, 1), 1 / 2.2)))})`;
+            c.beginPath();
+            c.arc(x, y, Math.max(it.px, 1.3), 0, 7);
+            c.fill();
+          } else drawPlanet(c, x, y, it.px, cam, body, lights, W, H);
+          c.fillStyle = "#9fb0d6";
+          c.fillText(
+            it.k === "s" ? it.s.n : $("preset").value || "Planet",
+            x + Math.max(it.px, 2) + 6,
+            y - Math.max(it.px, 2) * 0.6 - 4,
+          );
+        }
+        const pu =
+          fmt((a * (1 - e)) / AU) + " to " + fmt((a * (1 + e)) / AU) + " AU";
+        $("syscap").textContent =
+          `Planet distance from the ${cb ? "binary centre" : "star"}: ${e ? pu + ", eccentricity " + fmt(e) : fmt(a / AU) + " AU"}.` +
+          (cb
+            ? ` Stars ${fmt((bs * (1 - be)) / AU)} to ${fmt((bs * (1 + be)) / AU)} AU apart.`
+            : "") +
+          ` Camera is ${fmt(D / AU)} AU from the ${$("sysf").value === "p" ? "planet" : "system centre"}. Scale at the centre: 1 px = ${fmt(D / fl / 1e3)} km. ` +
+          (real
+            ? `At this distance the star is ${fmt(2 * stars[0].R * qs[0].s)} px wide and the planet ${fmt(2 * Rp * qp.s)} px. Move the camera closer to see them.`
+            : "Bodies are enlarged. Distances are true.");
+      }
+      function wireSys() {
+        let sd = null;
+        const cv = $("syscv");
+        cv.addEventListener("pointerdown", (e) => {
+          sd = [e.clientX, e.clientY];
+          cv.setPointerCapture(e.pointerId);
+          cv.style.cursor = "grabbing";
+        });
+        cv.addEventListener("pointerup", () => {
+          sd = null;
+          cv.style.cursor = "grab";
+        });
+        cv.addEventListener("pointermove", (e) => {
+          if (!sd) return;
+          sysView.yaw += (e.clientX - sd[0]) * 0.006;
+          // Pitch runs below the orbit plane too, so the south pole shows
+          sysView.pitch = clamp(
+            sysView.pitch + (e.clientY - sd[1]) * 0.006,
+            -1.57,
+            1.57,
+          );
+          sd = [e.clientX, e.clientY];
+          requestAnimationFrame(drawSystem);
+        });
+        // Zoom belongs to realistic scale, where bodies shrink to dots
+        $("real").addEventListener("change", () => {
+          $("zoom").disabled = !$("real").checked;
+          if (!$("real").checked) $("zoom").value = 0;
+        });
+        // With optional orbital parameters on, the slider drives the mean anomaly input, and Generate applies it to the map
+        const showM = () => {
+          $("meanv").textContent = $("mean").value + "°";
+        };
+        $("mean").addEventListener("input", () => {
+          showM();
+          if (!$("f_op").checked) return;
+          $("f_pq").value = fmt(
+            fromSI(BYID.pq, (+$("mean").value * Math.PI) / 180),
+          );
+          update();
+          markDirty();
+        });
+        $("f_pq").addEventListener("input", () => {
+          const x = Number($("f_pq").value.trim());
+          if ($("f_pq").value.trim() === "" || !isFinite(x)) return;
+          $("mean").value = Math.round(
+            ((((toSI(BYID.pq, x) * 180) / Math.PI) % 360) + 360) % 360,
+          );
+          showM();
+          requestAnimationFrame(drawSystem);
+        });
+        for (const id of ["real", "mean", "zoom", "sysf"])
+          $(id).addEventListener("input", () =>
+            requestAnimationFrame(drawSystem),
+          );
+        $("sysf").addEventListener("change", () => {
+          $("zoom").value = 0;
+          requestAnimationFrame(drawSystem);
+        });
+      }
+      // Species SpaceEngine accepts
+      const SE_OK = new Set([
+        "H2",
+        "He",
+        "Ne",
+        "Ar",
+        "Kr",
+        "Xe",
+        "O2",
+        "N2",
+        "CO",
+        "CO2",
+        "SO",
+        "SO2",
+        "Cl2",
+        "NaCl",
+        "H2S",
+        "H2O",
+        "NH3",
+        "CH4",
+        "C2H2",
+        "C2H4",
+        "C2H6",
+        "C3H8",
+        "C8H18",
+      ]);
+      const SUBS = "₀₁₂₃₄₅₆₇₈₉";
+      const sub = (s) => s.replace(/\d/g, (x) => SUBS[+x]);
+      const UNIT = 1e10; // 100 percent in units of 1e-8 percent, integers keep the sum exact
+
+      // Likely gas composition per mole of H2, from solar abundances plus temperature chemistry
+      function composition(d, p, se) {
+        const T = p.info.Te,
+          c = classify(d.pm, d.pr).c;
+        const enh = clamp((3 * E.Mj) / d.pm, 1, 300); // about 3x solar for Jupiter, 55x for Neptune
+        const w = {};
+        // H2 dissociates at lower T in thin gas. FastChem at 3 mbar: about 90 percent dissociated at 3000 K
+        const dis = p.info.bd
+          ? 0.8 * sstep(2200, 3500, T)
+          : 0.95 * sstep(2000, 3800, T);
+        w.H2 = 1 - dis;
+        w.H = 2 * dis;
+        w.He = { gas: 0.16, ice: 0.185, mini: 0.17 }[c];
+        // Carbon: CH4 in the cold, CO in the hot
+        const C = 5.4e-4 * enh,
+          fCO = sstep(700, 1400, T);
+        w.CH4 = C * (1 - fCO);
+        w.CO = C * fCO + (c === "ice" ? 1e-6 : 1e-9) * (1 - fCO);
+        // Nitrogen: NH3 depleted by clouds and deep NH4SH, N2 when hot
+        const N = 1.4e-4 * enh,
+          fN2 = sstep(500, 1000, T);
+        w.NH3 =
+          N *
+          (1 - fN2) *
+          (T < 120 ? 0.02 : p.info.deck === "ammonia" ? 0.4 : 1);
+        w.N2 = ((N * fN2) / 2) * (1 - sstep(3200, 4200, T));
+        // Oxygen: water depleted by condensation, CO takes its share, dissociation at the top end
+        const O = 9.8e-4 * enh,
+          hotOx = 1 - 0.9 * sstep(2000, 3000, T);
+        w.H2O =
+          Math.max(O - C * fCO, O * 0.1) *
+          Math.pow(10, -3 * (1 - sstep(180, 300, T))) *
+          hotOx;
+        w.CO2 =
+          0.01 *
+          Math.min(C, O) *
+          sstep(400, 900, T) *
+          (1 - sstep(1200, 1800, T)) *
+          clamp(enh / 30, 0, 3);
+        // Sulfur
+        const S = 2.6e-5 * enh;
+        w.H2S =
+          S *
+          Math.pow(10, -1.5 * (1 - sstep(150, 250, T))) *
+          (1 - 0.6 * sstep(1200, 1800, T)) *
+          (1 - sstep(2200, 3000, T));
+        w.SO2 =
+          S *
+          0.05 *
+          sstep(500, 900, T) *
+          (1 - sstep(1100, 1500, T)) *
+          clamp(enh / 30, 0, 2);
+        w.SO = S * 0.02 * sstep(1400, 2200, T) * (1 - sstep(2600, 3200, T));
+        // Noble gases
+        const nb = clamp(enh, 1, 5);
+        w.Ne = 2.4e-4 * (c === "gas" ? 0.1 : 1);
+        w.Ar = 5e-6 * nb;
+        w.Kr = 3.4e-9 * nb;
+        w.Xe = 3.4e-10 * nb;
+        // Photochemical hydrocarbons follow methane and haze
+        const hc =
+          w.CH4 * clamp(p.ht / 0.5, 0.2, 1.5) * (1 - sstep(500, 800, T));
+        w.C2H6 = 1.2e-2 * hc;
+        w.C2H2 = 3.6e-4 * hc; // Jupiter ISO at 3 mbar: C2H6 about 5 ppm, C2H2 about 0.14 ppm (Fouchet et al. 2000)
+        w.C2H4 = 6e-6 * hc;
+        w.C3H8 = 1e-6 * hc;
+        w.C3H4 = 2e-5 * hc;
+        w.C4H2 = 1e-6 * hc;
+        w.C6H6 = 1e-6 * hc;
+        // Hot vapours
+        w.NaCl = 1e-6 * enh * sstep(700, 1100, T) * (1 - sstep(1300, 1800, T));
+        w.TiO =
+          1.6e-7 * enh * sstep(1700, 2200, T) * (1 - sstep(3200, 4000, T));
+        w.VO = 1.7e-8 * enh * sstep(1700, 2200, T) * (1 - sstep(3200, 4000, T));
+        w.SiO = 6.4e-5 * enh * sstep(1600, 2200, T);
+        const hs = (lo, hi, a, b) => sstep(lo, hi, T) * (1 - sstep(a, b, T));
+        // Atoms and ions by element. Columns: symbol, solar log epsilon (Asplund et al. 2009, Li meteoritic), 50 percent condensation
+        // temperature at 1 bar (FastChem equilibrium condensation, Stock et al. 2018), first ionisation potential in eV.
+        // Gas is released over T50 +/- 200 K. FastChem matches Lodders 2003 at 1e-4 bar within 50 K. Alkalis, Zn, Ga, Ge, Rb, Li, Si, Ti and V
+        // use explicit ranges instead. Na and K fade near 950 to 1000 K as Na2S condenses, atomic Li holds above about 1525 K at 1 bar (Lodders 1999), and Si, Ti and V wait for SiO, TiO and VO to break apart.
+        const ELEM = [
+          ["Li", 3.26, 0, 5.39, 1200, 1800],
+          ["Na", 6.24, 0, 5.14, 850, 1050],
+          ["Mg", 7.6, 1600, 7.65],
+          ["Al", 6.45, 1900, 5.99],
+          ["Si", 7.51, 0, 8.15, 2600, 3400],
+          ["K", 5.03, 0, 4.34, 750, 1050],
+          ["Ca", 6.34, 1800, 6.11],
+          ["Sc", 3.15, 1700, 6.56],
+          ["Ti", 4.95, 0, 6.83, 2600, 3400],
+          ["V", 3.93, 0, 6.75, 2600, 3400],
+          ["Cr", 5.64, 1450, 6.77],
+          ["Mn", 5.43, 1250, 7.43],
+          ["Fe", 7.5, 1750, 7.9],
+          ["Co", 4.99, 1500, 7.88],
+          ["Ni", 6.22, 1650, 7.64],
+          ["Cu", 4.19, 1150, 7.73],
+          ["Zn", 4.56, 750, 9.39],
+          ["Ga", 3.04, 750, 6.0],
+          ["Ge", 3.65, 1150, 7.9],
+          ["Rb", 2.52, 600, 4.18],
+          ["Sr", 2.87, 1550, 5.69],
+          ["Y", 2.21, 1600, 6.22],
+          ["Zr", 2.58, 2000, 6.63],
+          ["Ba", 2.18, 1500, 5.21],
+        ];
+        // Saha ionisation at the photosphere: 3 mbar for planets, 1 bar for brown dwarfs. Electrons come from the metals, 1e-5 of the gas.
+        const Pph = p.info.bd ? 1e5 : 300,
+          ngas = Pph / (1.380649e-23 * T);
+        const S0 = (ip) =>
+          2 * 2.4147e21 * Math.pow(T, 1.5) * Math.exp((-11604.5 * ip) / T);
+        let pos = 0;
+        for (const [el, le, tc, ip, lo, hi] of ELEM) {
+          // Lithium burns above about 65 Jupiter masses (0.06 to 0.065 solar masses), the lithium test for brown dwarfs
+          const rel = tc ? sstep(tc - 200, tc + 200, T) : sstep(lo, hi, T);
+          const a =
+            2 *
+            Math.pow(10, le - 12) *
+            enh *
+            rel *
+            (el === "Li" && d.pm > 65 * E.Mj ? 0.01 : 1);
+          const sa = S0(ip),
+            fi = sa / (sa + 1e-5 * ngas);
+          w[el] = a * (1 - fi);
+          w[el + "+"] = a * fi;
+          pos += a * fi;
+        }
+        const sa0 = S0(13.6),
+          hi = sa0 / (sa0 + 1e-5 * ngas);
+        // Below the atomic Li range lithium sits in LiCl and LiOH (Lodders 1999). The lower edge is the FastChem 50 percent Li condensation temperature of 650 K at 1 bar.
+        const liMol =
+          2 *
+          Math.pow(10, 3.26 - 12) *
+          enh *
+          (d.pm > 65 * E.Mj ? 0.01 : 1) *
+          (1 - sstep(1200, 1800, T)) *
+          sstep(550, 750, T);
+        w.LiCl = 0.5 * liMol;
+        w.LiOH = 0.5 * liMol;
+        w["H+"] = w.H * hi;
+        w.H *= 1 - hi;
+        pos += w["H+"];
+        w["H-"] = 1e-9 * hs(2200, 3200, 4500, 6500);
+        w["e-"] = Math.max(pos - w["H-"], 0);
+        // Phosphorus, halogens, germanium and deuterium in the cool atmosphere
+        w.PH3 = 4.3e-7 * Math.min(enh, 3) * (1 - sstep(1400, 2100, T)); // Jupiter 0.5 to 1.4 ppm, solar 0.43 ppm (Giles et al. 2017)
+        // Below 1000 K chlorine sits in NH4Cl and KCl, fluorine in condensates. FastChem gives HCl 2 to 5e-7 and HF 2 to 4e-8 at 1500 to 2000 K
+        w.HCl = 4e-7 * enh * hs(1000, 1800, 2500, 3500);
+        w.HF = 4e-8 * enh * hs(1200, 1800, 2800, 3500);
+        w.GeH4 = 6e-10 * (1 - sstep(800, 1300, T)); // Jupiter 0.58 ppb, about 0.09 solar
+        w.HD = 5.2e-5 * w.H2; // Galileo D/H of 2.6e-5
+        w.HCN = 5e-8 * enh * hs(1100, 1500, 2200, 3000);
+        w.KCl = 1e-7 * enh * hs(700, 1000, 1200, 1900);
+        // Hydrides and oxides seen in L dwarfs and ultra-hot atmospheres
+        // Hydride and oxide levels follow FastChem solar runs (Stock et al. 2018) at 1500 to 3000 K
+        w.FeH = 1.2e-8 * enh * hs(1200, 1600, 2600, 3400);
+        w.CrH = 5e-9 * enh * hs(1200, 1600, 2200, 3000);
+        w.MgH = 1e-8 * enh * hs(1700, 2300, 3000, 3800);
+        w.CaH = 5e-9 * enh * hs(1700, 2300, 2800, 3600);
+        w.AlH = 6e-7 * enh * hs(1700, 2000, 2300, 2900);
+        w.TiH = 3e-11 * enh * hs(1800, 2400, 2800, 3600);
+        w.SiH = 2e-9 * enh * hs(2000, 2600, 3200, 4000);
+        w.AlO = 4e-9 * enh * hs(1700, 2000, 2600, 3600);
+        w.CaO = 1e-11 * enh * hs(1900, 2500, 3000, 3800);
+        // Dissociation products of water, CO, N2 and H2S in the hottest gas
+        w.OH = 5e-5 * enh * hs(2200, 3000, 3300, 4400);
+        w.O = 0.25 * O * sstep(2500, 3300, T);
+        w.CH = 1e-8 * enh * hs(2600, 3600, 4200, 5000);
+        w.C = 0.3 * C * sstep(3200, 4500, T);
+        w.N = 0.4 * N * sstep(2800, 4200, T);
+        w.CN = 1e-8 * enh * hs(2000, 3000, 3600, 4500);
+        w.NO = 1e-7 * enh * hs(2000, 3000, 3500, 4500);
+        w.HS = 0.1 * S * hs(1800, 2800, 3500, 4500);
+        w.CS = 0.02 * S * hs(1500, 2400, 3500, 4500);
+        w.S = 0.5 * S * sstep(2400, 3200, T);
+        // Keep the metal total below a sensible cap
+        const base = ["H2", "H", "H+", "He"];
+        const mt = Object.keys(w).reduce(
+          (s, k) => s + (base.includes(k) ? 0 : w[k]),
+          0,
+        );
+        if (mt > 1.5)
+          for (const k in w) if (!base.includes(k)) w[k] *= 1.5 / mt;
+        if (se) {
+          w.H2 += w.H / 2;
+          w.H = 0;
+          for (const k in w) if (!SE_OK.has(k)) w[k] = 0;
+        }
+        // Largest remainder rounding so integer units sum to exactly 100 percent
+        const keys = Object.keys(w).filter((k) => w[k] > 0);
+        const tot = keys.reduce((s, k) => s + w[k], 0);
+        const raw = keys.map((k) => (w[k] / tot) * UNIT),
+          fl = raw.map(Math.floor);
+        let rem = UNIT - fl.reduce((a, b) => a + b, 0);
+        raw
+          .map((x, i) => [x - fl[i], i])
+          .sort((a, b) => b[0] - a[0])
+          .forEach(([, i]) => {
+            if (rem > 0) {
+              fl[i]++;
+              rem--;
+            }
+          });
+        const rows = keys
+          .map((k, i) => [k, fl[i]])
+          .filter((r) => r[1] > 0)
+          .sort((a, b) => b[1] - a[1]);
+        return rows;
+      }
+
+      function pct(u) {
+        const ip = Math.floor(u / 1e8),
+          fp = String(u % 1e8)
+            .padStart(8, "0")
+            .replace(/0+$/, "");
+        return fp ? `${ip}.${fp}` : String(ip);
+      }
+
+      // Short note on what colours the composition explains
+      function agents(p) {
+        const s = p.info.sub,
+          Tb = p.info.Te;
+        if (p.info.bd)
+          return (
+            "Colour agents: " +
+            (Tb >= 2300
+              ? "thermal glow with TiO, VO and alkali absorption."
+              : Tb >= 1400
+                ? "silicate and iron dust absorbs blue light and glows red through gaps."
+                : Tb >= 1200
+                  ? "patchy clouds, so dusty brown regions sit beside hotter, brighter gaps."
+                  : Tb >= 500
+                    ? "sodium and potassium absorption and methane leave a dark magenta-brown tone (estimated)."
+                    : "water and ammonia clouds, as in a cold Jupiter-like giant, with ochre and cream bands (Y dwarf colours are estimated).")
+          );
+        if (p.info.cloudless)
+          return (
+            "Colour agents: Rayleigh scattering" +
+            (p.info.Te > 1300
+              ? ", with alkali and TiO absorption and thermal glow."
+              : ".")
+          );
+        const t = {
+          frigid: "CH4 absorption removes red light, giving blue and cyan.",
+          cold: "CH4 absorption removes red light, giving blue and cyan.",
+          cool: "NH3 ice clouds with tan and ochre chromophores, tholin haze.",
+          temperate: "Water clouds over a Rayleigh blue base.",
+          warm: "NH4SH and clear-sky gradients, Na and K absorption, sulfur haze.",
+          hot: "Alkali metal and TiO absorption, with silicate haze tints.",
+          torrid:
+            "Silicate and iron decks, alkali and TiO absorption, thermal emission.",
+        };
+        return "Colour agents: " + t[s];
+      }
+
+      let lastComp = null;
+      function showComp() {
+        if (!lastComp) return;
+        const rows = composition(lastComp.d, lastComp.p, $("se").checked);
+        $("comp").innerHTML =
+          rows
+            .map((r) => `<dt>${sub(r[0])}</dt><dd>${pct(r[1])}%</dd>`)
+            .join("") + "<dt>Total</dt><dd>100%</dd>";
+        $("agents").textContent = agents(lastComp.p);
+        // Copy shows only in SpaceEngine mode, one "formula percent" pair per line
+        seText = rows.map((r) => `${r[0]} ${pct(r[1])}`).join("\n");
+        $("cpy").hidden = !$("se").checked;
+      }
+      let seText = "";
+
+      const $ = (id) => document.getElementById(id);
+      const numRe = /^[-+]?(\d+\.?\d*|\.\d+)([eE][-+]?\d+)?$/;
+
+      // Build planet and star rows from the field table
+      function build() {
+        for (const f of FIELDS) {
+          const row = document.createElement("div");
+          row.className = "row";
+          row.id = "r_" + f.id;
+          const lab = document.createElement("label");
+          lab.textContent = f.n;
+          lab.htmlFor = "f_" + f.id;
+          row.append(lab);
+          const inp = document.createElement("input");
+          inp.id = "f_" + f.id;
+          if (f.chk) {
+            inp.type = "checkbox";
+            lab.style.gridColumn = "1";
+            row.append(lab, inp);
+          } else {
+            inp.type = "text";
+            inp.inputMode = "decimal";
+            row.append(inp);
+            if (f.u) {
+              const s = document.createElement("select");
+              s.id = "u_" + f.id;
+              s.setAttribute("aria-label", "Unit for " + f.n);
+              f.u.forEach((u, i) => s.add(new Option(u[0], i)));
+              s.value = f.d;
+              s.dataset.prev = f.d;
+              row.append(s);
+            }
+          }
+          const m = document.createElement("span");
+          m.className = "msg";
+          m.id = "m_" + f.id;
+          row.append(m);
+          $(f.g === "p" ? "fsp" : "fss").append(row);
+        }
+        fillPresets();
+      }
+      function fillPresets() {
+        const s = $("preset");
+        s.innerHTML = "";
+        s.add(new Option("Custom", ""));
+        Object.keys(mode === "bd" ? BDPRESETS : PRESETS).forEach((k) =>
+          s.add(new Option(k, k)),
+        );
+      }
+
+      const uf = (f) => {
+        const s = $("u_" + f.id);
+        const u = f.u[s ? +s.value : 0];
+        return { k: u[1], o: u[2] || 0 };
+      };
+      const toSI = (f, x) => {
+        const u = uf(f);
+        return x * u.k + u.o;
+      };
+      const fromSI = (f, x) => {
+        const u = uf(f);
+        return (x - u.o) / u.k;
+      };
+
+      // Read, validate, return SI values and error messages
+      function read() {
+        const v = {},
+          err = {};
+        const bdm = mode === "bd";
+        v.tl = !bdm && $("f_tl").checked;
+        v.op = !bdm && $("f_op").checked;
+        v.cb = !bdm && $("f_cb").checked;
+        for (const f of FIELDS) {
+          if (f.chk) {
+            v[f.id] = !bdm && $("f_" + f.id).checked;
+            continue;
+          }
+          const t = $("f_" + f.id).value.trim();
+          v[f.id] = null;
+          if (bdm && (PONLY.has(f.id) || f.g === "s")) continue;
+          if (f.id === "pw" && v.tl) continue;
+          if (f.opt && !v.op) continue;
+          if (f.bin && !v.cb) continue;
+          if (t === "") continue;
+          if (!numRe.test(t)) {
+            err[f.id] = "Enter a number.";
+            continue;
+          }
+          const x = Number(t);
+          if (f.alb) {
+            if (x < 0 || x > 1) err[f.id] = "Enter a value from 0 to 1.";
+            else v[f.id] = x;
+            continue;
+          }
+          if (f.ecc) {
+            if (x < 0 || x >= 1) err[f.id] = "Enter a value from 0 to below 1.";
+            else v[f.id] = x;
+            continue;
+          }
+          const si = toSI(f, x);
+          if (f.ang) {
+            if (si < 0 || si > f.ang)
+              err[f.id] =
+                `Enter 0 to ${fmt(fromSI(f, f.ang))} ${f.u[+$("u_" + f.id).value][0]}.`;
+            else v[f.id] = si;
+            continue;
+          }
+          if (f.u === TU) {
+            if (si <= 0) err[f.id] = "Below absolute zero.";
+            else v[f.id] = si;
+          } else if (x <= 0) err[f.id] = "Enter a positive value.";
+          else v[f.id] = si;
+        }
+        return { v, err };
+      }
+
+      // Solve one star on its own: Stefan-Boltzmann and the visual band link
+      function starSolve(m, r, l, vl, t) {
+        const s = { m, r, l, vl, t };
+        for (let i = 0; i < 3; i++) {
+          if (s.t) {
+            const f = visFrac(s.t);
+            if (s.vl == null && s.l) s.vl = s.l * f;
+            if (s.l == null && s.vl) s.l = s.vl / f;
+          }
+          if (s.l == null && s.r && s.t)
+            s.l = 4 * Math.PI * s.r ** 2 * SB * s.t ** 4;
+          else if (s.r == null && s.l && s.t)
+            s.r = Math.sqrt(s.l / (4 * Math.PI * SB * s.t ** 4));
+          else if (s.t == null && s.l && s.r)
+            s.t = Math.pow(s.l / (4 * Math.PI * SB * s.r ** 2), 0.25);
+        }
+        if (s.m == null && s.r) s.m = Math.pow(s.r / E.Rs, 1.25) * E.Ms;
+        return s;
+      }
+      const STARKEYS = [
+        ["sm", "bm", "m"],
+        ["sr", "br", "r"],
+        ["sl", "bl", "l"],
+        ["sv", "bv", "vl"],
+        ["st", "bt", "t"],
+      ];
+
+      // Derived values panel
+      function panel(d, p) {
+        const rows = [];
+        const g = (G * d.pm) / d.pr ** 2,
+          I = p.info;
+        const mu = CFG.mu[classify(d.pm, d.pr).c];
+        const H = (KB * I.Te) / (mu * MH * g);
+        const ro = I.U / (2 * I.om * d.pr);
+        const add = (k, x) => rows.push(`<dt>${k}</dt><dd>${x}</dd>`);
+        add("Class", I.cls);
+        add(I.bd ? "Spectral class" : "Subtype", I.sub);
+        if (I.bd) {
+          add("Mass", fmt(d.pm / E.Mj) + " MJ");
+          if (d.ae) add("Age", fmt(d.ae / GYR) + " Gyr");
+          add("Radius", fmt(d.pr / E.Rj) + " RJ");
+        }
+        const lum = (T) =>
+          fmt((4 * Math.PI * d.pr ** 2 * SB * T ** 4) / E.Ls) + " Lsun";
+        if (d.bd) {
+          add("Effective T", fmt(I.Te) + " K");
+          add("Luminosity", lum(I.Te));
+        } else {
+          add("Equilibrium T", fmt(d.pt) + " K");
+          add("Internal T", fmt(d.pi) + " K");
+          add("Effective T", fmt(I.Te) + " K");
+          if (I.bd) add("Internal luminosity", lum(d.pi));
+        }
+        add("Surface gravity", fmt(g) + " m/s2");
+        add("Scale height", fmt(H / 1e3) + " km");
+        if (d.po != null)
+          add("Obliquity", fmt((d.po * 180) / Math.PI) + " deg");
+        if (d.op && d.pe != null) add("Eccentricity", fmt(d.pe));
+        add("Rotation rate", fmt(I.om) + " rad/s");
+        add("Wind speed used", fmt(I.U) + " m/s");
+        add("Rossby number", fmt(ro));
+        add("Rhines band count", fmt(I.nbRaw));
+        add("Rotation regime", I.reg);
+        add("Cloud deck", I.deck);
+        if (d.pa) add("Semimajor axis", fmt(d.pa / AU) + " AU");
+        if (d.pp) add("Orbital period", fmt(d.pp / 86400) + " d");
+        if (d.cb) add("Star model", "Two stars, flux and mass summed");
+        if (d.cb && d.bs) {
+          add("Binary separation", fmt(d.bs / AU) + " AU");
+          if (d.sm)
+            add(
+              "Binary period",
+              fmt((2 * Math.PI * Math.sqrt(d.bs ** 3 / (G * d.sm))) / 86400) +
+                " d",
+            );
+        }
+        if (d.cb && d.be != null) add("Binary eccentricity", fmt(d.be));
+        if (d.sl) add("Star bolometric L", fmt(d.sl / E.Ls) + " Lsun");
+        if (d.sv) add("Star visual L", fmt(d.sv / E.Ls) + " Lsun");
+        if (d.st) add("Star temperature", fmt(d.st) + " K");
+        $("derived").innerHTML = rows.join("");
+      }
+
+      let timer = 0,
+        usedSeed = "",
+        dirty = false;
+      const markDirty = () => {
+        dirty = true;
+        $("stale").hidden = false;
+      };
+      // Validate, derive, show messages, return params or null
+      function update(seedIn) {
+        const { v, err } = read();
+        const bdm = mode === "bd";
+        for (const f of FIELDS)
+          if (f.g === "p")
+            $("r_" + f.id).hidden = bdm
+              ? PONLY.has(f.id)
+              : !!f.bd || !!f.pf || (!!f.opt && !v.op);
+        $("r_pi").querySelector("label").textContent = bdm
+          ? "Effective temperature"
+          : BYID.pi.n;
+        for (const f of FIELDS) {
+          if (f.bin) $("r_" + f.id).hidden = !v.cb;
+          if (f.g === "s" && !f.chk && !f.pair)
+            $("r_" + f.id).querySelector("label").textContent =
+              f.n + (v.cb ? (f.bin ? " (star 2)" : " (star 1)") : "");
+        }
+        for (const f of FIELDS) {
+          $("m_" + f.id).textContent = "";
+          $("m_" + f.id).className = "msg";
+          $("f_" + f.id).classList.remove("bad", "warn");
+        }
+        // Circumbinary: solve each star, then sum the flux and mass into one effective source
+        let w = v,
+          per = null;
+        const bw = {};
+        if (v.cb) {
+          per = [
+            starSolve(v.sm, v.sr, v.sl, v.sv, v.st),
+            starSolve(v.bm, v.br, v.bl, v.bv, v.bt),
+          ];
+          const [a, b] = per,
+            both = (k) => a[k] != null && b[k] != null;
+          w = { ...v };
+          w.sm = both("m") ? a.m + b.m : null;
+          w.sl = both("l") ? a.l + b.l : null;
+          w.sv = both("vl") ? a.vl + b.vl : null;
+          w.sr = both("r") ? Math.hypot(a.r, b.r) : null;
+          w.st =
+            w.sl && w.sr
+              ? Math.pow(w.sl / (4 * Math.PI * SB * w.sr ** 2), 0.25)
+              : null;
+          [
+            [v.sl, v.sr, v.st, "sl"],
+            [v.bl, v.br, v.bt, "bl"],
+          ].forEach(([l, r, tt, k]) => {
+            if (l && r && tt) {
+              const e = 4 * Math.PI * r ** 2 * SB * tt ** 4;
+              if (Math.abs(l / e - 1) > 0.05)
+                bw[k] =
+                  "Luminosity disagrees with radius and temperature. Expected " +
+                  fmt(e / E.Ls) +
+                  " solar.";
+            }
+          });
+        }
+        if (v.cb && v.bs && per[0].m && per[1].m) {
+          // Holman and Wiegert 1999 inner stability limit for a planet around a binary
+          const mu = per[1].m / (per[0].m + per[1].m),
+            e = v.be || 0;
+          const ac =
+            v.bs *
+            (1.6 +
+              5.1 * e -
+              2.22 * e * e +
+              4.12 * mu -
+              4.27 * e * mu -
+              5.09 * mu * mu +
+              4.61 * e * e * mu * mu);
+          bw.ac = ac;
+        }
+        const { d, src } = bdm ? solveBD(w) : solve(w);
+        // Planet mode: 13 to 75 Jupiter masses counts as a star-bound brown dwarf unless you tick the planet-formed box (GJ 504 b style)
+        const inr =
+          !bdm &&
+          d.pm != null &&
+          d.pm / E.Mj >= BD.dLim &&
+          d.pm / E.Mj <= BD.hLim;
+        $("r_pf").hidden = !inr;
+        $("r_ae").hidden = !(bdm || (inr && !d.pf));
+        $("r_ae").querySelector("label").textContent = bdm
+          ? "Age"
+          : "Age of the brown dwarf";
+        if (inr && !d.pf) {
+          d.bdp = true;
+          if (d.ae == null) {
+            d.ae = 3 * GYR;
+            src.ae = "typical field age, 3 Gyr";
+          }
+          if (v.pi == null) {
+            d.pi = bdTeff(d.pm, d.ae);
+            src.pi = "Burrows 2001 cooling fit";
+          }
+          if (v.pr == null) {
+            d.pr = bdRadius(d.pm, d.ae);
+            src.pr = "cooling track fit";
+          }
+        }
+        if (bw.ac && d.pa) {
+          const q = d.pa * (1 - (d.op && d.pe ? d.pe : 0));
+          if (d.pa < bw.ac)
+            bw.pa =
+              "Orbit lies inside the stable limit for this binary. Expected above " +
+              fmt(bw.ac / AU) +
+              " AU.";
+          else if (q < bw.ac)
+            bw.pe =
+              "Periapsis of " +
+              fmt(q / AU) +
+              " AU lies inside the stable limit for this binary. Expected above " +
+              fmt(bw.ac / AU) +
+              " AU.";
+        }
+        delete bw.ac;
+        const cc = Object.keys(err).length
+          ? {}
+          : bdm
+            ? bdChecks(v, d)
+            : checkConsistency(w, d);
+        if (v.cb && per) {
+          // The summed star hides which star is wrong, so judge each star on its own fields
+          delete cc.sv;
+          [
+            ["sv", 0],
+            ["bv", 1],
+          ].forEach(([k, i]) => {
+            if (v[k] && per[i].l && v[k] > per[i].l)
+              bw[k] = "Visual luminosity exceeds bolometric.";
+          });
+        }
+        const warn = Object.keys(err).length ? {} : { ...cc, ...bw };
+        const fail = (k, t) => {
+          $("m_" + k).textContent = t;
+          $("f_" + k).classList.add("bad");
+        };
+        for (const k in err) fail(k, err[k]);
+        for (const k in warn) {
+          $("m_" + k).textContent = warn[k];
+          $("m_" + k).className = "msg warn";
+          $("f_" + k).classList.add("warn");
+        }
+        // Show derived values as placeholders in the current unit
+        for (const f of FIELDS) {
+          if (f.chk) continue;
+          const el = $("f_" + f.id);
+          const filled = v[f.id] == null && d[f.id] != null;
+          el.placeholder = filled
+            ? fmt(f.alb ? d[f.id] : fromSI(f, d[f.id]))
+            : "";
+          el.title = filled ? "Derived: " + (src[f.id] || "") : "";
+        }
+        // Per-star placeholders replace the combined ones
+        if (per) {
+          for (const [k1, k2, pk] of STARKEYS) {
+            [k1, k2].forEach((k, i) => {
+              const x = per[i][pk],
+                el = $("f_" + k),
+                filled = v[k] == null && x != null;
+              el.placeholder = filled ? fmt(fromSI(BYID[k], x)) : "";
+              el.title = filled ? "Derived for this star" : "";
+            });
+          }
+        }
+        $("f_pw").disabled = !!v.tl;
+        const need = [];
+        if (bdm) {
+          if (d.pm == null)
+            need.push(["pm", "Enter a mass, or a temperature and age."]);
+        } else {
+          if (d.pm == null) need.push(["pm", "Enter mass or radius."]);
+          if (d.pr == null) need.push(["pr", "Enter radius or mass."]);
+          if (d.pt == null)
+            need.push(["pt", "Enter a value or fill star and orbit."]);
+          if (d.pw == null)
+            need.push([
+              "pw",
+              v.tl
+                ? "Needs an orbital period."
+                : "Enter a rotation period or lock tidally.",
+            ]);
+          if (d.pi == null && d.pm != null) need.push(["pi", "Enter a value."]);
+        }
+        for (const [k, t] of need) if (!err[k]) fail(k, t);
+        const seed = seedIn || $("seed").value.trim() || "0";
+        if (Object.keys(err).length || need.length) {
+          $("status").textContent = "Fix the fields marked in red.";
+          return null;
+        }
+        d.tl = v.tl;
+        d.pre = $("preset").value;
+        const p = makeParams(d, seed);
+        p.d = d;
+        p.per = per;
+        panel(d, p);
+        $("status").textContent = p.status;
+        $("stale").hidden = !dirty;
+        return p;
+      }
+
+      // Busy bar on the map, and the same numbers on the loading screen while it is up
+      const busy = (label, x) => {
+        $("busy").hidden = false;
+        $("busytxt").textContent = label + " " + Math.round(x * 100) + "%";
+        $("busyprog").value = x;
+        if (!$("loader").hidden) {
+          loadAt = Math.max(loadAt, 0.8 + 0.2 * x);
+          $("lprog").value = loadAt;
+        }
+      };
+      let loadAt = 0;
+      const idle = () => {
+        $("busy").hidden = true;
+      };
+      async function generate() {
+        if (!mp) return;
+        dirty = false;
+        $("stale").hidden = true;
+        // Empty seed means a fresh random map every time. The seed goes in before the parameters, so storms and polar counts change too.
+        usedSeed = $("seed").value.trim();
+        if (!usedSeed) {
+          usedSeed = String(Math.floor(Math.random() * 1e9));
+          $("seed").placeholder = "Empty is random. Last: " + usedSeed;
+        }
+        const p = update(usedSeed);
+        if (!p) return;
+        if (!gl) {
+          $("status").textContent = "WebGL2 is not available in this browser.";
+          return;
+        }
+        const W = +$("res").value;
+        const H =
+          $("aspect").value === "2:1" ? W / 2 : Math.round((W * 9) / 16);
+        const keep = $("status").textContent;
+        lastComp = null;
+        $("comp").innerHTML = "<dt>Generating...</dt>";
+        $("agents").textContent = "";
+        $("status").textContent = keep + " Rendering...";
+        $("dl").disabled = true;
+        busy("Rendering", 0);
+        const ok = await renderMap(p, W, H, (x) => busy("Rendering", x));
+        // A newer Generate took over, so it owns the bar and the buttons
+        if (!ok) return;
+        idle();
+        $("dl").disabled = false;
+        if (ok) {
+          const bdo = !!p.d.bd;
+          $("cap1").textContent = bdo
+            ? "Neutral preview light. The object also glows from its own heat."
+            : "Reference light (Sun-like white)";
+          if (!bdo) {
+            starT = p.d.st || 5772;
+            const two =
+              p.d.cb && p.per && p.per.every((s) => s.l && s.t) ? p.per : null;
+            starS = starMix(p.d, two);
+            starF = fluxRel(p.d, two);
+            const T = starT,
+              sc =
+                T >= 30000
+                  ? "O"
+                  : T >= 10000
+                    ? "B"
+                    : T >= 7500
+                      ? "A"
+                      : T >= 6000
+                        ? "F"
+                        : T >= 5200
+                          ? "G"
+                          : T >= 3700
+                            ? "K"
+                            : "M";
+            $("cap2").textContent =
+              `Under your star light (${sc}-type, ${Math.round(T)} K, ${starF >= 10 ? starF.toFixed(0) : starF.toPrecision(2)}x Earth's visible light)`;
+          }
+          $("status").textContent = keep;
+          loadTex();
+          lastComp = { d: p.d, p };
+          showComp();
+          if (!bdo && p.d.op && p.d.pq != null) {
+            $("mean").value = Math.round((p.d.pq * 180) / Math.PI);
+            $("meanv").textContent = $("mean").value + "°";
+          }
+          if (!bdo) {
+            grabTex();
+            drawSystem();
+          }
+        }
+      }
+      const later = () => {
+        clearTimeout(timer);
+        timer = setTimeout(generate, 400);
+      };
+
+      function setPreset(name) {
+        const p = (mode === "bd" ? BDPRESETS : PRESETS)[name];
+        for (const f of FIELDS) {
+          if (f.id === "op") continue;
+          if (f.chk) {
+            $("f_" + f.id).checked = !!p[f.id];
+            continue;
+          }
+          const el = $("f_" + f.id),
+            s = $("u_" + f.id);
+          el.value = "";
+          if (s) {
+            s.value = f.d;
+            s.dataset.prev = f.d;
+          }
+          const x = p[f.id];
+          if (!x) continue;
+          if (s) {
+            s.value = x[1];
+            s.dataset.prev = x[1];
+          }
+          el.value = String(x[0]);
+        }
+        // Eccentric presets switch the orbital parameters on so the periapsis effects can show
+        if (p.op && !$("f_op").checked) {
+          $("f_op").checked = true;
+          $("f_op").dispatchEvent(new Event("change"));
+        }
+      }
+
+      build();
+      $("form").addEventListener("input", (e) => {
+        if (
+          e.target.id !== "preset" &&
+          e.target.id !== "res" &&
+          e.target.id !== "aspect"
+        )
+          $("preset").value = "";
+        update();
+        markDirty();
+      });
+      $("form").addEventListener("change", (e) => {
+        const t = e.target;
+        if (t.id.startsWith("u_")) {
+          // Keep the physical value when the unit changes
+          const f = BYID[t.id.slice(2)],
+            el = $("f_" + f.id),
+            txt = el.value.trim();
+          if (numRe.test(txt)) {
+            const old = f.u[+t.dataset.prev],
+              nu = f.u[+t.value];
+            el.value = fmt(
+              (Number(txt) * old[1] + (old[2] || 0) - (nu[2] || 0)) / nu[1],
+            );
+          }
+          t.dataset.prev = t.value;
+          update();
+          markDirty();
+        } else if (t.id === "preset") {
+          if (t.value) setPreset(t.value);
+          update();
+          markDirty();
+        } else if (t.id === "res" || t.id === "aspect") {
+          resLabels();
+          markDirty();
+        }
+      });
+      $("se").addEventListener("change", showComp);
+      $("rnd").addEventListener("click", () => {
+        $("seed").value = String(Math.floor(Math.random() * 1e9));
+        generate();
+      });
+      $("gen").addEventListener("click", generate);
+      // 24-bit RGB PNG, canvas.toBlob always writes an alpha channel
+      const crcT = (() => {
+        const t = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+          let c = n;
+          for (let k = 0; k < 8; k++)
+            c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+          t[n] = c >>> 0;
+        }
+        return t;
+      })();
+      const crc32 = (b) => {
+        let c = 0xffffffff;
+        for (let i = 0; i < b.length; i++)
+          c = crcT[(c ^ b[i]) & 255] ^ (c >>> 8);
+        return (c ^ 0xffffffff) >>> 0;
+      };
+      function chunk(type, data) {
+        const out = new Uint8Array(12 + data.length),
+          dv = new DataView(out.buffer);
+        dv.setUint32(0, data.length);
+        for (let i = 0; i < 4; i++) out[4 + i] = type.charCodeAt(i);
+        out.set(data, 8);
+        dv.setUint32(8 + data.length, crc32(out.subarray(4, 8 + data.length)));
+        return out;
+      }
+      // Rows go through the compressor in strips, so the page keeps painting and the bar moves
+      async function pngRGB(cv, onProg) {
+        const W = cv.width,
+          H = cv.height,
+          ctx = cv.getContext("2d");
+        const cs = new CompressionStream("deflate"),
+          wr = cs.writable.getWriter(),
+          rd = cs.readable.getReader();
+        const parts = [];
+        const reading = (async () => {
+          for (;;) {
+            const r = await rd.read();
+            if (r.done) return;
+            parts.push(r.value);
+          }
+        })();
+        const step = Math.max(16, Math.floor(2e6 / W));
+        for (let y0 = 0; y0 < H; y0 += step) {
+          const n = Math.min(step, H - y0),
+            px = ctx.getImageData(0, y0, W, n).data;
+          const raw = new Uint8Array(n * (1 + 3 * W));
+          let o = 0;
+          for (let y = 0; y < n; y++) {
+            raw[o++] = 1; // Sub filter shrinks the file
+            let i = y * W * 4,
+              pr = 0,
+              pg = 0,
+              pb = 0;
+            for (let x = 0; x < W; x++, i += 4) {
+              const r = px[i],
+                g = px[i + 1],
+                b = px[i + 2];
+              raw[o++] = (r - pr) & 255;
+              raw[o++] = (g - pg) & 255;
+              raw[o++] = (b - pb) & 255;
+              pr = r;
+              pg = g;
+              pb = b;
+            }
+          }
+          await wr.write(raw);
+          onProg((y0 + n) / H);
+          await new Promise((r) => setTimeout(r));
+        }
+        await wr.close();
+        await reading;
+        const z = new Uint8Array(parts.reduce((a, b) => a + b.length, 0));
+        let at = 0;
+        for (const q of parts) {
+          z.set(q, at);
+          at += q.length;
+        }
+        const ihdr = new Uint8Array(13),
+          dv = new DataView(ihdr.buffer);
+        dv.setUint32(0, W);
+        dv.setUint32(4, H);
+        ihdr[8] = 8;
+        ihdr[9] = 2;
+        return new Blob(
+          [
+            new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]),
+            chunk("IHDR", ihdr),
+            chunk("IDAT", z),
+            chunk("IEND", new Uint8Array(0)),
+          ],
+          { type: "image/png" },
+        );
+      }
+      $("dl").addEventListener("click", async () => {
+        const keep = $("status").textContent;
+        $("dl").disabled = true;
+        $("gen").disabled = true;
+        busy("Preparing PNG", 0);
+        let blob;
+        try {
+          blob =
+            typeof CompressionStream === "undefined"
+              ? null
+              : await pngRGB(mapCv, (x) => busy("Preparing PNG", x));
+        } catch (e) {
+          blob = null;
+        }
+        if (!blob) {
+          $("busytxt").textContent = "Encoding PNG...";
+          blob = await new Promise((r) => mapCv.toBlob(r, "image/png"));
+        }
+        const a = document.createElement("a"),
+          name = `${mode === "bd" ? "dwarf" : "giant"}-${
+            $("preset")
+              .value.normalize("NFD")
+              .replace(/[^\w-]+/g, "") || "custom"
+          }-${usedSeed}-${mapCv.width}x${mapCv.height}.png`;
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        idle();
+        $("dl").disabled = false;
+        $("gen").disabled = false;
+        $("status").textContent =
+          `Saved ${name} (${(blob.size / 1048576).toFixed(1)} MB).`;
+        setTimeout(() => {
+          if ($("status").textContent.startsWith("Saved "))
+            $("status").textContent = keep;
+        }, 6000);
+      });
+      $("cpy").addEventListener("click", async () => {
+        const b = $("cpy");
+        try {
+          await navigator.clipboard.writeText(seText);
+        } catch (e) {
+          // Clipboard API can be blocked, so fall back to a hidden textarea
+          const ta = document.createElement("textarea");
+          ta.value = seText;
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand("copy");
+          } catch (e2) {
+            b.textContent = "Copy failed";
+            ta.remove();
+            return;
+          }
+          ta.remove();
+        }
+        b.textContent = "Copied";
+        setTimeout(() => {
+          b.textContent = "Copy";
+        }, 1200);
+      });
+      $("form").addEventListener("submit", (e) => e.preventDefault());
+
+      // Space Engine .sc import, shown only for the Custom preset
+      const syncImp = () => {
+        $("improw").hidden = mode === "bd" || $("preset").value !== "";
+      };
+      // One pass, so a // inside a block comment or a /* inside a line comment stays inert
+      function stripComments(s) {
+        let out = "",
+          i = 0,
+          q = false;
+        while (i < s.length) {
+          const c = s[i],
+            n = s[i + 1];
+          if (c === '"') q = !q;
+          if (!q && c === "/" && n === "/") {
+            while (i < s.length && s[i] !== "\n") i++;
+            continue;
+          }
+          if (!q && c === "/" && n === "*") {
+            const end = s.indexOf("*/", i + 2);
+            i = end < 0 ? s.length : end + 2;
+            out += " ";
+            continue;
+          }
+          out += c;
+          i++;
+        }
+        return out;
+      }
+      function parseSC(txt) {
+        txt = stripComments(txt);
+        const planet = {},
+          orbit = {};
+        let pend = "",
+          stack = [],
+          seen = false;
+        // Only the first Planet block counts. Moons and other blocks are skipped.
+        const lines = [];
+        for (let line of txt.split(/\r?\n/)) {
+          line = line.trim();
+          if (!line) continue;
+          // Split a header with its brace, such as: Planet "x" {
+          if (line.length > 1 && line.endsWith("{")) {
+            lines.push(line.slice(0, -1).trim(), "{");
+            continue;
+          }
+          lines.push(line);
+        }
+        for (const line of lines) {
+          if (line === "{") {
+            stack.push(pend);
+            pend = "";
+            if (stack.length === 1 && stack[0] === "Planet") seen = true;
+            continue;
+          }
+          if (line === "}") {
+            stack.pop();
+            if (stack.length === 0 && seen) break;
+            continue;
+          }
+          const m = line.match(/^(\w+)\s+(.+)$/);
+          if (!m) {
+            pend = line;
+            continue;
+          }
+          // A quoted name marks a block header, such as: Planet "6"
+          if (m[2].trim().startsWith('"')) {
+            pend = m[1];
+            continue;
+          }
+          const raw = m[2].replace(/"/g, "").trim();
+          // Space Engine booleans become 1 or 0
+          const val = /^true$/i.test(raw)
+            ? 1
+            : /^false$/i.test(raw)
+              ? 0
+              : Number(raw);
+          if (!Number.isFinite(val)) {
+            pend = m[1];
+            continue;
+          }
+          if (stack.length === 1 && stack[0] === "Planet") planet[m[1]] = val;
+          else if (
+            stack.length === 2 &&
+            stack[0] === "Planet" &&
+            stack[1] === "Orbit"
+          )
+            orbit[m[1]] = val;
+        }
+        return { planet, orbit };
+      }
+      // Main sequence estimates, used when the file has no star data
+      function starFromMass(ms) {
+        const L =
+          ms < 0.43
+            ? 0.23 * ms ** 2.3
+            : ms < 2
+              ? ms ** 4
+              : ms < 55
+                ? 1.4 * ms ** 3.5
+                : 32000 * ms;
+        const R = ms >= 1 ? ms ** 0.8 : ms ** 0.9;
+        return { ms, L, R, T: 5772 * (L / (R * R)) ** 0.25 };
+      }
+      function importSC(txt) {
+        const { planet: P, orbit: O } = parseSC(txt);
+        const ab = (x) => (x == null ? null : Math.abs(x));
+        const est = [];
+        const vals = {};
+        const put = (id, x, unit) => {
+          vals[id] = [x, unit];
+        };
+        // Mass in Earth masses, or MassJup in Jupiter masses. Radius in km, or RadiusEarth in Earth radii.
+        const mass = ab(P.Mass),
+          rad = ab(P.Radius);
+        const massJ = ab(P.MassJup),
+          radE = ab(P.RadiusEarth);
+        if (mass == null && massJ == null && rad == null && radE == null) {
+          $("impnote").textContent = "No Mass or Radius found in this file.";
+          $("impnote").className = "msg";
+          return;
+        }
+        if (mass != null) put("pm", mass, 1);
+        else if (massJ != null) put("pm", massJ, 3);
+        if (rad != null) put("pr", rad, 0);
+        else if (radE != null) put("pr", radE, 1);
+        const rot = ab(P.RotationPeriod);
+        const sma = ab(O.SemiMajorAxis),
+          per = ab(O.Period);
+        // Star: Kepler's third law gives its mass from the orbit, then main sequence relations give the rest
+        // Use the star mass already in the form, if any, for missing orbit values
+        const smEl = Number($("f_sm").value),
+          smU = FIELDS.find((f) => f.id === "sm").u[$("u_sm").selectedIndex][1];
+        const bmEl = $("f_cb").checked
+          ? (Number($("f_bm").value) *
+              FIELDS.find((f) => f.id === "bm").u[$("u_bm").selectedIndex][1]) /
+            E.Ms
+          : 0;
+        const msUser =
+          smEl > 0 ? (smEl * smU) / E.Ms + (bmEl > 0 ? bmEl : 0) : 1;
+        let a = sma,
+          pr = per;
+        if (a == null && pr == null) {
+          a = 1;
+          pr = Math.sqrt(1 / msUser);
+          est.push("semimajor axis", "orbital period");
+        } else if (a == null) {
+          a = Math.cbrt(pr * pr * msUser);
+          est.push("semimajor axis");
+        } else if (pr == null) {
+          pr = Math.sqrt(a ** 3 / msUser);
+          est.push("orbital period");
+        }
+        // Keep star values the user already typed
+        const keepStar = FIELDS.some(
+          (f) =>
+            f.g === "s" &&
+            !f.chk &&
+            !f.bin &&
+            $("f_" + f.id).value.trim() !== "",
+        );
+        put("pa", a, 0);
+        put("pp", pr, 2);
+        if (!keepStar) {
+          $("f_cb").checked = false;
+          const s = starFromMass(clamp(a ** 3 / (pr * pr), 0.08, 100));
+          put("sm", +s.ms.toPrecision(4), 1);
+          put("sr", +s.R.toPrecision(4), 1);
+          put("sl", +s.L.toPrecision(4), 1);
+          put("st", Math.round(s.T), 0);
+          est.push("star mass, radius, luminosity and temperature");
+        }
+        est.push("internal temperature");
+        if (rot != null) put("pw", rot, 0);
+        else {
+          put("pw", 10, 0);
+          est.push("rotation period");
+        }
+        // Angles wrap into 0 to 360 degrees. A negative angle is not its absolute value.
+        const ang = (x) => ((x % 360) + 360) % 360;
+        if (P.Obliquity != null) put("po", Math.min(ab(P.Obliquity), 180), 0);
+        if (P.EqAscendNode != null) put("pn", ang(P.EqAscendNode), 0);
+        // A lone Albedo fills both the Bond and geometric albedo
+        const bond = P.AlbedoBond ?? P.Albedo,
+          geom = P.AlbedoGeom ?? P.Albedo;
+        if (bond != null) put("ab", clamp(ab(bond), 0, 1));
+        else est.push("Bond albedo");
+        if (geom != null) put("ag", clamp(ab(geom), 0, 1));
+        // Tidal lock when rotation matches the orbit within 1%
+        const lock =
+          P.TidalLocked != null
+            ? P.TidalLocked !== 0
+            : rot != null &&
+              Math.abs(rot * 3600 - pr * 3.15576e7) < 0.01 * pr * 3.15576e7;
+        const hasOpt = [
+          "Eccentricity",
+          "Inclination",
+          "AscendingNode",
+          "ArgOfPericenter",
+          "MeanAnomaly",
+        ].some((k) => O[k] != null);
+        if (hasOpt) {
+          if (O.Eccentricity != null)
+            put("pe", clamp(ab(O.Eccentricity), 0, 0.999));
+          // An inclination above 180 is the same orbit as 360 minus it, with the node and periapsis turned by 180
+          let inc = O.Inclination,
+            nd = O.AscendingNode,
+            ap = O.ArgOfPericenter;
+          if (inc != null) {
+            inc = ang(inc);
+            if (inc > 180) {
+              inc = 360 - inc;
+              nd = (nd ?? 0) - 180;
+              ap = (ap ?? 0) + 180;
+            }
+            put("pc", inc, 0);
+          }
+          if (nd != null) put("pl", ang(nd), 0);
+          if (ap != null) put("pg", ang(ap), 0);
+          if (O.MeanAnomaly != null) put("pq", ang(O.MeanAnomaly), 0);
+        }
+        // Fill the form
+        for (const f of FIELDS) {
+          if (f.chk || (keepStar && f.g === "s")) continue;
+          const el = $("f_" + f.id),
+            sel = $("u_" + f.id);
+          el.value = "";
+          if (sel) {
+            sel.value = f.d;
+            sel.dataset.prev = f.d;
+          }
+          const x = vals[f.id];
+          if (!x) continue;
+          if (sel && x[1] != null) {
+            sel.value = x[1];
+            sel.dataset.prev = x[1];
+          }
+          el.value = String(+Number(x[0]).toPrecision(8));
+        }
+        $("f_tl").checked = lock;
+        $("f_op").checked = hasOpt;
+        $("preset").value = "";
+        update();
+        markDirty();
+        syncImp();
+        $("impnote").textContent =
+          "Imported. Estimated: " +
+          est.join(", ") +
+          ". Angles wrap into 0 to 360 degrees and other negative values became positive.";
+      }
+      $("imp").addEventListener("click", () => $("impf").click());
+      $("impf").addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          importSC(await file.text());
+        } catch (err) {
+          $("impnote").textContent = "Could not read this file.";
+        }
+        e.target.value = "";
+      });
+      $("preset").addEventListener("change", () => {
+        $("impnote").textContent = "";
+        syncImp();
+      });
+      $("form").addEventListener("input", syncImp);
+      // Size labels follow the aspect: 2:1 is W by W/2, 16:9 is W by 9W/16
+      const resLabels = () => {
+        const r = $("aspect").value === "2:1" ? 1 / 2 : 9 / 16;
+        for (const o of $("res").options)
+          o.textContent = `${o.value} x ${Math.round(o.value * r)}`;
+      };
+      resLabels();
+      $("preset").value = "Jupiter";
+      setPreset("Jupiter");
+      syncImp();
+      update();
+      // Switching mode loads a starting preset and waits for Generate
+      function setMode(m) {
+        mode = m;
+        document.body.classList.toggle("bd", m === "bd");
+        $("m_planet").setAttribute("aria-pressed", String(m === "planet"));
+        $("m_bd").setAttribute("aria-pressed", String(m === "bd"));
+        $("fsp").querySelector("legend").textContent =
+          m === "bd" ? "Brown dwarf" : "Planet";
+        fillPresets();
+        const first = m === "bd" ? "Luhman 16 B" : "Jupiter";
+        $("preset").value = first;
+        $("impnote").textContent = "";
+        setPreset(first);
+        syncImp();
+        update();
+        markDirty();
+      }
+      $("m_planet").addEventListener("click", () => {
+        if (mode !== "planet") setMode("planet");
+      });
+      $("m_bd").addEventListener("click", () => {
+        if (mode !== "bd") setMode("bd");
+      });
+
+      // Boot: paint the loading screen first, then compile all shaders at once without blocking the page
+      async function boot() {
+        wireSys();
+        // Compiling has no progress signal, so it eases toward 80 percent. The render takes the last 20 and never moves the bar back.
+        const t0 = Date.now(),
+          tick = setInterval(() => {
+            const s = (Date.now() - t0) / 1000;
+            if (!compiled) {
+              loadAt = Math.max(loadAt, 0.8 * (1 - Math.exp(-s / 6)));
+              $("lprog").value = loadAt;
+            }
+            $("ltime").textContent =
+              Math.round(loadAt * 100) + "% · " + Math.round(s) + " s";
+          }, 200);
+        let compiled = false;
+        const lock = (on) =>
+          ["gen", "dl", "rnd"].forEach((id) => {
+            $(id).disabled = on;
+          });
+        lock(true);
+        try {
+          if (!gl) throw new Error("WebGL2 is not available in this browser.");
+          $("lstep").textContent = "Compiling shaders...";
+          await frame();
+          await frame();
+          const jobs = [progStart(gl, VS, FS)];
+          spheres.forEach((s) => {
+            if (s.g) jobs.push(progStart(s.g, VS, SFS));
+          });
+          const progs = await Promise.all(jobs.map(progDone));
+          mp = progs[0];
+          spheres
+            .filter((s) => s.g)
+            .forEach((s, i) => {
+              s.prog = progs[i + 1];
+            });
+          lock(false);
+          compiled = true;
+          $("lstep").textContent = "Rendering the first map...";
+          loadAt = Math.max(loadAt, 0.8);
+          $("lprog").value = loadAt;
+          // The first draw can stall while the driver finishes the shader, so paint the bar before it
+          await frame();
+          await frame();
+          await generate();
+          loadAt = 1;
+          $("lprog").value = 1;
+          $("ltime").textContent = "100%";
+          await new Promise((r) => setTimeout(r, 400));
+        } catch (e) {
+          $("status").textContent = "Could not start: " + e.message;
+        }
+        clearInterval(tick);
+        $("loader").hidden = true;
+        document.body.classList.remove("loading");
+        lock(false);
+      }
+      boot();
+    </script>
+  </body>
+</html>
