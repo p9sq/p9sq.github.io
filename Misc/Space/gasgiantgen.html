@@ -704,10 +704,25 @@
           window of temperature ratio count as buried or absent.
         </p>
         <p>
-          Colour anchors come from Voyager and Cassini imagery of the four solar
-          giants, Evans et al. 2013 for HD 189733 b (blue, geometric albedo 0.40
-          at 450 nm), Bell et al. 2017 for WASP-12 b (albedo below 0.1), and
-          Kreidberg et al. 2014 for GJ 1214 b (flat spectrum, cloudy).
+          In Automatic, a custom planet blends chromophores by temperature, host
+          star ultraviolet and metallicity, so the same inputs give the same
+          colours. Presets keep their observed colours. Host star [Fe/H] shifts
+          planet metallicity by 0.3 dex per dex, which lowers the albedo and
+          raises chromophore strength a little (Cahoy et al. 2010 for the albedo
+          trend, Teske et al. 2019 for the weak star to planet link). Star age
+          and orbit give a cumulative ultraviolet dose, saturated for the first
+          100 Myr in Sun-like stars and then falling as time^-0.65 (Johnstone et
+          al. 2021). Cool stars stay saturated longer, with estimated times.
+          Vertical mixing Kzz is estimated by mixing length theory when blank,
+          Kzz = W H with W = (H / R) U. A value you enter is compared with that
+          estimate, and stronger mixing raises the red phosphorus chromophore.
+          Both fields are optional. The chromophores are tholin, sulfur, red
+          phosphorus or sulfur compound, ammonia ice, water ice, Rayleigh,
+          MgSiO3, methane, silicate and soot. Colour anchors come from Voyager
+          and Cassini imagery of the four solar giants, Evans et al. 2013 for HD
+          189733 b (blue, geometric albedo 0.40 at 450 nm), Bell et al. 2017 for
+          WASP-12 b (albedo below 0.1), and Kreidberg et al. 2014 for GJ 1214 b
+          (flat spectrum, cloudy).
         </p>
         <p>
           Haze optical depth scales with sqrt(g0 / g), a temperature term, weak
@@ -1113,6 +1128,32 @@
           bd: 1,
         },
       );
+      FIELDS.splice(
+        FIELDS.findIndex((f) => f.id === "st") + 1,
+        0,
+        { id: "sz", g: "s", n: "Metallicity [Fe/H], Sun is 0", fh: 1, ex: 1 },
+        {
+          id: "sg",
+          g: "s",
+          n: "Age",
+          u: [
+            ["Myr", 3.15576e13],
+            ["Gyr", 3.15576e16],
+          ],
+          d: 1,
+          ex: 1,
+        },
+      );
+      FIELDS.splice(FIELDS.findIndex((f) => f.id === "pw") + 1, 0, {
+        id: "pk",
+        g: "p",
+        n: "Vertical mixing Kzz",
+        u: [
+          ["cm²/s", 1e-4],
+          ["m²/s", 1],
+        ],
+        d: 0,
+      });
       // Planet only fields, hidden in brown dwarf mode
       const PONLY = new Set([
         "pf",
@@ -1128,6 +1169,7 @@
         "pq",
         "pa",
         "pp",
+        "pk",
       ]);
       let mode = "planet";
       const BYID = Object.fromEntries(FIELDS.map((f) => [f.id, f]));
@@ -1367,6 +1409,18 @@
       }
 
       // Fill empty values from physics. Returns filled copy and a source note per key
+      // Mixing length estimate Kzz = W H, with W = (H / R) U (Zhang and Showman 2018). U is the generator's own jet speed.
+      // This gives about 3e6 cm2/s for Jupiter and 3e10 for a 1500 K hot Jupiter, inside the published ranges.
+      function kzzEst(d) {
+        const Te = Math.pow(d.pt ** 4 + d.pi ** 4, 0.25),
+          c = classify(d.pm, d.pr).c;
+        const g = (G * d.pm) / d.pr ** 2,
+          H = (1.380649e-23 * Te) / (CFG.mu[c] * 1.6605e-27 * g);
+        const U =
+          (CFG.wind[c] + (c === "gas" ? 100 * (1 - sstep(90, 125, Te)) : 0)) *
+          (1 + 20 * sstep(900, 1800, Te));
+        return (H * H * U) / d.pr;
+      }
       function solve(v) {
         const d = { ...v },
           src = {};
@@ -1477,6 +1531,12 @@
         if (d.tl && d.pp) {
           d.pw = d.pp;
           src.pw = "tidal lock, equals orbital period";
+        }
+        if (d.pk == null && d.pt && d.pi && d.pm && d.pr) {
+          d.pk = kzzEst(d);
+          d.pkd = true;
+          src.pk =
+            "mixing length estimate from temperature, gravity and jet speed";
         }
         return { d, src };
       }
@@ -1784,6 +1844,109 @@
         ],
       ];
 
+      // Colour schemes: [zone, belt, accent, storm] targets and a haze tint. Each follows an observed or modelled chromophore.
+      const CS = {
+        tho: {
+          n: "tholin haze",
+          p: [
+            [0.62, 0.42, 0.24],
+            [0.42, 0.26, 0.14],
+            [0.74, 0.54, 0.32],
+            [0.3, 0.16, 0.08],
+          ],
+          h: [0.55, 0.34, 0.16],
+        },
+        sul: {
+          n: "sulfur haze",
+          p: [
+            [0.8, 0.74, 0.36],
+            [0.58, 0.52, 0.22],
+            [0.9, 0.84, 0.5],
+            [0.4, 0.36, 0.12],
+          ],
+          h: [0.78, 0.7, 0.3],
+        },
+        red: {
+          n: "red chromophore",
+          p: [
+            [0.8, 0.58, 0.46],
+            [0.58, 0.3, 0.2],
+            [0.86, 0.66, 0.52],
+            [0.52, 0.16, 0.1],
+          ],
+          h: [0.62, 0.3, 0.18],
+        },
+        amm: {
+          n: "clean ammonia ice",
+          p: [
+            [0.95, 0.92, 0.84],
+            [0.8, 0.74, 0.62],
+            [0.97, 0.95, 0.9],
+            [0.64, 0.56, 0.44],
+          ],
+          h: [0.88, 0.82, 0.66],
+        },
+        wat: {
+          n: "water cloud",
+          p: [
+            [0.96, 0.96, 0.95],
+            [0.82, 0.84, 0.86],
+            [0.98, 0.98, 0.98],
+            [0.62, 0.66, 0.72],
+          ],
+          h: [0.85, 0.88, 0.92],
+        },
+        ray: {
+          n: "clear Rayleigh scattering",
+          p: [
+            [0.58, 0.74, 0.92],
+            [0.38, 0.56, 0.84],
+            [0.76, 0.86, 0.96],
+            [0.2, 0.32, 0.62],
+          ],
+          h: [0.5, 0.66, 0.92],
+        },
+        cob: {
+          n: "MgSiO3 haze",
+          p: [
+            [0.22, 0.32, 0.72],
+            [0.12, 0.18, 0.52],
+            [0.34, 0.44, 0.8],
+            [0.06, 0.09, 0.3],
+          ],
+          h: [0.24, 0.36, 0.8],
+        },
+        cya: {
+          n: "methane absorption",
+          p: [
+            [0.54, 0.8, 0.8],
+            [0.38, 0.66, 0.7],
+            [0.76, 0.92, 0.9],
+            [0.22, 0.46, 0.54],
+          ],
+          h: [0.6, 0.82, 0.8],
+        },
+        sil: {
+          n: "silicate dust",
+          p: [
+            [0.72, 0.64, 0.54],
+            [0.5, 0.44, 0.38],
+            [0.82, 0.76, 0.66],
+            [0.3, 0.26, 0.22],
+          ],
+          h: [0.66, 0.58, 0.48],
+        },
+        soo: {
+          n: "carbon soot",
+          p: [
+            [0.24, 0.2, 0.18],
+            [0.12, 0.1, 0.09],
+            [0.32, 0.27, 0.24],
+            [0.05, 0.04, 0.04],
+          ],
+          h: [0.2, 0.16, 0.13],
+        },
+      };
       const BDPAL = [
         // brown dwarf visible colour by effective temperature, estimated: warm brown to dark magenta to near black
         [
@@ -2027,6 +2190,83 @@
             wr = rowAt(WARM, Math.max(Te, 95));
           pal = rowAt(BDPAL, Te).map((c, i) => mix3(c, wr[i], wy));
         }
+        let sch = null,
+          str = 0.75,
+          top = "",
+          uvTxt = "";
+        // Chromophores follow the physics, so the same inputs give the same colours. Each species has a temperature window,
+        // the windows blend by weight, and the seed never changes them. Presets keep their observed colours.
+        if (!bd && !d.pre) {
+          const lt = Math.log10(Te),
+            g = (c, w) => Math.exp(-(((lt - Math.log10(c)) / w) ** 2));
+          const wt = {
+            cya: cloudless ? 0 : g(55, 0.16),
+            ray: cloudless ? 1 : g(45, 0.12) * 0.5 + g(800, 0.2) * 0.4,
+            wat: g(250, 0.18) * (cloudless ? 0 : 1),
+            amm: g(130, 0.14) * (cloudless ? 0 : 1),
+            tho: g(300, 0.45) * (cloudless ? 0.3 : 1),
+            red: g(150, 0.12) * (cloudless ? 0 : 1),
+            sul: g(500, 0.3) * (cloudless ? 0.3 : 1),
+            sil: g(1100, 0.2) * (cloudless ? 0.3 : 1),
+            cob: g(1100, 0.15) * (cloudless ? 1.5 : 0.3),
+            soo: g(2000, 0.3) * (cloudless ? 1 : 0.5),
+          };
+          const keys = Object.keys(wt);
+          // Vertical mixing against the mixing length estimate. Strong mixing lifts phosphine toward the UV, so red grows.
+          const dK = d.pk && !d.pkd ? Math.log10(d.pk / kzzEst(d)) : 0;
+          wt.red *= clamp(Math.pow(10, 0.25 * dK), 0.3, 3);
+          const tot = keys.reduce((a, k) => a + wt[k], 0);
+          if (tot > 0.05) {
+            const sh = (k) => wt[k] / tot;
+            const mixp = [0, 1, 2, 3].map((i) =>
+              [0, 1, 2].map((j) =>
+                keys.reduce((a, k) => a + sh(k) * CS[k].p[i][j], 0),
+              ),
+            );
+            const hz2 = [0, 1, 2].map((j) =>
+              keys.reduce((a, k) => a + sh(k) * CS[k].h[j], 0),
+            );
+            sch = { p: mixp, h: hz2 };
+            // Photochemical hazes need ultraviolet. Cool stars give less, hot stars more. Isolated and unknown stars count as Sun-like.
+            let uv = d.st ? sstep(3000, 6500, d.st) : 1;
+            // Age and orbit give the cumulative EUV dose. Saturated for tsat, then a t^-0.65 decay (Johnstone et al. 2021 FGK fits).
+            // Cool stars stay saturated longer. The tsat values for K and M stars are estimates.
+            if (d.sg && d.sl && d.pa && d.st) {
+              const ts =
+                d.st >= 5200
+                  ? 0.1
+                  : d.st >= 3700
+                    ? 0.1 * Math.pow(10, (5200 - d.st) / 1500)
+                    : d.st >= 3000
+                      ? 1 + (3 * (3700 - d.st)) / 700
+                      : 4;
+              const cum = (t, t0) =>
+                t > t0 ? t0 * (1 + (Math.pow(t / t0, 0.35) - 1) / 0.35) : t;
+              const R =
+                ((d.sl / E.Ls / (d.pa / AU) ** 2) *
+                  cum(d.sg / 3.15576e16, ts)) /
+                cum(4.6, 0.1);
+              uv = sstep(-2.5, 1.5, Math.log10(R));
+              uvTxt = `Stellar ultraviolet dose over the star's age: about ${+R.toPrecision(2)} times the Sun's dose at Earth.`;
+            }
+            str = (0.12 + 0.2 * uv) * clamp(1 + 0.15 * dK, 0.6, 1.5);
+            top = keys
+              .sort((a, c) => wt[c] - wt[a])
+              .slice(0, 2)
+              .map((k) => `${CS[k].n} ${Math.round(100 * sh(k))} percent`)
+              .join(", ");
+          }
+        }
+        // Star [Fe/H] shifts the planet metallicity by dz dex. More metals add opacity and lower the albedo (Cahoy et al. 2010),
+        // and more carbon, sulfur and nitrogen feed the chromophores.
+        const dz = bd ? 0 : 0.3 * (d.sz || 0);
+        if (dz) {
+          const br = 1 - (cloudless ? 0.6 : 0.35) * dz;
+          pal = pal.map((c) => c.map((x) => clamp(x * br, 0, 1)));
+          str = clamp(str * Math.pow(10, dz), 0, 0.7);
+        }
+        // Keep each palette row's own contrast and move its hue toward the scheme
+        if (sch) pal = pal.map((c, i) => mix3(c, sch.p[i], str));
         pal = pal.map((c) => shiftAlb(c, k * (1 - 0.5 * sstep(400, 800, Te))));
         pal = pal.map((c) => mix3(c, [0.86, 0.82, 0.76], 0.3 * sil));
         // Polar tint: desaturated and cooler, as in Juno and Cassini polar views
@@ -2074,6 +2314,7 @@
         if (cloudless) tau *= 0.5;
         tau = clamp(tau, 0, 2.5);
         tint = mix3(tint, [0.5, 0.34, 0.2], 0.7 * soot);
+        if (sch) tint = mix3(tint, sch.h, (0.6 * str) / 0.75);
         if (bdx) {
           tau = 0.15;
           tint = mix3(pal[2], pal[0], 0.5);
@@ -2400,6 +2641,10 @@
           status += `\nSelf-luminous, no host star. ${fmt(mjb)} Jupiter masses, radius ${fmt(d.pr / E.Rj)} Jupiter radii, age ${fmt(d.ae / GYR)} Gyr.`;
         if (bd && Te >= 1200 && Te < 1400)
           status += "\nPatchy clouds expected at the L/T transition.";
+        if (!bd && d.sz != null)
+          status += `\nMetallicity: star [Fe/H] ${fmt(d.sz)} gives about ${+metEnh(d).toPrecision(2)} times solar in the planet.`;
+        if (uvTxt) status += "\n" + uvTxt;
+        if (top) status += `\nLeading chromophores: ${top}.`;
         if (!bd && cls.c === "gas")
           status += `\nSudarsky class ${sudarsky(Te)[0]}. Original model: ${sudarsky(Te)[2]}.`;
         if (d.bdp)
@@ -3905,11 +4150,19 @@ void main(){
       const sub = (s) => s.replace(/\d/g, (x) => SUBS[+x]);
       const UNIT = 1e10; // 100 percent in units of 1e-8 percent, integers keep the sum exact
 
+      // Metal enrichment over solar. Mass sets the base (Thorngren et al. 2016). Host star [Fe/H] shifts it by 0.3 dex per dex.
+      // The star to planet link is weak in the data (Teske et al. 2019 find no clear correlation), so the coupling stays small.
+      const metEnh = (d) =>
+        clamp(
+          clamp((3 * E.Mj) / d.pm, 1, 300) * Math.pow(10, 0.3 * (d.sz || 0)),
+          0.3,
+          600,
+        );
       // Likely gas composition per mole of H2, from solar abundances plus temperature chemistry
       function composition(d, p, se) {
         const T = p.info.Te,
           c = classify(d.pm, d.pr).c;
-        const enh = clamp((3 * E.Mj) / d.pm, 1, 300); // about 3x solar for Jupiter, 55x for Neptune
+        const enh = metEnh(d); // about 3x solar for Jupiter, 55x for Neptune at [Fe/H] 0
         const w = {};
         // H2 dissociates at lower T in thin gas. FastChem at 3 mbar: about 90 percent dissociated at 3000 K
         const dis = p.info.bd
@@ -4264,6 +4517,11 @@ void main(){
             continue;
           }
           const x = Number(t);
+          if (f.fh) {
+            if (x < -3 || x > 1) err[f.id] = "Enter a value from -3 to 1.";
+            else v[f.id] = x;
+            continue;
+          }
           if (f.alb) {
             if (x < 0 || x > 1) err[f.id] = "Enter a value from 0 to 1.";
             else v[f.id] = x;
@@ -4398,7 +4656,7 @@ void main(){
           : BYID.pi.n;
         for (const f of FIELDS) {
           if (f.bin) $("r_" + f.id).hidden = !v.cb;
-          if (f.g === "s" && !f.chk && !f.pair)
+          if (f.g === "s" && !f.chk && !f.pair && !f.ex)
             $("r_" + f.id).querySelector("label").textContent =
               f.n + (v.cb ? (f.bin ? " (star 2)" : " (star 1)") : "");
         }
@@ -4710,7 +4968,7 @@ void main(){
       build();
       $("form").addEventListener("input", (e) => {
         if (
-          e.target.id !== "preset" &&
+          !["preset", "seed", "f_sz", "f_sg", "f_pk"].includes(e.target.id) &&
           e.target.id !== "res" &&
           e.target.id !== "aspect"
         )
@@ -5066,6 +5324,7 @@ void main(){
             f.g === "s" &&
             !f.chk &&
             !f.bin &&
+            !f.ex &&
             $("f_" + f.id).value.trim() !== "",
         );
         put("pa", a, 0);
