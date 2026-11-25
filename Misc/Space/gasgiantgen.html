@@ -697,7 +697,8 @@
           Jupiter gives about 22 bands, Neptune about 5.
         </p>
         <p>
-          Class and subtype follow the thresholds in the config object CFG.
+          Class and subtype follow the thresholds in the config object CFG. Gas
+          giants also get a Sudarsky class (I to V) from effective temperature.
           Cloud decks follow Sudarsky, Burrows and Hubeny 2000 and Lodders 2003
           condensation chemistry, tested at 1 bar. Species outside a 0.55 to 1.0
           window of temperature ratio count as buried or absent.
@@ -1621,6 +1622,15 @@
           name: { gas: "Gas giant", ice: "Ice giant", mini: "Mini-Neptune" }[c],
         };
       }
+      // Sudarsky, Burrows and Hubeny 2000 classes by effective temperature. Class V needs Roche-hot silicate clouds above 1400 K.
+      const SUD = [
+        ["I", 150, "ammonia clouds"],
+        ["II", 250, "water clouds"],
+        ["III", 800, "cloudless, Rayleigh blue"],
+        ["IV", 1400, "alkali metal absorbers"],
+        ["V", Infinity, "silicate clouds"],
+      ];
+      const sudarsky = (T) => SUD.find((c) => T < c[1]);
       function subtype(T) {
         return CFG.sub.find((s) => T < s[1])[0];
       }
@@ -2390,6 +2400,8 @@
           status += `\nSelf-luminous, no host star. ${fmt(mjb)} Jupiter masses, radius ${fmt(d.pr / E.Rj)} Jupiter radii, age ${fmt(d.ae / GYR)} Gyr.`;
         if (bd && Te >= 1200 && Te < 1400)
           status += "\nPatchy clouds expected at the L/T transition.";
+        if (!bd && cls.c === "gas")
+          status += `\nSudarsky class ${sudarsky(Te)[0]}. Original model: ${sudarsky(Te)[2]}.`;
         if (d.bdp)
           status +=
             "\nTreated as a star-bound brown dwarf (13 to 75 Jupiter masses). Tick the planet-formed box to treat it as a planet.";
@@ -2444,6 +2456,7 @@
           so,
           status,
           info: {
+            sud: !bd && cls.c === "gas" ? sudarsky(Te) : null,
             bd,
             Te,
             cls: cls.name,
@@ -4316,6 +4329,8 @@ void main(){
         const add = (k, x) => rows.push(`<dt>${k}</dt><dd>${x}</dd>`);
         add("Class", I.cls);
         add(I.bd ? "Spectral class" : "Subtype", I.sub);
+        if (I.sud)
+          add("Sudarsky class", `${I.sud[0]}, original model: ${I.sud[2]}`);
         if (I.bd) {
           add("Mass", fmt(d.pm / E.Mj) + " MJ");
           if (d.ae) add("Age", fmt(d.ae / GYR) + " Gyr");
