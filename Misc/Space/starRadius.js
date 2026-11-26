@@ -942,13 +942,21 @@ function printMS(
     console.log(
       `Age:                   ${fmt(ageGyr)} Gyr  (${fmtPct((ageGyr / t_MS) * 100)}% through MS)`,
     );
+    const zamsSpType = teffToSpectralType(zams.Teff);
+    const zamsLabel = `${zamsSpType.classKey}${zamsSpType.subtypeStr}V`;
     console.log(`\n  -- ZAMS (t = 0) --`);
+    console.log(`  Spectral class:      ${zamsLabel}`);
     console.log(
       `  Radius:              ${fmt(zams.R)} R_Sun  /  ${fmt(zams.R * R_SUN_KM)} km`,
     );
     console.log(`  Luminosity:          ${fmt(zams.L)} L_Sun`);
     console.log(`  T_eff (ZAMS, Mamajek 2022): ${fmtTeff(zams.Teff)} K`);
+    const ageSpType = teffToSpectralType(Teff);
+    const ageLabel = `${ageSpType.classKey}${ageSpType.subtypeStr}V`;
     console.log(`\n  -- Age-adjusted --`);
+    console.log(
+      `Spectral class:        ${ageLabel}  (derived from age-adjusted T_eff)`,
+    );
   }
   console.log(`Radius:                ${fmt(R)} R_Sun`);
   console.log(`                       ${fmt(R * R_SUN_KM)} km`);
