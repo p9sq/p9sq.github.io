@@ -2634,8 +2634,8 @@
           status += `Cloud deck: ${cd.top[0]} (${cd.hit.length} species stable).\nRegime: ${reg} rotation.`;
         if (pol[0])
           status += `\nPoles: N ${pd(pol[0], pol[1])}, S ${pd(pol[2], pol[3])}.`;
-        if (sk) status += `\nStorm: ${skName} ${sLatTxt}.`;
-        if (sk === 1)
+        if (sk && !cloudless) status += `\nStorm: ${skName} ${sLatTxt}.`;
+        if (sk === 1 && !cloudless)
           status += ` Spot ${fmt(sLen)} by ${fmt(sHgt)} degrees, ${ssh < 0.25 ? "pale orange" : ssh < 0.5 ? "orange" : ssh < 0.75 ? "red-orange" : "deep red"}.`;
         if (d.bd)
           status += `\nSelf-luminous, no host star. ${fmt(mjb)} Jupiter masses, radius ${fmt(d.pr / E.Rj)} Jupiter radii, age ${fmt(d.ae / GYR)} Gyr.`;
@@ -2677,7 +2677,7 @@
           ssh,
           ssw,
           pol,
-          sk,
+          sk: cloudless ? 0 : sk,
           te: Te,
           cls: { gas: 0, ice: 1, mini: 2 }[cls.c],
           act: clamp(d.pi / 50, 0, 1),
