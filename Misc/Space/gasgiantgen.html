@@ -716,13 +716,17 @@
           Vertical mixing Kzz is estimated by mixing length theory when blank,
           Kzz = W H with W = (H / R) U. A value you enter is compared with that
           estimate, and stronger mixing raises the red phosphorus chromophore.
-          Both fields are optional. The chromophores are tholin, sulfur, red
-          phosphorus or sulfur compound, ammonia ice, water ice, Rayleigh,
-          MgSiO3, methane, silicate and soot. Colour anchors come from Voyager
-          and Cassini imagery of the four solar giants, Evans et al. 2013 for HD
-          189733 b (blue, geometric albedo 0.40 at 450 nm), Bell et al. 2017 for
-          WASP-12 b (albedo below 0.1), and Kreidberg et al. 2014 for GJ 1214 b
-          (flat spectrum, cloudy).
+          Both fields are optional. Super-puffs (density under 0.3 g/cm3 and
+          mass under 30 Earth masses, fading out up to 100 Earth masses and
+          above 800 K) get thick high altitude haze, which mutes bands and
+          storms and strengthens the tholin, sulfur and soot chromophores
+          together. Puffy planets with lower density only get a status note. The
+          chromophores are tholin, sulfur, red phosphorus or sulfur compound,
+          ammonia ice, water ice, Rayleigh, MgSiO3, methane, silicate and soot.
+          Colour anchors come from Voyager and Cassini imagery of the four solar
+          giants, Evans et al. 2013 for HD 189733 b (blue, geometric albedo 0.40
+          at 450 nm), Bell et al. 2017 for WASP-12 b (albedo below 0.1), and
+          Kreidberg et al. 2014 for GJ 1214 b (flat spectrum, cloudy).
         </p>
         <p>
           Haze optical depth scales with sqrt(g0 / g), a temperature term, weak
@@ -1309,6 +1313,48 @@
           sm: [1.35, 1],
           sr: [1.84, 1],
           st: [5933, 0],
+        },
+        "Kepler-51 b": {
+          po: [0, 0],
+          pe: [0.03],
+          pm: [3.69, 1],
+          pr: [6.89, 1],
+          pa: [0.2469, 0],
+          pp: [45.1542, 1],
+          pw: [10, 0],
+          sm: [0.985, 1],
+          sr: [0.881, 1],
+          st: [5670, 0],
+          sz: [0.05],
+          sg: [500, 0],
+        },
+        "Kepler-51 c": {
+          po: [0, 0],
+          pe: [0.01],
+          pm: [4.43, 1],
+          pr: [8.98, 1],
+          pa: [0.3774, 0],
+          pp: [85.3139, 1],
+          pw: [10, 0],
+          sm: [0.985, 1],
+          sr: [0.881, 1],
+          st: [5670, 0],
+          sz: [0.05],
+          sg: [500, 0],
+        },
+        "Kepler-51 d": {
+          po: [0, 0],
+          pe: [0.01],
+          pm: [5.7, 1],
+          pr: [9.46, 1],
+          pa: [0.5002, 0],
+          pp: [130.1845, 1],
+          pw: [10, 0],
+          sm: [0.985, 1],
+          sr: [0.881, 1],
+          st: [5670, 0],
+          sz: [0.05],
+          sg: [500, 0],
         },
         "HD 80606 b": {
           po: [0, 0],
@@ -2157,6 +2203,15 @@
         const g = (G * d.pm) / d.pr ** 2;
         const cd = bd ? bdClouds(Te) : condensates(Te);
         const cloudless = bd ? Te > 2400 : !cd.top;
+        // Super-puffs have densities under 0.3 g/cm3 and masses under 30 Earth masses. Their flat transmission spectra point to
+        // haze or dust at microbar pressures (Libby-Roberts et al. 2020, JWST Kepler-51d in 2025).
+        // Haze needs cool air, so the effect fades out between 800 and 1100 K, and with mass between 30 and 100 Earth masses.
+        const rho = d.pm / ((4 / 3) * Math.PI * d.pr ** 3) / 1000;
+        const puff = bd
+          ? 0
+          : sstep(0.5, 0.15, rho) *
+            (1 - sstep(800, 1100, Te)) *
+            (1 - sstep(30 * E.Me, 100 * E.Me, d.pm));
         const prot = d.pw / 3600;
         const om = (2 * Math.PI) / d.pw;
         // Brown dwarf jets: Showman and Kaspi 2013 predict 10 to 300 m/s. Luhman 16 light curves suggest faster, so the top of that range is used and it grows with Teff.
@@ -2211,6 +2266,8 @@
             cob: g(1100, 0.15) * (cloudless ? 1.5 : 0.3),
             soo: g(2000, 0.3) * (cloudless ? 1 : 0.5),
           };
+          // JWST and HST cannot separate tholin, soot and sulfur haze in Kepler-51d, so all three grow together
+          for (const k of ["tho", "sul", "soo"]) wt[k] *= 1 + 2 * puff;
           const keys = Object.keys(wt);
           // Vertical mixing against the mixing length estimate. Strong mixing lifts phosphine toward the UV, so red grows.
           const dK = d.pk && !d.pkd ? Math.log10(d.pk / kzzEst(d)) : 0;
@@ -2249,7 +2306,11 @@
               uv = sstep(-2.5, 1.5, Math.log10(R));
               uvTxt = `Stellar ultraviolet dose over the star's age: about ${+R.toPrecision(2)} times the Sun's dose at Earth.`;
             }
-            str = (0.12 + 0.2 * uv) * clamp(1 + 0.15 * dK, 0.6, 1.5);
+            str = clamp(
+              (0.12 + 0.2 * uv) * clamp(1 + 0.15 * dK, 0.6, 1.5) + 0.25 * puff,
+              0,
+              0.7,
+            );
             top = keys
               .sort((a, c) => wt[c] - wt[a])
               .slice(0, 2)
@@ -2267,6 +2328,14 @@
         }
         // Keep each palette row's own contrast and move its hue toward the scheme
         if (sch) pal = pal.map((c, i) => mix3(c, sch.p[i], str));
+        // Thick high haze washes out the contrast between zones and belts
+        if (puff)
+          pal = [
+            pal[0],
+            mix3(pal[1], pal[0], 0.7 * puff),
+            pal[2],
+            mix3(pal[3], pal[0], 0.7 * puff),
+          ];
         pal = pal.map((c) => shiftAlb(c, k * (1 - 0.5 * sstep(400, 800, Te))));
         pal = pal.map((c) => mix3(c, [0.86, 0.82, 0.76], 0.3 * sil));
         // Polar tint: desaturated and cooler, as in Juno and Cassini polar views
@@ -2312,7 +2381,7 @@
         tau *= 1 + (cls.c === "mini" ? 2.2 : 0.8) * soot;
         tau *= 1 - sstep(1500, 1800, Te);
         if (cloudless) tau *= 0.5;
-        tau = clamp(tau, 0, 2.5);
+        tau = clamp(tau + 1.2 * puff, 0, 2.5);
         tint = mix3(tint, [0.5, 0.34, 0.2], 0.7 * soot);
         if (sch) tint = mix3(tint, sch.h, (0.6 * str) / 0.75);
         if (bdx) {
@@ -2356,6 +2425,7 @@
           Math.max(bw, tl ? 0.5 : 0) *
           (0.45 + 0.55 * clamp(d.pi / 50, 0, 1));
         if (cls.c === "mini") con *= 1 - 0.6 * soot;
+        con *= 1 - 0.6 * puff;
         // Slow rotators with Rossby number near 1 have few, broad bands and a wide tropical zone
         const ro = 1 / (nbRaw * nbRaw);
         const sl = tl ? 0 : sstep(0.1, 1, ro);
@@ -2464,19 +2534,20 @@
           (reg === "fast" || reg === "medium") &&
           !cloudless;
         const nvOut = gws ? 1 : nv;
-        const sk = bdx
-          ? 0
-          : nvOut > 0
-            ? cls.c === "gas"
-              ? S >= 1.8
-                ? 3
-                : 1
-              : cls.c === "ice"
-                ? clamp(d.pi / 50, 0, 1) < 0.35
-                  ? 4
-                  : 2
-                : 0
-            : 0;
+        const sk =
+          bdx || puff > 0.5
+            ? 0
+            : nvOut > 0
+              ? cls.c === "gas"
+                ? S >= 1.8
+                  ? 3
+                  : 1
+                : cls.c === "ice"
+                  ? clamp(d.pi / 50, 0, 1) < 0.35
+                    ? 4
+                    : 2
+                  : 0
+              : 0;
         // Red spot shape and colour. Shape: vortex strength against the shear of the jets that bound it (Rossby number over normalised shear).
         // Strength grows with merger feed from small storms, internal heat and storm age. Colour: UV photochemistry of ammonia and acetylene
         // at the cloud top, stronger for taller storms and brighter starlight, muted by haze, absent once ammonia is gone.
@@ -2643,6 +2714,10 @@
           status += "\nPatchy clouds expected at the L/T transition.";
         if (!bd && d.sz != null)
           status += `\nMetallicity: star [Fe/H] ${fmt(d.sz)} gives about ${+metEnh(d).toPrecision(2)} times solar in the planet.`;
+        if (puff > 0.3)
+          status += `\nSuper-puff: density ${+rho.toPrecision(2)} g/cm3. Thick haze at high altitude mutes bands and storms.`;
+        else if (!bd && rho < 0.5)
+          status += `\nPuffy: density ${+rho.toPrecision(2)} g/cm3 is low for this mass. No colour change applied, since no data link it to colour.`;
         if (uvTxt) status += "\n" + uvTxt;
         if (top) status += `\nLeading chromophores: ${top}.`;
         if (!bd && cls.c === "gas")
@@ -4152,12 +4227,18 @@ void main(){
 
       // Metal enrichment over solar. Mass sets the base (Thorngren et al. 2016). Host star [Fe/H] shifts it by 0.3 dex per dex.
       // The star to planet link is weak in the data (Teske et al. 2019 find no clear correlation), so the coupling stays small.
-      const metEnh = (d) =>
-        clamp(
-          clamp((3 * E.Mj) / d.pm, 1, 300) * Math.pow(10, 0.3 * (d.sz || 0)),
-          0.3,
-          600,
-        );
+      // Cool super-puffs use 10 times solar. JWST finds Kepler-51d likely has 1 to 10 times solar, because its scale height is large.
+      const metEnh = (d) => {
+        const Te = Math.pow((d.pt || 0) ** 4 + (d.pi || 0) ** 4, 0.25),
+          rho = d.pm / ((4 / 3) * Math.PI * d.pr ** 3) / 1000;
+        const pd =
+          sstep(0.5, 0.15, rho) *
+          (1 - sstep(30 * E.Me, 100 * E.Me, d.pm)) *
+          (1 - sstep(800, 1100, Te));
+        const base =
+          Math.pow(clamp((3 * E.Mj) / d.pm, 1, 300), 1 - pd) * Math.pow(10, pd);
+        return clamp(base * Math.pow(10, 0.3 * (d.sz || 0)), 0.3, 600);
+      };
       // Likely gas composition per mole of H2, from solar abundances plus temperature chemistry
       function composition(d, p, se) {
         const T = p.info.Te,
